@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0d0a1a">
+  <title>FichaBet — Cassino Fictício</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@600;700;800;900&display=swap">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a href="#/" class="logo"><img src="assets/img/slot.webp" alt=""><span><b>Ficha</b>Bet</span></a>
+    <div class="top-right">
+      <button id="lvl-chip" class="lvl-chip" title="Passe da temporada" aria-label="Nível do passe">
+        <span class="lvl-ring"><span class="lvl-num">1</span></span>
+      </button>
+      <button id="balance" class="balance" title="Carteira">
+        <img class="coin" src="assets/img/coin.webp" alt=""><span id="balance-value">0,00</span><span class="bal-plus">+</span>
+      </button>
+      <button id="btn-music" class="icon-btn" title="Música" aria-label="Ligar/desligar música">🎵</button>
+      <button id="btn-sound" class="icon-btn" title="Efeitos sonoros" aria-label="Ligar/desligar efeitos">🔊</button>
+    </div>
+  </header>
+
+  <main id="app"></main>
+
+  <footer class="disclaimer">
+    🎲 <b>Dinheiro 100% fictício.</b> Não há depósitos, saques nem prêmios reais — apenas diversão.
+    <br><span class="small">Sprites: <a href="https://github.com/microsoft/fluentui-emoji" target="_blank" rel="noopener">Fluent Emoji</a> (Microsoft, MIT) · Sons: <a href="https://kenney.nl" target="_blank" rel="noopener">Kenney</a> (CC0) · Música: "Bossa Shop Theme" de <a href="https://opengameart.org/content/bossa-shop-theme-in-low-fi-and-hd" target="_blank" rel="noopener">springyspringo</a> (CC0).</span>
+  </footer>
+
+  <nav class="bottom-nav">
+    <a href="#/" data-nav="lobby"><img src="assets/img/slot.webp" alt=""><span>Jogos</span></a>
+    <a href="#/bonus" data-nav="bonus"><img src="assets/img/gift.webp" alt=""><span>Bônus</span><i class="dot hidden" data-dot="bonus"></i></a>
+    <a href="#/missoes" data-nav="missoes"><img src="assets/img/bullseye.webp" alt=""><span>Missões</span><i class="dot hidden" data-dot="missoes"></i></a>
+    <a href="#/passe" data-nav="passe"><img src="assets/img/ticket.webp" alt=""><span>Passe</span><i class="dot hidden" data-dot="passe"></i></a>
+    <a href="#/carteira" data-nav="carteira"><img src="assets/img/moneybag.webp" alt=""><span>Carteira</span></a>
+  </nav>
+
+  <div id="toasts"></div>
+  <div id="modal-root"></div>
+
+  <script src="assets/audio/sfx.js"></script>
+  <script src="js/core.js"></script>
+  <script src="js/progress.js"></script>
+  <script src="js/pages.js"></script>
+  <script src="js/games/slots.js"></script>
+  <script src="js/games/scatter.js"></script>
+  <script src="js/games/crash.js"></script>
+  <script src="js/games/double.js"></script>
+  <script src="js/games/mines.js"></script>
+  <script src="js/games/plinko.js"></script>
+  <script src="js/games/limbo.js"></script>
+  <script src="js/games/dice.js"></script>
+  <script src="js/games/hilo.js"></script>
+  <script src="js/games/keno.js"></script>
+  <script src="js/games/torre.js"></script>
+  <script src="js/games/raspadinha.js"></script>
+  <script src="js/games/wheel.js"></script>
+  <script src="js/games/roulette.js"></script>
+  <script src="js/games/blackjack.js"></script>
+  <script src="js/games/futebol.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
