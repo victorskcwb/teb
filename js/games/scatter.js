@@ -2,7 +2,7 @@
 
 /* =========================================================
    Slots "scatter pays" 6×5 com cascata (estilo Sweet Bonanza /
-   Gates of Olympus):
+   Gates of Olympus / Starlight Princess):
    - 8+ símbolos iguais em QUALQUER lugar pagam
    - símbolos vencedores somem e novos caem (cascata)
    - 4+ scatters = 10 rodadas grátis (3+ durante elas = +5)
@@ -234,16 +234,16 @@
           $$('.scatter', gridEl).forEach(x => x.classList.add('win'));
           await wait(1200);
           const total = await freeSpins(bet);
-          finish(price, total, price);
+          finish(price, total, price, { buy: true });
         }
 
-        function finish(stake, pay, base) {
+        function finish(stake, pay, base, extra) {
           if (pay > 0) {
             Wallet.win(pay);
             winEl.textContent = fmt(pay);
             if (ctx.alive) UI.result(pay, base);
           } else if (ctx.alive) Sfx.lose();
-          ctx.round(stake, pay, base);
+          ctx.round(stake, pay, base, extra);
           setBusy(false);
           fsBar.render();
           if (ctx.alive && (auto || (fsBar.active && Progress.s.fs > 0))) {
@@ -306,6 +306,20 @@
     ]), 1.05),
     scatter: { id: 'sc', img: 'voltage', name: 'Raio de Zeus', w: 1.25 },
     orbImg: 'crystal', orbs: ORBS, orbBase: 0.0048, orbFS: 0.03,
+    fsCount: 10, buyX: 60, accumulate: true,
+  }));
+
+  App.register(createScatterSlot({
+    id: 'princesa', name: 'Princesa Estelar', art: 'princess', mascot: 'princess',
+    tag: 'Estrelas multiplicadoras acumulam', colors: ['#c026d3', '#4338ca'], rtp: '~95,5%',
+    intro: 'Inspirado no "Starlight Princess": a princesa lança estrelas multiplicadoras a qualquer momento.',
+    orbRules: `<p>🌟 <b>Estrelas multiplicadoras</b> (2x a 100x) podem cair em <b>qualquer giro</b>. Se houver ganho, as estrelas se somam e multiplicam o prêmio. Nas rodadas grátis elas <b>acumulam</b> num multiplicador total que vale para todos os ganhos seguintes!</p>`,
+    symbols: scale(mk([
+      ['crown', 'crown', 'Coroa'], ['ring', 'ring', 'Anel'], ['moon', 'moon', 'Lua'], ['crystal', 'crystal', 'Bola de cristal'],
+      ['heart', 'heart', 'Coração'], ['blue', 'blueheart', 'Coração azul'], ['purple', 'purpleheart', 'Coração roxo'], ['green', 'greenheart', 'Coração verde'], ['yellow', 'yellowheart', 'Coração dourado'],
+    ]), 1.05),
+    scatter: { id: 'sc', img: 'shootingstar', name: 'Estrela cadente', w: 1.25 },
+    orbImg: 'glowstar', orbs: ORBS, orbBase: 0.0048, orbFS: 0.03,
     fsCount: 10, buyX: 60, accumulate: true,
   }));
 })();

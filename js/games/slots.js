@@ -5,6 +5,8 @@
    - Tigrinho: recurso "Carta do Tigre" (respins até ganhar, tela cheia = x10)
    - Ratinho: rolo do meio vira coringa e os outros giram até ganhar
    - Dragãozinho: multiplicador aleatório em todo giro (x1, x2, x5, x10)
+   - Touro: rolo do meio trava um símbolo e as pontas fazem respins
+   - Coelho: cenouras com prêmio (5+ pagam) e rodadas só de cenouras
    Pagamentos em "x da aposta por linha" (aposta total / 5).
    ========================================================= */
 (function () {
@@ -15,20 +17,27 @@
     for (const line of LINES) {
       const syms = line.map(i => grid[i]);
       const base = syms.find(s => !s.wild) || syms[0];
+      if (base.prize || base.blank) continue;
       if (syms.every(s => s.wild || s.id === base.id)) wins.push({ cells: line, sym: base });
     }
     return wins;
   }
 
   function paytable(cfg) {
-    return `<table class="paytable">${cfg.symbols.map(s => `
+    return `<table class="paytable">${cfg.symbols.filter(s => !s.prize).map(s => `
       <tr><td class="pt-sym">${ico(s.img)}${ico(s.img)}${ico(s.img)}</td>
       <td>${s.name}${s.wild ? ' <span class="badge">CORINGA</span>' : ''}</td>
-      <td><b>${s.pay / 5}x</b></td></tr>`).join('')}</table>`;
+      <td><b>${fmtV(round2(s.pay / 5))}</b></td></tr>`).join('')}</table>`;
   }
+
+  const fmtV = v => String(v).replace('.', ',') + 'x';
+  const BLANK = { id: 'blank', img: 'sparkles', blank: true };
 
   function createSlot(cfg) {
     const wild = cfg.symbols.find(s => s.wild);
+    const prize = cfg.symbols.find(s => s.prize);
+    const prizeSym = () => ({ ...prize, val: RNG.weighted(cfg.prizeValues).v });
+    const draw = () => { const s = RNG.weighted(cfg.symbols); return s.prize ? prizeSym() : s; };
     return {
       id: cfg.id, name: cfg.name, art: cfg.art, category: 'slots', tag: cfg.tag, colors: cfg.colors,
       sprites: cfg.symbols.map(s => s.img),
@@ -75,7 +84,7 @@
 
         const cells = [];
         for (let i = 0; i < 9; i++) {
-          const c = h('<div class="cell"><img alt="" draggable="false"></div>');
+          const c = h('<div class="cell"><img alt="" draggable="false"><b class="val"></b></div>');
           gridEl.append(c);
           cells.push(c);
         }
@@ -83,19 +92,22 @@
           const img = cells[i].firstChild;
           if (img.dataset.s !== sym.img) { img.src = IMG(sym.img); img.dataset.s = sym.img; }
           cells[i].classList.toggle('is-wild', !!sym.wild);
+          cells[i].classList.toggle('prize', !!sym.prize);
+          cells[i].classList.toggle('blank', !!sym.blank);
+          cells[i].lastChild.textContent = sym.prize ? fmtV(sym.val) : '';
         };
-        for (let i = 0; i < 9; i++) setCell(i, RNG.weighted(cfg.symbols));
+        for (let i = 0; i < 9; i++) setCell(i, draw());
 
         let busy = false, turbo = false, auto = false;
         const msg = t => { msgEl.textContent = t; };
         const setAuto = v => { auto = v; $('[data-t="auto"]', el).classList.toggle('on', v); };
 
-        async function animateTo(final, { fixed = new Set() } = {}) {
+        async function animateTo(final, { fixed = new Set(), gen = draw } = {}) {
           const timers = [0, 1, 2].map(col => {
             const idx = [col, col + 3, col + 6].filter(i => !fixed.has(i));
             if (!idx.length) return null;
             idx.forEach(i => cells[i].classList.add('spinning'));
-            return { idx, t: ctx.interval(() => idx.forEach(i => setCell(i, RNG.weighted(cfg.symbols))), 70) };
+            return { idx, t: ctx.interval(() => idx.forEach(i => setCell(i, gen())), 70) };
           });
           const first = turbo ? 180 : 520, step = turbo ? 110 : 300;
           for (let col = 0; col < 3; col++) {
@@ -114,31 +126,37 @@
           final.forEach((s, i) => setCell(i, s));
         }
 
-        /* Recurso do Tigrinho: respins até formar linha; tela cheia paga x10 */
-        async function tigerFeature() {
+        /* Respins travando um símbolo (e coringas) até formar linha; tela cheia paga x10.
+           Tigrinho: começa livre. Touro: o rolo do meio já começa travado. */
+        async function lockFeature() {
+          const [p0, step, wildP] = cfg.lock;
+          const pre = cfg.feature === 'ox' ? [1, 4, 7] : [];
           const nonWild = cfg.symbols.filter(s => !s.wild);
           const target = RNG.weighted(nonWild);
           const others = nonWild.filter(s => s.id !== target.id);
-          const roll = () => (RNG.float() < 0.15 ? wild : target);
+          const roll = () => (RNG.float() < wildP ? wild : target);
           const lock = Array(9).fill(null);
-          for (let i = 0; i < 9; i++) if (RNG.float() < 0.35) lock[i] = roll();
+          pre.forEach(i => { lock[i] = target; });
+          for (let i = 0; i < 9; i++) if (!lock[i] && RNG.float() < p0) lock[i] = roll();
           const fill = () => lock.map(l => l || RNG.weighted(others));
           const markLocks = () => cells.forEach((c, i) => c.classList.toggle('locked', !!lock[i]));
 
           el.classList.add('feature');
           mascot.classList.add('roar');
-          msg(`CARTA DO TIGRE! Símbolo da rodada: ${target.name}`);
+          msg(cfg.featureMsg(target));
           Sfx.big();
+          pre.forEach(i => setCell(i, target));
+          markLocks();
           await ctx.sleep(1100);
 
           let grid = fill();
-          await animateTo(grid);
+          await animateTo(grid, { fixed: new Set(pre) });
           markLocks();
           let guard = 0;
           while (!LINES.some(L => L.every(i => lock[i])) && guard++ < 60) {
             const fixed = new Set(lock.map((l, i) => (l ? i : -1)).filter(i => i >= 0));
             await ctx.sleep(turbo ? 150 : 350);
-            for (let i = 0; i < 9; i++) if (!lock[i] && RNG.float() < 0.22) lock[i] = roll();
+            for (let i = 0; i < 9; i++) if (!lock[i] && RNG.float() < step) lock[i] = roll();
             grid = fill();
             await animateTo(grid, { fixed });
             markLocks();
@@ -147,8 +165,40 @@
           mascot.classList.remove('roar');
           el.classList.remove('feature');
           cells.forEach(c => c.classList.remove('locked'));
-          if (full) msg('TELA CHEIA! Prêmio x10 🐯');
+          if (full) msg(`TELA CHEIA! Prêmio x10 ${cfg.emoji}`);
           return { grid, mult: full ? 10 : 1 };
+        }
+
+        /* Recurso do Coelho: giros só com cenouras e espaços vazios; toda cenoura paga */
+        async function rabbitFeature(bet) {
+          el.classList.add('feature');
+          mascot.classList.add('roar');
+          msg(`RODADAS DO COELHO! ${cfg.rabbitSpins} giros só de cenouras 🥕`);
+          Sfx.big();
+          UI.confetti(30, [prize.img, 'coin', 'star']);
+          await ctx.sleep(1300);
+          const gen = () => (RNG.float() < 0.5 ? prizeSym() : BLANK);
+          let grid = [], total = 0;
+          for (let k = cfg.rabbitSpins; k > 0; k--) {
+            msg(`Rodadas do Coelho: ${k} restante${k > 1 ? 's' : ''} · 🪙 ${fmt(total)}`);
+            cells.forEach(c => c.classList.remove('win'));
+            grid = Array.from({ length: 9 }, () => (RNG.float() < cfg.rabbitP ? prizeSym() : BLANK));
+            await animateTo(grid, { gen });
+            const sum = grid.reduce((s, x) => s + (x.val || 0), 0);
+            if (sum > 0) {
+              total = round2(total + sum * bet);
+              cells.forEach((c, i) => { if (grid[i].prize) c.classList.add('win'); });
+              winEl.textContent = fmt(total);
+              Sfx.coin();
+              await ctx.sleep(turbo ? 350 : 750);
+            } else {
+              await ctx.sleep(turbo ? 150 : 350);
+            }
+          }
+          mascot.classList.remove('roar');
+          el.classList.remove('feature');
+          cells.forEach(c => c.classList.remove('win'));
+          return { grid, mult: 1, bonus: total };
         }
 
         /* Recurso do Ratinho: rolo do meio vira coringa, os outros giram até pagar */
@@ -162,7 +212,7 @@
           await ctx.sleep(1000);
           let grid, guard = 0;
           do {
-            grid = Array.from({ length: 9 }, (_, i) => (mid.has(i) ? wild : RNG.weighted(cfg.symbols)));
+            grid = Array.from({ length: 9 }, (_, i) => (mid.has(i) ? wild : draw()));
             await animateTo(grid, { fixed: mid });
             if (evaluate(grid).length) break;
             await ctx.sleep(turbo ? 120 : 260);
@@ -174,7 +224,7 @@
         }
 
         async function normalSpin() {
-          const grid = Array.from({ length: 9 }, () => RNG.weighted(cfg.symbols));
+          const grid = Array.from({ length: 9 }, draw);
           let mult = 1, multTimer = null;
           if (cfg.multipliers) {
             mult = RNG.weighted(cfg.multipliers).m;
@@ -207,22 +257,30 @@
           msg(free ? '🎁 Rodada grátis!' : 'Girando...');
 
           const isFeature = cfg.featureChance && RNG.float() < cfg.featureChance;
-          const res = isFeature ? await (cfg.feature === 'mouse' ? mouseFeature() : tigerFeature()) : await normalSpin();
+          const features = { mouse: mouseFeature, rabbit: rabbitFeature, ox: lockFeature, tiger: lockFeature };
+          const res = isFeature ? await features[cfg.feature || 'tiger'](bet) : await normalSpin();
 
           const wins = evaluate(res.grid);
-          const payout = round2(wins.reduce((s, w) => s + w.sym.pay, 0) * (bet / 5) * res.mult);
-          if (wins.length) {
+          const prizes = prize && !res.bonus ? res.grid.map((x, i) => (x.prize ? i : -1)).filter(i => i >= 0) : [];
+          const prizeWin = prizes.length >= cfg.prizeMin ? round2(prizes.reduce((s, i) => s + res.grid[i].val, 0) * bet) : 0;
+          const payout = round2(wins.reduce((s, w) => s + w.sym.pay, 0) * (bet / 5) * res.mult + prizeWin + (res.bonus || 0));
+          if (wins.length || prizeWin) {
             cells.forEach(c => c.classList.add('dim'));
             wins.forEach(w => w.cells.forEach(i => { cells[i].classList.remove('dim'); cells[i].classList.add('win'); }));
+            if (prizeWin) prizes.forEach(i => { cells[i].classList.remove('dim'); cells[i].classList.add('win'); });
           }
           if (payout > 0) {
             Wallet.win(payout);
             winEl.textContent = fmt(payout);
             if (ctx.alive) {
-              if (res.mult < 10 || !isFeature) msg(`${wins.length} linha${wins.length > 1 ? 's' : ''}${res.mult > 1 ? ` · x${res.mult}` : ''} — ganhou ${fmt(payout)}!`);
+              const parts = [];
+              if (wins.length) parts.push(`${wins.length} linha${wins.length > 1 ? 's' : ''}${res.mult > 1 ? ` · x${res.mult}` : ''}`);
+              if (prizeWin) parts.push(`${prizes.length} ${prize.plural}`);
+              if (res.bonus) parts.push(cfg.featureName);
+              if (res.mult < 10 || !isFeature) msg(`${parts.join(' + ')} — ganhou ${fmt(payout)}!`);
               UI.result(payout, bet);
             }
-          } else if (!isFeature) {
+          } else {
             msg('Não foi dessa vez...');
           }
           ctx.round(free ? 0 : bet, payout, bet);
@@ -261,10 +319,11 @@
 
   App.register(createSlot({
     id: 'tigrinho', name: 'Tigrinho da Sorte', art: 'tiger', mascot: 'tiger-full',
-    tag: 'Carta do Tigre · até 2.500x', colors: ['#f59e0b', '#b91c1c'], rtp: '~93%',
+    tag: 'Carta do Tigre · até 2.500x', colors: ['#f59e0b', '#b91c1c'], rtp: '~91%',
     intro: 'Inspirado no famoso "jogo do tigrinho".',
     featureRules: `<p><b>🐯 Carta do Tigre:</b> em qualquer giro o tigre pode soltar a carta. Um símbolo é sorteado e os rolos fazem <b>respins</b> travando esse símbolo (e coringas) até formar ao menos uma linha. Se a <b>tela inteira</b> for preenchida, o prêmio é multiplicado por <b>x10</b>!</p>`,
-    featureChance: 1 / 45,
+    featureChance: 1 / 45, lock: [0.35, 0.22, 0.15], emoji: '🐯',
+    featureMsg: t => `CARTA DO TIGRE! Símbolo da rodada: ${t.name}`,
     symbols: [
       { id: 'tigre', img: 'tiger', name: 'Tigre', w: 3, pay: 250, wild: true },
       { id: 'ouro', img: 'moneybag', name: 'Saco de ouro', w: 3, pay: 100 },
@@ -291,6 +350,45 @@
       { id: 'queijo', img: 'cheese', name: 'Queijo', w: 8, pay: 10 },
       { id: 'bolo', img: 'mooncake', name: 'Bolo da lua', w: 10, pay: 6 },
       { id: 'biscoito', img: 'cookie', name: 'Biscoito da sorte', w: 12, pay: 4 },
+    ],
+  }));
+
+  App.register(createSlot({
+    id: 'touro', name: 'Touro da Sorte', art: 'ox', mascot: 'ox',
+    tag: 'Touro Furioso · tela cheia x10', colors: ['#dc2626', '#a16207'], rtp: '~96%',
+    intro: 'Inspirado no "Fortune Ox".',
+    feature: 'ox', featureChance: 1 / 40, lock: [0.3, 0.25, 0.12], emoji: '🐂',
+    featureMsg: t => `TOURO FURIOSO! Rolo do meio travado em ${t.name}`,
+    featureRules: `<p><b>🐂 Touro Furioso:</b> em qualquer giro (≈ 1 a cada 40) o rolo do meio trava inteiro com um símbolo sorteado e os rolos das pontas fazem <b>respins</b>, travando esse símbolo (e coringas), até formar pelo menos uma linha. Encheu a <b>tela inteira</b>? Prêmio <b>x10</b>!</p>`,
+    symbols: [
+      { id: 'touro', img: 'ox', name: 'Touro', w: 2, pay: 235, wild: true },
+      { id: 'joia', img: 'gem', name: 'Joia', w: 3, pay: 117.5 },
+      { id: 'nota', img: 'banknote', name: 'Maço de notas', w: 4, pay: 47 },
+      { id: 'env', img: 'envelope', name: 'Envelope da sorte', w: 6, pay: 17.5 },
+      { id: 'perg', img: 'scroll', name: 'Pergaminho', w: 7, pay: 11.75 },
+      { id: 'moeda', img: 'coin', name: 'Moeda', w: 9, pay: 6 },
+      { id: 'laranja', img: 'tangerine', name: 'Laranja', w: 11, pay: 3.5 },
+    ],
+  }));
+
+  App.register(createSlot({
+    id: 'coelho', name: 'Coelho da Sorte', art: 'rabbit', mascot: 'rabbit-full',
+    tag: 'Cenouras de prêmio · até 200x', colors: ['#f97316', '#be185d'], rtp: '~96%',
+    intro: 'Inspirado no "Fortune Rabbit".',
+    feature: 'rabbit', featureChance: 1 / 70, featureName: 'Rodadas do Coelho',
+    rabbitSpins: 8, rabbitP: 0.1, prizeMin: 5,
+    prizeValues: [{ v: 0.5, w: 35 }, { v: 1, w: 25 }, { v: 2, w: 18 }, { v: 5, w: 10 }, { v: 10, w: 6 }, { v: 25, w: 2.5 }, { v: 50, w: 1 }, { v: 200, w: 0.15 }],
+    featureRules: `<p><b>🥕 Cenouras de prêmio:</b> cada cenoura mostra um valor (0,5x a 200x a aposta). Com <b>5 ou mais</b> cenouras na tela, você ganha a soma de todas — além das linhas.</p>
+      <p><b>🐰 Rodadas do Coelho:</b> em qualquer giro (≈ 1 a cada 70) começam <b>8 giros grátis</b> em que só caem cenouras e espaços vazios — e <b>toda cenoura paga</b>, sem mínimo.</p>`,
+    symbols: [
+      { id: 'coelho', img: 'rabbit', name: 'Coelho', w: 2, pay: 270, wild: true },
+      { id: 'cenoura', img: 'carrot', name: 'Cenoura', plural: 'cenouras', w: 3.2, prize: true },
+      { id: 'moeda', img: 'coin', name: 'Moeda de ouro', w: 3, pay: 135 },
+      { id: 'presente', img: 'gift', name: 'Presente', w: 5, pay: 40 },
+      { id: 'env', img: 'envelope', name: 'Envelope', w: 6, pay: 16.25 },
+      { id: 'lant', img: 'lantern', name: 'Lanterna', w: 8, pay: 10.75 },
+      { id: 'laranja', img: 'tangerine', name: 'Laranja', w: 10, pay: 6.75 },
+      { id: 'doce', img: 'candy', name: 'Doce', w: 12, pay: 4 },
     ],
   }));
 

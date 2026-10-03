@@ -7,9 +7,9 @@
     { id: 'mesa', title: 'Mesa & Ao vivo', art: 'cards', desc: 'Roleta, Blackjack, Futebol Studio' },
   ];
   // ranking aproximado dos jogos mais jogados em cassinos online no Brasil
-  const POPULAR = ['tigrinho', 'raspadinha', 'crash', 'doce', 'mines', 'olimpo', 'ratinho', 'double', 'futebol', 'roleta', 'plinko', 'dragaozinho', 'blackjack'];
+  const POPULAR = ['tigrinho', 'touro', 'raspadinha', 'crash', 'doce', 'coelho', 'mines', 'olimpo', 'pescaria', 'ratinho', 'princesa', 'double', 'futebol', 'roleta', 'plinko', 'dragaozinho', 'blackjack'];
   const BADGE = {
-    tigrinho: 'hot', crash: 'hot', mines: 'hot', doce: 'new', olimpo: 'new', ratinho: 'new',
+    tigrinho: 'hot', crash: 'hot', mines: 'hot', touro: 'new', coelho: 'new', pescaria: 'new', princesa: 'new', doce: 'top', olimpo: 'top', ratinho: 'new',
     futebol: 'new', raspadinha: 'new', limbo: 'new', dice: 'new', hilo: 'new', keno: 'new', torre: 'new', double: 'top',
   };
   const BADGE_TXT = { hot: '🔥 HOT', new: 'NOVO', top: 'TOP' };
@@ -154,9 +154,10 @@
     const ck = Progress.checkinStatus();
     const slides = [];
     if (ck.canClaim) slides.push({ art: 'gift', c: ['#10b981', '#0e7490'], t: `Bônus diário: Dia ${ck.nextIdx + 1}`, s: `Colete ${rewardText(CHECKIN[ck.nextIdx])} agora!`, cta: 'Coletar', go: 'checkin' });
-    slides.push({ art: 'lollipop', c: ['#ec4899', '#f97316'], t: 'NOVO: Doce Bonança', s: 'Cascatas de doces e bombas de até 100x nas rodadas grátis.', cta: 'Jogar', go: '#/doce' });
+    slides.push({ art: 'fish', c: ['#0284c7', '#0f766e'], t: 'NOVO: Pescaria Bonança', s: 'O pescador fisga peixes de até 1.000x nas rodadas grátis.', cta: 'Jogar', go: '#/pescaria' });
+    slides.push({ art: 'ox', c: ['#dc2626', '#a16207'], t: 'NOVOS: Touro e Coelho da Sorte', s: 'Touro Furioso com tela cheia x10 e cenouras de prêmio de até 200x.', cta: 'Jogar', go: '#/touro' });
     slides.push({ art: 'ticket', c: ['#7c3aed', '#db2777'], t: `Passe da Temporada · Nível ${Progress.level}`, s: `Termina em ${fmtDur(Progress.seasonEndsIn())}. Jogue, ganhe XP e libere prêmios!`, cta: 'Ver passe', go: '#/passe' });
-    slides.push({ art: 'voltage', c: ['#4f46e5', '#0ea5e9'], t: 'NOVO: Portões do Olimpo', s: 'Multiplicadores de raio que se acumulam nas rodadas grátis.', cta: 'Jogar', go: '#/olimpo' });
+    slides.push({ art: 'princess', c: ['#c026d3', '#4338ca'], t: 'NOVO: Princesa Estelar', s: 'Estrelas multiplicadoras que se acumulam nas rodadas grátis.', cta: 'Jogar', go: '#/princesa' });
     slides.push({ art: 'tv', c: ['#0891b2', '#1e3a8a'], t: 'Ganhe fichas grátis', s: `Assista anúncios e receba 🪙 ${fmt(Progress.AD_REWARD)} cada.`, cta: 'Ganhar', go: '#/bonus' });
     return slides;
   }
@@ -281,6 +282,22 @@
     return el;
   }
 
+  /** Botão de histórico (slots): mostra o resultado da sessão e abre a lista de giros. */
+  function historyButton(el, g, gctx) {
+    const btn = h(`<button class="icon-btn hist-btn" aria-label="Histórico de giros" title="Histórico de giros">${ico('scroll')}<span class="hist-net hidden"></span></button>`);
+    $('.help', el).before(btn);
+    const net = $('.hist-net', btn);
+    const render = () => {
+      const st = History.stats(History.list(g.id).filter(r => r.t >= History.since));
+      net.classList.toggle('hidden', !st.n);
+      net.classList.toggle('neg', st.net < 0);
+      net.textContent = (st.net >= 0 ? '+' : '') + fmt(st.net);
+    };
+    btn.addEventListener('click', () => { Sfx.click(); History.open(g); });
+    gctx.onUnmount(Bus.on('history', id => { if (id === g.id) render(); }));
+    render();
+  }
+
   /* ---------- Roteador por hash ---------- */
   function setNav(id) {
     $$('.bottom-nav a').forEach(a => a.classList.toggle('on', a.dataset.nav === id));
@@ -300,6 +317,7 @@
       ctx = new GameCtx(game);
       document.title = `${game.name} — FichaBet`;
       setNav('');
+      if (game.category === 'slots') historyButton(el, game, ctx);
       game.mount($('.game-body', el), ctx);
       return;
     }

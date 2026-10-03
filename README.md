@@ -11,11 +11,15 @@ Para testar no celular na mesma rede: `python -m http.server 8000` e acesse `htt
 
 | Categoria | Jogo | Inspirado em | RTP aprox. |
 |---|---|---|---|
-| Slots | Tigrinho da Sorte | Fortune Tiger — 3×3, "Carta do Tigre" (respins, tela cheia x10) | ~93% |
+| Slots | Tigrinho da Sorte | Fortune Tiger — 3×3, "Carta do Tigre" (respins, tela cheia x10) | ~91% |
+| Slots | Touro da Sorte | Fortune Ox — rolo do meio trava um símbolo, pontas fazem respins, tela cheia x10 | ~96% |
+| Slots | Coelho da Sorte | Fortune Rabbit — cenouras com prêmio (5+ pagam), 8 giros só de cenouras | ~96% |
 | Slots | Ratinho Sortudo | Fortune Mouse — rolo do meio vira coringa, ganho garantido | ~95,7% |
 | Slots | Dragãozinho | 3×3 com multiplicador x1/x2/x5/x10 por giro | ~96% |
 | Slots | Doce Bonança | Sweet Bonanza — 6×5, scatter pays, cascata, bombas até 100x nas FS, compra de bônus | ~97% |
 | Slots | Portões do Olimpo | Gates of Olympus — orbes em qualquer giro, multiplicador acumula nas FS | ~95,5% |
+| Slots | Princesa Estelar | Starlight Princess — mesma matemática do Olimpo, tema de estrelas | ~95,5% |
+| Slots | Pescaria Bonança | Big Bass Bonanza — 5×3, 10 linhas, pescador coleta peixes nas FS (x2/x3/x10), compra de bônus | ~94% |
 | Originais | Foguetinho | Aviator / Crash | 97% |
 | Originais | Double | Blaze Double | 93,3% |
 | Originais | Mines | Stake Mines | 97% |
@@ -31,7 +35,7 @@ Para testar no celular na mesma rede: `python -m http.server 8000` e acesse `htt
 | Mesa & Ao vivo | Blackjack | 6 baralhos, dobrar, dividir, BJ 3:2 | ~99,4% |
 | Mesa & Ao vivo | Futebol Studio | Football Studio (Evolution) | 92–96% |
 
-Os RTPs de Ratinho, Doce Bonança e Portões do Olimpo foram calibrados por simulação; o do Keno é exato (hipergeométrica).
+Os RTPs dos slots foram calibrados por simulação; o do Keno é exato (hipergeométrica).
 
 ## Engajamento
 
@@ -45,6 +49,7 @@ Os RTPs de Ratinho, Doce Bonança e Portões do Olimpo foram calibrados por simu
 - **Rodadas grátis:** valem em qualquer slot (aposta fixa 🪙 2,00).
 - **Anúncios fictícios:** +🪙 250 por anúncio (10 por dia); prêmios altos (≥10x, ou ≥🪙 300 com ≥3x) oferecem **dobrar o prêmio** assistindo um anúncio. Para plugar uma rede de anúncios de verdade, troque só `Ads.watch()` em `js/progress.js`.
 - **Retenção:** carrossel de promoções, "Mais jogados", "Continue jogando", selos HOT/NOVO, pontinhos de notificação na navegação, celebração de nível, oferta de anúncio/recarga quando as fichas acabam.
+- **Histórico de giros (slots):** botão 📜 no topo de todo slot mostra o resultado da sessão e abre os últimos 100 giros com vitórias/perdas, filtros, resumo (apostado, recebido, resultado, maior prêmio) e gráfico dos últimos giros. Qualquer slot novo entra sozinho (vem do `ctx.round`).
 - **Jogo responsável:** lembrete de pausa a cada 1h de sessão.
 
 ## Estrutura
@@ -57,6 +62,7 @@ assets/audio/sfx.js efeitos sonoros (Kenney, CC0) em base64 — tocam via WebAud
 assets/audio/bossa.mp3  música ambiente em loop
 js/core.js          utilidades, RNG, carteira, sons, UI (bigWin, confete), Bus de eventos, GameCtx
 js/progress.js      XP/passe, missões, check-in, roda, anúncios fictícios, rodadas grátis
+js/history.js       histórico de giros dos slots (localStorage) e o modal de histórico
 js/pages.js         páginas Bônus, Missões, Passe e VIP
 js/main.js          roteador por hash (#/id), lobby, carteira, navegação
 js/games/*.js       um arquivo por jogo, cada um chama App.register({ id, name, art, ..., mount(root, ctx) })
