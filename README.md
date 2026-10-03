@@ -25,6 +25,7 @@ Para testar no celular na mesma rede: `python -m http.server 8000` e acesse `htt
 | Originais | Hi-Lo | Stake Hilo | 99% |
 | Originais | Keno | Stake Keno (40 números, 10 sorteados) | ~99% |
 | Originais | Torre | Tower / Dragon Tower | 97% |
+| Originais | Raspadinha | raspadinha 3×3 (3 iguais ganham), raspe com dedo/mouse; 1 grátis por dia | 95% (exato) |
 | Mesa & Ao vivo | Roda da Fortuna | money wheel + x2/x7 | 90–96% |
 | Mesa & Ao vivo | Roleta Europeia | mesa completa, um zero | 97,3% |
 | Mesa & Ao vivo | Blackjack | 6 baralhos, dobrar, dividir, BJ 3:2 | ~99,4% |
@@ -39,6 +40,8 @@ Os RTPs de Ratinho, Doce Bonança e Portões do Olimpo foram calibrados por simu
 - **Missões diárias:** 5 por dia (sorteadas pela data), com fichas + XP; completar todas abre um baú com rodadas grátis.
 - **Passe da temporada:** 30 níveis (300 XP cada), temporadas de 28 dias. Trilha grátis + trilha Premium (ativada com fichas, dá +25% de XP).
 - **XP:** cada rodada dá `4 + 3·√aposta` XP (não premia só apostas enormes).
+- **VIP + cashback semanal:** níveis Bronze → Prata → Ouro → Platina → Diamante pelo XP total (nunca zera). Cada nível dá cashback de 5–15% das perdas líquidas da semana (liberado na segunda-feira), multiplica o bônus diário (x1 a x3) e dá um presente ao subir.
+- **Raspadinha grátis do dia:** uma cartela de 🪙 5 por dia.
 - **Rodadas grátis:** valem em qualquer slot (aposta fixa 🪙 2,00).
 - **Anúncios fictícios:** +🪙 250 por anúncio (10 por dia); prêmios altos (≥10x, ou ≥🪙 300 com ≥3x) oferecem **dobrar o prêmio** assistindo um anúncio. Para plugar uma rede de anúncios de verdade, troque só `Ads.watch()` em `js/progress.js`.
 - **Retenção:** carrossel de promoções, "Mais jogados", "Continue jogando", selos HOT/NOVO, pontinhos de notificação na navegação, celebração de nível, oferta de anúncio/recarga quando as fichas acabam.
@@ -50,9 +53,11 @@ Os RTPs de Ratinho, Doce Bonança e Portões do Olimpo foram calibrados por simu
 index.html
 css/style.css
 assets/img/*.webp   sprites 3D (Microsoft Fluent Emoji, licença MIT)
+assets/audio/sfx.js efeitos sonoros (Kenney, CC0) em base64 — tocam via WebAudio até abrindo o arquivo direto
+assets/audio/bossa.mp3  música ambiente em loop
 js/core.js          utilidades, RNG, carteira, sons, UI (bigWin, confete), Bus de eventos, GameCtx
 js/progress.js      XP/passe, missões, check-in, roda, anúncios fictícios, rodadas grátis
-js/pages.js         páginas Bônus, Missões e Passe
+js/pages.js         páginas Bônus, Missões, Passe e VIP
 js/main.js          roteador por hash (#/id), lobby, carteira, navegação
 js/games/*.js       um arquivo por jogo, cada um chama App.register({ id, name, art, ..., mount(root, ctx) })
 ```
@@ -63,5 +68,8 @@ Chame `ctx.round(aposta, pagamento)` quando a rodada terminar — é isso que al
 
 ## Créditos
 
-Sprites: [Microsoft Fluent Emoji](https://github.com/microsoft/fluentui-emoji) (MIT). Fontes: Lilita One e Nunito (Google Fonts, OFL).
+- Sprites: [Microsoft Fluent Emoji](https://github.com/microsoft/fluentui-emoji) (MIT).
+- Efeitos sonoros: [Kenney](https://kenney.nl) — Casino Audio, Interface Sounds, Digital Audio, Impact Sounds, Music Jingles (CC0).
+- Música: "Bossa Shop Theme" de [springyspringo](https://opengameart.org/content/bossa-shop-theme-in-low-fi-and-hd) (CC0 / CC-BY 3.0).
+- Fontes: Lilita One e Nunito (Google Fonts, OFL).
 "# teb" 

@@ -65,7 +65,7 @@
           </div>
         </div>`);
       root.append(el);
-      const gridEl = $('.rs-grid', el), area = $('.rs-area', el), canvas = $('.rs-foil', el), c2d = canvas.getContext('2d');
+      const gridEl = $('.rs-grid', el), area = $('.rs-area', el), canvas = $('.rs-foil', el), c2d = canvas.getContext('2d', { willReadFrequently: true });
       const resultEl = $('.rs-result', el), buyBtn = $('.buy', el), revealBtn = $('.reveal', el);
       const freeBox = $('.rs-free', el), priceEl = $('.rs-price', el);
       let price = 5, card = null; // { cells, win, price, stake, done }
@@ -104,6 +104,7 @@
       const pos = e => { const r = canvas.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
       function scratchTo(p) {
         c2d.globalCompositeOperation = 'destination-out';
+        c2d.strokeStyle = '#000'; // alfa 1: apaga a prata por completo
         c2d.lineWidth = Math.max(26, W / 9);
         c2d.lineCap = c2d.lineJoin = 'round';
         c2d.beginPath();
