@@ -12,7 +12,7 @@
    Parâmetros calibrados por simulação (~600 mil giros).
    ========================================================= */
 (function () {
-  const N = 7, MIN = 5, MAX_MULT = 128, MAX_WIN = 5000, BUY_X = 62;
+  const N = 7, MIN = 5, MAX_MULT = 128, MAX_WIN = 5000, BUY_X = 66;
   const K = 2.8;
   const TIERS = ['5–6', '7–8', '9–10', '11–12', '13–14', '15+'];
   const tier = n => (n <= 6 ? 0 : n <= 8 ? 1 : n <= 10 ? 2 : n <= 12 ? 3 : n <= 14 ? 4 : 5);
@@ -85,7 +85,7 @@
         <table class="paytable"><tr class="si-head"><td>Foguetes</td><td>Rodadas grátis</td></tr>
           ${Object.entries(FS_TABLE).map(([k, v]) => `<tr><td><b>${k}${k === '7' ? '+' : ''}</b></td><td>${v}</td></tr>`).join('')}</table>
         <p>3+ foguetes durante as rodadas grátis dão mais rodadas pela mesma tabela.</p>
-        <p>💰 <b>Comprar bônus:</b> 10 rodadas grátis por <b>${BUY_X}x</b> a aposta.</p>
+        <p>💰 <b>Comprar bônus:</b> 10 rodadas grátis por <b>${BUY_X}x</b> a aposta (retorno médio da compra ~94%).</p>
         <p class="muted small">Prêmio máximo: ${fmt(MAX_WIN).replace(',00', '')}x a aposta — ao atingir, a rodada termina.</p>`,
     },
 

@@ -1285,3 +1285,17 @@ select { padding: 9px 10px; border-radius: 12px; background: var(--bg2); border:
 .lite .sc-cell.orb img { animation: none; filter: drop-shadow(0 0 8px #fde047); }
 .lite .logo img, .lite .slide-art, .lite .ph-img, .lite .slot-lights, .lite .si-max .si-trophy { animation: none; }
 .lite .bigwin-rays, .lite .ad-stage::before { animation: none; }
+
+/* ---------- Nível do jogador: medalhas ---------- */
+.medals { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; }
+.medal-card { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 10px 6px; border-radius: 14px; background: var(--bg2); border: 1px solid var(--border); text-align: center; }
+.medal-card .ico { width: 40px; height: 40px; }
+.medal-card b { font-size: .8rem; color: var(--rc); }
+.medal-card small { font-size: .66rem; color: var(--muted); font-weight: 700; }
+.medal-card.locked { opacity: .4; filter: grayscale(.8); }
+.medal-card.cur { border-color: var(--rc); box-shadow: 0 0 14px color-mix(in srgb, var(--rc) 60%, transparent); }
+.mdivs { display: flex; gap: 3px; margin-top: 2px; }
+.mdivs i { width: 10px; height: 10px; border-radius: 50%; background: rgba(255, 255, 255, .14); }
+.mdivs i.on { background: var(--rc); box-shadow: 0 0 6px var(--rc); }
+.mdivs em { font-style: normal; color: var(--rc); font-size: .8rem; }
+.profile h4 { margin: 4px 0 0; }

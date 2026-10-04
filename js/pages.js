@@ -31,7 +31,7 @@ function checkinCalendar(onClaim) {
         ${r.fs ? `<em>+${r.fs} FS</em>` : '<em></em>'}
         ${i < doneCount ? '<span class="ck-check">✔</span>' : ''}
       </div>`;
-    }).join('') + (vm > 1 ? `<div class="ck-vip">${ico(Progress.vipTier().art)} Bônus VIP ${Progress.vipTier().name}: x${vm}</div>` : '') + `<button class="btn btn-gold btn-big ck-claim" ${st.canClaim ? '' : 'disabled'}>${st.canClaim ? '🎁 Coletar bônus de hoje' : '✅ Volte amanhã para o próximo dia'}</button>`;
+    }).join('') + (vm > 1 ? `<div class="ck-vip">${ico(Progress.vipTier().art)} Bônus VIP ${Progress.vipTier().name}: ${xm(vm)}</div>` : '') + `<button class="btn btn-gold btn-big ck-claim" ${st.canClaim ? '' : 'disabled'}>${st.canClaim ? '🎁 Coletar bônus de hoje' : '✅ Volte amanhã para o próximo dia'}</button>`;
   };
   el.addEventListener('click', e => {
     if (!e.target.closest('.ck-claim')) return;
@@ -130,7 +130,7 @@ function cashbackBox(ctx) {
     const P = Progress, t = P.vipTier(), pend = P.s.vip.pending, est = P.cashbackEstimate();
     el.innerHTML = `
       <div class="cb-row"><span>Perdas líquidas desta semana</span><b>🪙 ${fmt(Math.max(0, P.s.vip.net))}</b></div>
-      <div class="cb-row"><span>Cashback ${t.name} (${Math.round(t.cashback * 100)}%) previsto</span><b class="gold">🪙 ${fmt(est)}</b></div>
+      <div class="cb-row"><span>Cashback ${t.name} (${pct(t.cashback)}) previsto</span><b class="gold">🪙 ${fmt(est)}</b></div>
       <div class="cb-row muted small"><span>Liberado toda segunda-feira · faltam</span><b>${fmtDur(P.weekEndsIn())}</b></div>
       <button class="btn ${pend > 0 ? 'btn-gold' : 'btn-ghost'} btn-big cb-claim" ${pend > 0 ? '' : 'disabled'}>${pend > 0 ? `💸 Resgatar cashback 🪙 ${fmt(pend)}` : 'Nenhum cashback para resgatar agora'}</button>`;
   };
@@ -152,7 +152,7 @@ Pages.vip = {
         <div class="page-hero vip-hero"></div>
         <div class="page-grid">
           <div class="panel block"><h3>${ico('moneywings')} Cashback semanal</h3><p class="muted small">Toda segunda-feira você recebe de volta uma parte do que perdeu na semana anterior. Quanto maior o nível VIP, maior a porcentagem.</p><div class="cb-slot"></div></div>
-          <div class="panel block"><h3>${ico('crown')} Níveis VIP</h3><div class="vip-table"></div><p class="muted small">O XP VIP é o XP total de todas as temporadas — ele nunca zera.</p></div>
+          <div class="panel block"><h3>${ico('crown')} Níveis VIP</h3><div class="vip-table"></div><p class="muted small">O VIP acompanha o <a href="#/nivel">nível do jogador</a>, que nunca zera. Cada degrau novo dá um presente de boas-vindas.</p></div>
         </div>
       </section>`);
     const hero = $('.vip-hero', el);
@@ -160,15 +160,15 @@ Pages.vip = {
       const t = P.vipTier(), next = P.vipNext();
       hero.style.cssText = `--c1:${t.color};--c2:#1e1b4b`;
       hero.innerHTML = `${ico(t.art, 'ph-img')}<div class="pass-head"><h1>VIP ${t.name}</h1>
-        <p>Cashback de <b>${Math.round(t.cashback * 100)}%</b> · bônus diário <b>x${t.checkin}</b></p>
-        <div class="pass-lvl"><div class="xpbar"><i style="width:${P.vipPct()}%"></i><span>${next ? `${fmt(P.s.totalXp).replace(',00', '')} / ${fmt(next.xp).replace(',00', '')} XP para ${next.name}` : 'Nível máximo!'}</span></div></div></div>`;
+        <p>Cashback de <b>${pct(t.cashback)}</b> · bônus diário <b>${xm(t.checkin)}</b></p>
+        <div class="pass-lvl"><div class="xpbar"><i style="width:${P.vipPct()}%"></i><span>${next ? `Nível ${P.player.level} · ${next.name} no nível ${next.lvl}` : 'Nível VIP máximo!'}</span></div></div></div>`;
       const idx = P.vipIndex();
       $('.vip-table', el).innerHTML = VIP_TIERS.map((v, i) => `
         <div class="vip-row ${i === idx ? 'cur' : ''} ${i < idx ? 'past' : ''}" style="--vc:${v.color}">
           ${ico(v.art, 'vip-img')}
-          <div class="m-body"><b>${v.name}</b><small>${fmt(v.xp).replace(',00', '')} XP${v.reward ? ` · presente: 🪙 ${fmt(v.reward.coins).replace(',00', '')} + ${v.reward.fs} FS` : ''}</small></div>
-          <div class="vip-perk"><b>${Math.round(v.cashback * 100)}%</b><small>cashback</small></div>
-          <div class="vip-perk"><b>x${v.checkin}</b><small>check-in</small></div>
+          <div class="m-body"><b>${v.name}</b><small>Nível ${v.lvl} do jogador${v.reward ? ` · presente: 🪙 ${fmt(v.reward.coins).replace(',00', '')} + ${v.reward.fs} FS` : ''}</small></div>
+          <div class="vip-perk"><b>${pct(v.cashback)}</b><small>cashback</small></div>
+          <div class="vip-perk"><b>${xm(v.checkin)}</b><small>check-in</small></div>
         </div>`).join('');
     };
     $('.cb-slot', el).append(cashbackBox(ctx));
@@ -408,6 +408,61 @@ Pages.passe = {
       const cur = $('.pt-col.cur', track);
       if (cur) track.parentElement.scrollLeft = cur.offsetLeft - 120;
     });
+    return el;
+  },
+};
+
+/* ---------- Nível do jogador: medalhas e marcos ---------- */
+/** Linha de um marco (nível do jogador) com botão de resgate. */
+function mileRow(m) {
+  const pl = Progress.player;
+  const prev = m.i > 0 ? milestoneLevel(m.i - 1) : 0;
+  const p = Math.max(0, Math.min(100, ((pl.level - 1 + pl.pct / 100 - prev) / (m.at - prev)) * 100));
+  const btn = m.st === 'ready' ? `<button class="btn btn-gold mile-claim" data-i="${m.i}">Resgatar</button>`
+    : m.st === 'claimed' ? '<button class="btn btn-ghost" disabled>✔ Resgatado</button>'
+      : m.st === 'skip' ? '<button class="btn btn-ghost" disabled>Já passou</button>'
+        : `<button class="btn btn-ghost" disabled>Nível ${m.at}</button>`;
+  return `<div class="mission ${m.st === 'ready' ? 'done' : ''} ${m.st === 'claimed' || m.st === 'skip' ? 'claimed' : ''}">
+    <div class="m-art">${ico(m.reward.fs >= 20 ? 'moneybag' : 'gift', 'm-img')}<span class="m-lv">Nv ${m.at}</span></div>
+    <div class="m-body"><b>Marco do nível ${m.at}</b>
+      ${m.st === 'locked' ? `<div class="xpbar"><i style="width:${p}%"></i><span>Nível ${pl.level} / ${m.at}</span></div>` : ''}
+      <small>Recompensa: ${rewardText(m.reward)}</small></div>
+    ${btn}
+  </div>`;
+}
+
+Pages.nivel = {
+  title: 'Nível',
+  render(ctx) {
+    const P = Progress;
+    const el = h(`
+      <section class="page">
+        <div class="page-hero nivel-hero"></div>
+        <div class="page-grid">
+          <div class="panel block"><h3>${ico('medal')} Medalhas</h3><p class="muted small">Cada patente tem 5 divisões (I a V), uma a cada 2 níveis. Depois do nível 100 você vira Mito e ganha uma estrela a cada 10 níveis.</p><div class="medals"></div></div>
+          <div class="panel block"><h3>${ico('gift')} Marcos de nível</h3><p class="muted small">No começo há um marco a cada 10 níveis; depois eles ficam cada vez mais espaçados e a recompensa cresce.</p><div class="missions miles"></div></div>
+        </div>
+      </section>`);
+    const render = () => {
+      const pl = P.player, t = P.vipTier();
+      const hero = $('.nivel-hero', el);
+      hero.style.cssText = `--c1:${pl.rank.color};--c2:#1e1b4b`;
+      hero.innerHTML = `${ico(pl.rank.art, 'ph-img')}<div class="pass-head"><h1>${pl.rank.label}</h1>
+        <p>Nível <b>${pl.level}</b> do jogador · VIP <a href="#/vip"><b>${t.name}</b></a></p>
+        <div class="pass-lvl"><div class="xpbar"><i style="width:${pl.pct}%"></i><span>${fmt0(pl.into)} / ${fmt0(pl.need)} XP para o nível ${pl.level + 1}</span></div></div></div>`;
+      $('.medals', el).innerHTML = PLAYER_RANKS.map((r, i) => {
+        const start = i * 10 + 1, done = pl.level >= start;
+        const divs = i < 10 ? [0, 1, 2, 3, 4].map(d => `<i class="${pl.level >= start + d * 2 ? 'on' : ''}"></i>`).join('') : `<em>${pl.rank.stars ? '★'.repeat(Math.min(5, pl.rank.stars)) + (pl.rank.stars > 5 ? `+${pl.rank.stars - 5}` : '') : '★'}</em>`;
+        return `<div class="medal-card ${i === pl.rank.idx ? 'cur' : done ? 'done' : 'locked'}" style="--rc:${r.color}">${ico(r.art)}<b>${r.name}</b><small>${i < 10 ? `Nv ${start}–${start + 9}` : 'Nv 101+'}</small><div class="mdivs">${divs}</div></div>`;
+      }).join('');
+      $('.miles', el).innerHTML = P.milestones(4).filter(m => m.st !== 'skip' || m.at > pl.level - 40).map(mileRow).join('');
+    };
+    el.addEventListener('click', e => {
+      const b = e.target.closest('.mile-claim');
+      if (b && P.claimMilestone(Number(b.dataset.i))) { UI.confetti(60, ['gift', 'coin', 'star']); render(); }
+    });
+    render();
+    ctx.onUnmount(Bus.on('progress', render));
     return el;
   },
 };
