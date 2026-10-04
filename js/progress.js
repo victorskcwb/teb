@@ -88,6 +88,10 @@ const SLOT_QUESTS = [
   { k: 'mega', text: n => `Ganhe ${n}x ou mais numa rodada`, base: 25, step: 25, inc: (e, n) => (e.mult >= n ? 1 : 0), one: true, art: 'heartfire' },
 ];
 const fmt0 = n => Math.round(n).toLocaleString('pt-BR');
+/** 0.025 → "2,5%" */
+const pct = v => (v * 100).toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + '%';
+/** 1.1 → "x1,1" */
+const xm = v => 'x' + v.toLocaleString('pt-BR', { maximumFractionDigits: 1 });
 const ALL_MISSIONS_BONUS = { fs: 5, xp: 300 };
 
 const WHEEL_PRIZES = [
@@ -97,20 +101,37 @@ const WHEEL_PRIZES = [
   { label: '200 XP', xp: 200, w: 14, color: '#0891b2' },
   { label: '500', coins: 500, w: 10, color: '#16a34a' },
   { label: '5 FS', fs: 5, w: 7, color: '#ea580c' },
-  { label: '1.000', coins: 1000, w: 5, color: '#ca8a04' },
-  { label: '5.000', coins: 5000, w: 2, color: '#dc2626' },
+  { label: '600', coins: 600, w: 5, color: '#ca8a04' },
+  { label: '2.000', coins: 2000, w: 2, color: '#dc2626' },
 ];
 const WHEEL_COOLDOWN = 4 * 3600000;
 
-/* Níveis VIP pelo XP total (não zera entre temporadas) */
+/* Níveis VIP: acompanham o nível do jogador (que nunca zera). Benefícios pequenos e permanentes. */
 const VIP_TIERS = [
-  { name: 'Bronze', xp: 0, art: 'medal3', cashback: 0.05, checkin: 1, color: '#d97706', reward: null },
-  { name: 'Prata', xp: 2500, art: 'medal2', cashback: 0.07, checkin: 1.25, color: '#cbd5e1', reward: { coins: 1000, fs: 5 } },
-  { name: 'Ouro', xp: 10000, art: 'medal', cashback: 0.10, checkin: 1.5, color: '#fbbf24', reward: { coins: 3000, fs: 10 } },
-  { name: 'Platina', xp: 30000, art: 'crown', cashback: 0.12, checkin: 2, color: '#67e8f9', reward: { coins: 8000, fs: 20 } },
-  { name: 'Diamante', xp: 75000, art: 'gem', cashback: 0.15, checkin: 3, color: '#c084fc', reward: { coins: 20000, fs: 50 } },
+  { name: 'Bronze I', lvl: 1, art: 'medal3', cashback: 0.01, checkin: 1, color: '#d97706', reward: null },
+  { name: 'Bronze II', lvl: 5, art: 'medal3', cashback: 0.02, checkin: 1.1, color: '#b45309', reward: { coins: 300, fs: 5 } },
+  { name: 'Prata I', lvl: 10, art: 'medal2', cashback: 0.025, checkin: 1.2, color: '#cbd5e1', reward: { coins: 500, fs: 8 } },
+  { name: 'Prata II', lvl: 20, art: 'medal2', cashback: 0.03, checkin: 1.3, color: '#94a3b8', reward: { coins: 800, fs: 10 } },
+  { name: 'Ouro I', lvl: 30, art: 'medal', cashback: 0.04, checkin: 1.4, color: '#fbbf24', reward: { coins: 1200, fs: 12 } },
+  { name: 'Ouro II', lvl: 45, art: 'medal', cashback: 0.045, checkin: 1.5, color: '#f59e0b', reward: { coins: 1600, fs: 15 } },
+  { name: 'Platina', lvl: 60, art: 'crown', cashback: 0.05, checkin: 1.6, color: '#67e8f9', reward: { coins: 2200, fs: 18 } },
+  { name: 'Diamante', lvl: 80, art: 'gem', cashback: 0.06, checkin: 1.8, color: '#c084fc', reward: { coins: 3000, fs: 22 } },
+  { name: 'Mestre', lvl: 100, art: 'trophy', cashback: 0.07, checkin: 2, color: '#f472b6', reward: { coins: 4000, fs: 26 } },
+  { name: 'Lenda', lvl: 130, art: 'dragon', cashback: 0.08, checkin: 2.2, color: '#ef4444', reward: { coins: 5000, fs: 30 } },
 ];
-const CASHBACK_CAP = 25000;
+const CASHBACK_CAP = 5000;
+
+/* Marcos do nível do jogador: no começo a cada 10 níveis, depois cada vez mais espaçados.
+   A recompensa cresce devagar (cada marco ≈ uma sessão de jogo, nunca um saldo que tire a graça). */
+const MILESTONE_GAPS = [10, 10, 10, 10, 10, 15, 15, 20, 25, 25, 30, 30, 40];
+function milestoneLevel(i) {
+  let lv = 0;
+  for (let k = 0; k <= i; k++) lv += k < MILESTONE_GAPS.length ? MILESTONE_GAPS[k] : 50 + 10 * Math.floor((k - MILESTONE_GAPS.length) / 2);
+  return lv;
+}
+function milestoneReward(i) {
+  return { coins: Math.round((400 * (1 + 0.35 * i)) / 50) * 50, fs: Math.min(30, 5 + 2 * i) };
+}
 
 /* Patentes do nível do jogador (a cada 10 níveis). Depois do 100: Mito ★1, ★2... */
 const PLAYER_RANKS = [
@@ -137,9 +158,13 @@ const Progress = {
 
   SEASON_DAYS: 28,
   FS_BET: 2,
-  AD_REWARD: 250,
+  AD_REWARD: 100,
   ADS_PER_DAY: 10,
-  PREMIUM_PRICE: 3000,
+  PREMIUM_PRICE: 5000,
+  /** Versão da economia: ao mudar, migra o estado salvo sem despejar recompensas antigas. */
+  ECON: 2,
+  /** Fração das fichas das missões (o XP fica igual, para elas continuarem puxando o passe). */
+  MISSION_COINS: 0.6,
   s: null,
 
   load() {
@@ -153,11 +178,22 @@ const Progress = {
       vip: { week: this.weekNum(), net: 0, pending: 0 }, vipSeen: 0,
       scratch: { day: null },
       tracks: {}, slotq: {}, played: [],
+      mile: null, econ: 0,
     };
     this.s = Object.assign(d, this.s || {});
+    this.migrate();
     this.checkSeason();
     this.ensureMissions();
     this.save(false);
+  },
+  /** Economia v2: VIP passa a seguir o nível do jogador e os marcos começam do nível atual
+      (nada de presentes retroativos para quem já jogava). */
+  migrate() {
+    if (this.s.econ >= this.ECON) return;
+    const lv = this.player.level;
+    if (!this.s.mile) this.s.mile = { from: this.s.totalXp > 0 ? lv : 0, claimed: [] };
+    this.s.vipSeen = this.vipIndex();
+    this.s.econ = this.ECON;
   },
   save(emit = true) {
     try { localStorage.setItem(this.KEY, JSON.stringify(this.s)); } catch { /* ignore */ }
@@ -190,7 +226,8 @@ const Progress = {
   get levelPct() { const i = this.passInfo; return (i.into / i.need) * 100; },
 
   /* ---------- nível do jogador (infinito, nunca zera) ---------- */
-  playerCost(n) { return 1000 + 400 * (n - 1); },
+  /** XP do nível n ao n+1: cresce sempre; depois do 30 fica cada vez mais lento. */
+  playerCost(n) { return 1000 + 400 * (n - 1) + (n > 30 ? 15 * (n - 30) * (n - 30) : 0); },
   get player() {
     const i = this.levelFrom(this.s.totalXp, n => this.playerCost(n));
     return { ...i, pct: (i.into / i.need) * 100, rank: this.rankOf(i.level) };
@@ -220,14 +257,14 @@ const Progress = {
 
   passReward(level, track) {
     // além do nível 50 a recompensa é sempre a mesma
-    if (level > this.PASS_LEVELS) return track === 'free' ? { coins: 500 } : { coins: 1500, fs: 3 };
+    if (level > this.PASS_LEVELS) return track === 'free' ? { coins: 100 } : { coins: 300, fs: 3 };
     if (track === 'free') {
       if (level % 5 === 0) return { fs: 3 + level / 5 };
-      return { coins: 150 + level * 20 };
+      return { coins: 40 + level * 5 };
     }
-    if (level === this.PASS_LEVELS) return { coins: 25000, fs: 50 };
-    if (level % 5 === 0) return { coins: 600 * (level / 5), fs: 10 };
-    return { coins: 300 + level * 50 };
+    if (level === this.PASS_LEVELS) return { coins: 5000, fs: 50 };
+    if (level % 5 === 0) return { coins: 150 * (level / 5), fs: 10 };
+    return { coins: 80 + level * 15 };
   },
   canClaimPass(level, track) {
     if (level > this.level) return false;
@@ -330,7 +367,7 @@ const Progress = {
     const def = this.missionDef(id);
     if (!m || m.claimed || m.p < def.goal) return false;
     m.claimed = true;
-    this.grant({ coins: def.coins, xp: def.xp }, 'Missão');
+    this.grant({ coins: Math.round((def.coins * this.MISSION_COINS) / 10) * 10, xp: def.xp }, 'Missão');
     return true;
   },
   allMissionsClaimed() { return this.s.missions.list.every(m => m.claimed); },
@@ -347,7 +384,7 @@ const Progress = {
   trackGoal(t, lv) { return Math.round(t.base + t.step * lv * (1 + lv / 25)); },
   /** Recompensa de nível lv (0 = primeiro): cresce devagar; a cada 5 níveis vem com rodadas grátis. */
   questReward(coins, xp, lv) {
-    const r = { coins: Math.round((coins * (1 + 0.3 * lv)) / 10) * 10, xp: Math.round(xp * (1 + 0.2 * lv)) };
+    const r = { coins: Math.round((coins * this.MISSION_COINS * (1 + 0.3 * lv)) / 10) * 10, xp: Math.round(xp * (1 + 0.2 * lv)) };
     if ((lv + 1) % 5 === 0) r.fs = 3 + Math.floor(lv / 5);
     return r;
   },
@@ -436,17 +473,17 @@ const Progress = {
     const daysLeft = (this.weekNum() + 1) * 7 - 3 - dayNum(now);
     return daysLeft * DAY_MS - (now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds()) * 1000;
   },
-  vipIndex(xp = this.s.totalXp) {
+  vipIndex(level = this.player.level) {
     let i = 0;
-    VIP_TIERS.forEach((t, j) => { if (xp >= t.xp) i = j; });
+    VIP_TIERS.forEach((t, j) => { if (level >= t.lvl) i = j; });
     return i;
   },
   vipTier() { return VIP_TIERS[this.vipIndex()]; },
   vipNext() { return VIP_TIERS[this.vipIndex() + 1] || null; },
   vipPct() {
-    const cur = this.vipTier(), next = this.vipNext();
+    const cur = this.vipTier(), next = this.vipNext(), pl = this.player;
     if (!next) return 100;
-    return ((this.s.totalXp - cur.xp) / (next.xp - cur.xp)) * 100;
+    return Math.min(100, ((pl.level - cur.lvl + pl.pct / 100) / (next.lvl - cur.lvl)) * 100);
   },
   checkVipUp() {
     const i = this.vipIndex();
@@ -459,6 +496,28 @@ const Progress = {
     }
     this.save();
   },
+  /* ---------- marcos do nível do jogador ---------- */
+  /** Lista de marcos de first até o próximo ainda não alcançado (+ alguns à frente). */
+  milestones(ahead = 3) {
+    const lv = this.player.level, from = this.s.mile.from, out = [];
+    for (let i = 0; out.length < 400; i++) {
+      const at = milestoneLevel(i);
+      const st = at <= from ? 'skip' : this.s.mile.claimed.includes(i) ? 'claimed' : at <= lv ? 'ready' : 'locked';
+      out.push({ i, at, st, reward: milestoneReward(i) });
+      if (at > lv && out.filter(m => m.st === 'locked').length >= ahead) break;
+    }
+    return out;
+  },
+  nextMilestone() { return this.milestones(1).find(m => m.st === 'locked'); },
+  milestonesReady() { return this.milestones(0).filter(m => m.st === 'ready'); },
+  claimMilestone(i) {
+    const m = this.milestones(0).find(x => x.i === i);
+    if (!m || m.st !== 'ready') return null;
+    this.s.mile.claimed.push(i);
+    this.grant(m.reward, `Marco do nível ${m.at}`);
+    return m;
+  },
+
   /** Na virada da semana, as perdas líquidas viram cashback para resgatar. */
   rollWeek() {
     const w = this.weekNum(), v = this.s.vip;
@@ -527,7 +586,7 @@ const Progress = {
   /** Contadores para os "pontinhos vermelhos" de notificação. */
   pending() {
     const ck = this.checkinStatus().canClaim ? 1 : 0;
-    const wh = (this.wheelIn() === 0 ? 1 : 0) + (this.freeScratch() ? 1 : 0) + (this.s.vip.pending > 0 ? 1 : 0);
+    const wh = (this.wheelIn() === 0 ? 1 : 0) + (this.freeScratch() ? 1 : 0) + (this.s.vip.pending > 0 ? 1 : 0) + this.milestonesReady().length;
     const ms = this.missions().filter(m => m.done && !m.claimed).length + (this.allMissionsClaimed() && !this.s.missions.bonus ? 1 : 0)
       + this.tracks().filter(t => t.done).length + this.slotQuestsReady().length;
     let ps = 0;
@@ -546,7 +605,7 @@ const Ads = {
     { art: 'lollipop', title: 'Doce Bonança', sub: 'Multiplicadores de até 100x caindo do céu!', c: ['#ec4899', '#f97316'] },
     { art: 'voltage', title: 'Portões do Olimpo', sub: 'Zeus está distribuindo raios de multiplicador!', c: ['#6366f1', '#0ea5e9'] },
     { art: 'tiger', title: 'Tigrinho da Sorte', sub: 'A Carta do Tigre pode encher a tela!', c: ['#f59e0b', '#b91c1c'] },
-    { art: 'ticket', title: 'Passe Premium', sub: '+25% de XP e recompensas em dobro.', c: ['#a855f7', '#4338ca'] },
+    { art: 'ticket', title: 'Passe Premium', sub: '+25% de XP e uma trilha extra de recompensas.', c: ['#a855f7', '#4338ca'] },
     { art: 'gift', title: 'Bônus diário', sub: 'Volte todo dia: no 7º dia são 🪙 1.000 + 10 rodadas!', c: ['#10b981', '#0e7490'] },
   ],
   watch(reason = 'Recompensa') {
@@ -633,9 +692,13 @@ Bus.on('vipup', t => {
   Sfx.jackpot();
   UI.confetti(80, [t.art, 'coin', 'star']);
   const body = h(`<div class="center vip-up"><img src="${IMG(t.art)}" alt=""><h2>Você agora é VIP ${t.name}!</h2>
-    <p>Cashback semanal de <b>${Math.round(t.cashback * 100)}%</b> e bônus diário <b>x${t.checkin}</b>.</p>
+    <p>Cashback semanal de <b>${pct(t.cashback)}</b> e bônus diário <b>${xm(t.checkin)}</b>.</p>
     ${t.reward ? `<p class="muted">Presente de boas-vindas: 🪙 ${fmt(t.reward.coins)} + ${t.reward.fs} rodadas grátis</p>` : ''}
     <a class="btn btn-gold" href="#/vip">Ver benefícios</a></div>`);
   setTimeout(() => UI.modal('Novo nível VIP', body), 600);
+});
+Bus.on('playerup', pl => {
+  const m = Progress.milestonesReady().find(x => x.at === pl.level);
+  if (m) setTimeout(() => UI.toast(`🏁 Marco do nível ${m.at} alcançado! Resgate 🪙 ${fmt(m.reward.coins)} + ${m.reward.fs} rodadas no seu perfil`, 'win', 4200), 2200);
 });
 Bus.on('missionDone', def => { Sfx.claim(); UI.toast(`🎯 Missão concluída: ${def.text}`, 'win', 3000); });

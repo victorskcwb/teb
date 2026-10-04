@@ -77,13 +77,22 @@
           <div><small>Nível do jogador</small><b>${pl.rank.label}</b><span>Nível ${pl.level}</span></div>
         </div>
         <div class="xpbar"><i style="width:${pl.pct}%"></i><span>${fmt(pl.into).replace(',00', '')} / ${fmt(pl.need).replace(',00', '')} XP para o nível ${pl.level + 1}</span></div>
-        <p class="muted small">O nível do jogador é infinito e nunca zera: cada nível pede mais XP que o anterior. A patente muda a cada 10 níveis; depois do nível 100 você vira Mito e ganha uma estrela a cada 10 níveis.</p>
+        <p class="muted small">O nível do jogador é infinito e nunca zera: cada nível pede mais XP que o anterior (depois do 30, bem mais). A patente muda a cada 10 níveis e o VIP sobe junto. Os marcos dão fichas e rodadas grátis.</p>
+        <h4>Próximo marco</h4><div class="missions pf-miles"></div>
         <h4>Patentes</h4><div class="ranks">${ranks}</div>
+        <a class="btn btn-ghost" href="#/nivel">Ver medalhas e todos os marcos →</a>
         <div class="pf-pass">${ico('ticket')}<div><small>Passe da temporada</small><b>Nível ${pi.level}</b><div class="xpbar"><i style="width:${(pi.into / pi.need) * 100}%"></i><span>${fmt(pi.into).replace(',00', '')} / ${fmt(pi.need).replace(',00', '')} XP</span></div></div><a class="btn btn-gold" href="#/passe">Ver passe</a></div>
         <div class="stats-grid"><div><small>XP total</small><b>${fmt(Progress.s.totalXp).replace(',00', '')}</b></div><div><small>VIP</small><b>${Progress.vipTier().name}</b></div></div>
       </div>`);
+    const miles = $('.pf-miles', body);
+    const renderMiles = () => { const ready = Progress.milestonesReady(), next = Progress.nextMilestone(); miles.innerHTML = [...ready, ...(next ? [next] : [])].map(mileRow).join(''); };
+    renderMiles();
     const m = UI.modal('Perfil', body);
-    body.addEventListener('click', e => { if (e.target.closest('a')) m.close(); });
+    body.addEventListener('click', e => {
+      if (e.target.closest('a')) m.close();
+      const b = e.target.closest('.mile-claim');
+      if (b && Progress.claimMilestone(Number(b.dataset.i))) { UI.confetti(60, ['gift', 'coin', 'star']); renderMiles(); }
+    });
   }
   lvlChip.addEventListener('click', () => { Sfx.click(); openProfile(); });
   Bus.on('playerup', pl => {
@@ -270,7 +279,7 @@
         <a class="qk ${ms.some(m => m.done && !m.claimed) ? 'ready' : ''}" href="#/missoes">${ico('bullseye')}<span><b>Missões</b><small>${done}/${ms.length} completas</small></span></a>
         <a class="qk" href="#/bonus">${ico('tv')}<span><b>Fichas grátis</b><small>${Progress.adsLeft()} anúncios hoje</small></span></a>
         <a class="qk ${Progress.freeScratch() ? 'ready' : ''}" href="#/raspadinha">${ico('ticket')}<span><b>Raspadinha</b><small>${Progress.freeScratch() ? '1 grátis hoje!' : 'Tente a sorte'}</small></span></a>
-        <a class="qk ${Progress.s.vip.pending > 0 ? 'ready' : ''}" href="#/vip">${ico(Progress.vipTier().art)}<span><b>VIP ${Progress.vipTier().name}</b><small>${Progress.s.vip.pending > 0 ? `Cashback 🪙 ${fmt(Progress.s.vip.pending)}!` : `Cashback ${Math.round(Progress.vipTier().cashback * 100)}%`}</small></span></a>`;
+        <a class="qk ${Progress.s.vip.pending > 0 ? 'ready' : ''}" href="#/vip">${ico(Progress.vipTier().art)}<span><b>VIP ${Progress.vipTier().name}</b><small>${Progress.s.vip.pending > 0 ? `Cashback 🪙 ${fmt(Progress.s.vip.pending)}!` : `Cashback ${pct(Progress.vipTier().cashback)}`}</small></span></a>`;
     };
     quick.addEventListener('click', e => { if (e.target.closest('[data-q="checkin"]')) { e.preventDefault(); openCheckin(); } });
     renderQuick();

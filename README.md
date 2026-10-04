@@ -279,19 +279,20 @@ Os RTPs e preços de compra de bônus são calibrados por simulação: `node too
 ## Engajamento
 
 - **Bônus diário (check-in):** calendário de 7 dias com sequência; perdeu um dia, volta ao Dia 1. Abre sozinho na primeira visita do dia.
-- **Roda de prêmios grátis:** a cada 4 horas (fichas, XP ou rodadas grátis).
-- **Missões diárias:** 5 por dia (sorteadas pela data), com fichas + XP; completar todas abre um baú com rodadas grátis.
+- **Roda de prêmios grátis:** a cada 4 horas (fichas até 🪙 2.000, XP ou rodadas grátis).
+- **Missões diárias:** 5 por dia (sorteadas pela data), com fichas + XP (as missões pagam 60% das fichas do catálogo — `MISSION_COINS` — e o XP inteiro); completar todas abre um baú com rodadas grátis.
 - **Missões gerais ∞:** 10 trilhas sem fim (giros, vitórias, ganhos de 10x/50x/100x, bônus ativados, total apostado/recebido, jogos diferentes). Ao coletar, o próximo nível aparece na hora com objetivo e prêmio maiores; a cada 5 níveis vêm rodadas grátis.
 - **Missões de cada slot ∞:** todo slot tem a sua sequência infinita (giros, vitórias, bônus, ganho de 10x, valor apostado, ganho de Nx), que fica mais difícil a cada volta. O botão 🎯 no topo do slot mostra a missão dele; a página Missões tem as abas Diárias / Gerais / Slots.
-- **Passe da temporada:** 50 níveis com custo crescente (500 XP no nível 2 até ~3.400 XP no 50; ~95 mil XP no total) e, depois, **níveis infinitos** de 4.000 XP com recompensa fixa (grátis 🪙 500; premium 🪙 1.500 + 3 giros). Temporadas de 28 dias. Trilha grátis + trilha Premium (ativada com fichas, dá +25% de XP).
-- **Nível do jogador:** infinito e nunca zera (cada nível custa `1000 + 400·(n−1)` XP). Patente a cada 10 níveis — Novato, Aprendiz, Apostador, Veterano, Profissional, Especialista, Mestre, Grão-Mestre, Lenda, Ídolo — e Mito ★N depois do 100. Aparece no topo (anel com medalha) e abre o perfil.
+- **Passe da temporada:** 50 níveis com custo crescente (500 XP no nível 2 até ~3.400 XP no 50; ~95 mil XP no total) e, depois, **níveis infinitos** de 4.000 XP com recompensa fixa (grátis 🪙 100; premium 🪙 300 + 3 giros). Trilha grátis: `40 + 5·nível` fichas e giros grátis a cada 5 níveis (~7 mil fichas na temporada). Premium (🪙 5.000, +25% de XP): `80 + 15·nível`, a cada 5 níveis `150·(nível/5)` + 10 giros e 🪙 5.000 + 50 giros no 50 (~30 mil fichas). Temporadas de 28 dias.
+- **Nível do jogador:** infinito e nunca zera (cada nível custa `1000 + 400·(n−1)` XP, mais `15·(n−30)²` depois do 30). Patente a cada 10 níveis — Novato, Aprendiz, Apostador, Veterano, Profissional, Especialista, Mestre, Grão-Mestre, Lenda, Ídolo — e Mito ★N depois do 100. Cada patente tem 5 divisões (uma a cada 2 níveis). Aparece no topo (anel com medalha) e abre o perfil; a página **Nível** (`#/nivel`) mostra as medalhas e os marcos.
+- **Marcos de nível:** recompensas no nível 10, 20, 30, 40, 50, 65, 80, 100, 125, 150, 180, 210, 250 e depois cada vez mais espaçados (+50, +50, +60, +60…). Valem `400·(1 + 0,35·i)` fichas + `5 + 2·i` giros (até 30) — cada um ≈ uma sessão de jogo. São resgatados no perfil ou na página Nível; quem já jogava antes começa a contar do nível atual.
 - **XP:** cada rodada dá `2 + 1,5·√aposta` XP (não premia só apostas enormes).
 - **Velocidade dos slots:** Normal, Rápido e Turbo (salvo no navegador).
 - **Som dos slots de estúdio:** trilha temática gerada por jogo (WebAudio) e efeitos CC0 do Kenney/OpenGameArt em `assets/audio/slotsfx.js`.
-- **VIP + cashback semanal:** níveis Bronze → Prata → Ouro → Platina → Diamante pelo XP total (nunca zera). Cada nível dá cashback de 5–15% das perdas líquidas da semana (liberado na segunda-feira), multiplica o bônus diário (x1 a x3) e dá um presente ao subir.
+- **VIP + cashback semanal:** 10 degraus que acompanham o nível do jogador — Bronze I (1), Bronze II (5), Prata I (10), Prata II (20), Ouro I (30), Ouro II (45), Platina (60), Diamante (80), Mestre (100) e Lenda (130). Cada um dá cashback de 1–8% das perdas líquidas da semana (teto 🪙 5.000, liberado na segunda-feira), multiplica o bônus diário (x1 a x2,2) e dá um presente ao subir (🪙 300 + 5 giros até 🪙 5.000 + 30 giros).
 - **Raspadinha grátis do dia:** uma cartela de 🪙 5 por dia.
 - **Rodadas grátis:** valem em qualquer slot (aposta fixa 🪙 2,00).
-- **Anúncios fictícios:** +🪙 250 por anúncio (10 por dia); prêmios altos (≥10x, ou ≥🪙 300 com ≥3x) oferecem **dobrar o prêmio** assistindo um anúncio. Para plugar uma rede de anúncios de verdade, troque só `Ads.watch()` em `js/progress.js`.
+- **Anúncios fictícios:** +🪙 100 por anúncio (10 por dia); prêmios altos (≥10x, ou ≥🪙 300 com ≥3x) oferecem **dobrar o prêmio** assistindo um anúncio. Para plugar uma rede de anúncios de verdade, troque só `Ads.watch()` em `js/progress.js`.
 - **Retenção:** carrossel de promoções, "Mais jogados", "Continue jogando", selos HOT/NOVO, pontinhos de notificação na navegação, celebração de nível, oferta de anúncio/recarga quando as fichas acabam.
 - **Histórico de giros (slots):** botão 📜 no topo de todo slot mostra o resultado da sessão e abre os últimos 100 giros com vitórias/perdas, filtros, resumo (apostado, recebido, resultado, maior prêmio) e gráfico dos últimos giros. Qualquer slot novo entra sozinho (vem do `ctx.round`).
 - **Painel de prêmios (slots):** botão 🏆 "Prêmios" ao lado do ganho (e o "?") abre abas Resumo (prêmio máximo, RTP, volatilidade, chance de ganho), Pagamentos (em fichas para a aposta atual), Bônus e Linhas (desenho de cada linha). Cada slot descreve isso em `info` (ver `js/slotinfo.js`).
@@ -315,7 +316,7 @@ js/games/pragmatic*.js, pgsoft*.js, hacksaw*.js, tada.js, nolimit*.js   os 208 s
 js/games/templates.js  modelos reaproveitados (paga em qualquer lugar, grupos, PG Soft)
 tools/calibrate.js  simulador que calibra o RTP dos slots de estúdio
 js/slotinfo.js      painel "Prêmios" dos slots (prêmio máximo, tabela, bônus, linhas)
-js/pages.js         páginas Bônus, Missões, Passe e VIP
+js/pages.js         páginas Bônus, Missões, Passe, VIP e Nível (medalhas e marcos)
 js/main.js          roteador por hash (#/id), lobby, carteira, navegação
 js/games/*.js       um arquivo por jogo, cada um chama App.register({ id, name, art, ..., mount(root, ctx) })
 ```
