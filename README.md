@@ -123,8 +123,11 @@ Os RTPs e preços de compra de bônus são calibrados por simulação: `node too
 - **Bônus diário (check-in):** calendário de 7 dias com sequência; perdeu um dia, volta ao Dia 1. Abre sozinho na primeira visita do dia.
 - **Roda de prêmios grátis:** a cada 4 horas (fichas, XP ou rodadas grátis).
 - **Missões diárias:** 5 por dia (sorteadas pela data), com fichas + XP; completar todas abre um baú com rodadas grátis.
-- **Passe da temporada:** 30 níveis (300 XP cada), temporadas de 28 dias. Trilha grátis + trilha Premium (ativada com fichas, dá +25% de XP).
-- **XP:** cada rodada dá `4 + 3·√aposta` XP (não premia só apostas enormes).
+- **Passe da temporada:** 50 níveis com custo crescente (500 XP no nível 2 até ~3.400 XP no 50; ~95 mil XP no total) e, depois, **níveis infinitos** de 4.000 XP com recompensa fixa (grátis 🪙 500; premium 🪙 1.500 + 3 giros). Temporadas de 28 dias. Trilha grátis + trilha Premium (ativada com fichas, dá +25% de XP).
+- **Nível do jogador:** infinito e nunca zera (cada nível custa `1000 + 400·(n−1)` XP). Patente a cada 10 níveis — Novato, Aprendiz, Apostador, Veterano, Profissional, Especialista, Mestre, Grão-Mestre, Lenda, Ídolo — e Mito ★N depois do 100. Aparece no topo (anel com medalha) e abre o perfil.
+- **XP:** cada rodada dá `2 + 1,5·√aposta` XP (não premia só apostas enormes).
+- **Velocidade dos slots:** Normal, Rápido e Turbo (salvo no navegador).
+- **Som dos slots de estúdio:** trilha temática gerada por jogo (WebAudio) e efeitos CC0 do Kenney/OpenGameArt em `assets/audio/slotsfx.js`.
 - **VIP + cashback semanal:** níveis Bronze → Prata → Ouro → Platina → Diamante pelo XP total (nunca zera). Cada nível dá cashback de 5–15% das perdas líquidas da semana (liberado na segunda-feira), multiplica o bônus diário (x1 a x3) e dá um presente ao subir.
 - **Raspadinha grátis do dia:** uma cartela de 🪙 5 por dia.
 - **Rodadas grátis:** valem em qualquer slot (aposta fixa 🪙 2,00).

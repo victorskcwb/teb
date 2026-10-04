@@ -53,8 +53,12 @@
   /* ---------- Nível no topo + badges ---------- */
   const lvlChip = $('#lvl-chip');
   function renderProgressUI() {
-    $('.lvl-num', lvlChip).textContent = Progress.level;
-    $('.lvl-ring', lvlChip).style.setProperty('--p', Progress.levelPct);
+    const pl = Progress.player;
+    $('.lvl-num', lvlChip).textContent = pl.level;
+    $('.lvl-ring', lvlChip).style.setProperty('--p', pl.pct);
+    $('.lvl-ring', lvlChip).style.setProperty('--rc', pl.rank.color);
+    $('.lvl-medal', lvlChip).src = IMG(pl.rank.art);
+    lvlChip.title = `Nível ${pl.level} · ${pl.rank.label}`;
     const pend = Progress.pending();
     const setDot = (sel, n) => { const d = $(sel); if (d) { d.textContent = n > 9 ? '9+' : n; d.classList.toggle('hidden', !n); } };
     setDot('[data-dot="bonus"]', pend.bonus);
@@ -62,7 +66,33 @@
     setDot('[data-dot="passe"]', pend.pass);
   }
   Bus.on('progress', renderProgressUI);
-  lvlChip.addEventListener('click', () => { location.hash = '#/passe'; });
+  /** Perfil: nível do jogador (infinito), patente e progresso do passe. */
+  function openProfile() {
+    const pl = Progress.player, pi = Progress.passInfo;
+    const ranks = PLAYER_RANKS.map((r, i) => `<div class="rk ${i === pl.rank.idx ? 'cur' : i < pl.rank.idx ? 'done' : ''}" style="--rc:${r.color}">${ico(r.art)}<small>${r.name}</small><b>${i < 10 ? `Nv ${i * 10 + 1}` : 'Nv 101+'}</b></div>`).join('');
+    const body = h(`
+      <div class="profile">
+        <div class="pf-head" style="--rc:${pl.rank.color}">
+          <div class="pf-medal">${ico(pl.rank.art)}<span>${pl.level}</span></div>
+          <div><small>Nível do jogador</small><b>${pl.rank.label}</b><span>Nível ${pl.level}</span></div>
+        </div>
+        <div class="xpbar"><i style="width:${pl.pct}%"></i><span>${fmt(pl.into).replace(',00', '')} / ${fmt(pl.need).replace(',00', '')} XP para o nível ${pl.level + 1}</span></div>
+        <p class="muted small">O nível do jogador é infinito e nunca zera: cada nível pede mais XP que o anterior. A patente muda a cada 10 níveis; depois do nível 100 você vira Mito e ganha uma estrela a cada 10 níveis.</p>
+        <h4>Patentes</h4><div class="ranks">${ranks}</div>
+        <div class="pf-pass">${ico('ticket')}<div><small>Passe da temporada</small><b>Nível ${pi.level}</b><div class="xpbar"><i style="width:${(pi.into / pi.need) * 100}%"></i><span>${fmt(pi.into).replace(',00', '')} / ${fmt(pi.need).replace(',00', '')} XP</span></div></div><a class="btn btn-gold" href="#/passe">Ver passe</a></div>
+        <div class="stats-grid"><div><small>XP total</small><b>${fmt(Progress.s.totalXp).replace(',00', '')}</b></div><div><small>VIP</small><b>${Progress.vipTier().name}</b></div></div>
+      </div>`);
+    const m = UI.modal('Perfil', body);
+    body.addEventListener('click', e => { if (e.target.closest('a')) m.close(); });
+  }
+  lvlChip.addEventListener('click', () => { Sfx.click(); openProfile(); });
+  Bus.on('playerup', pl => {
+    setTimeout(() => {
+      Sfx.levelUp();
+      UI.confetti(40, [pl.rank.art, 'star', 'coin']);
+      UI.toast(`🏅 Você subiu para o nível ${pl.level} do jogador! ${pl.level % 10 === 1 ? `Nova patente: ${pl.rank.label}` : ''}`, 'level', 3600);
+    }, 900);
+  });
 
   /* ---------- Som ---------- */
   Sfx.init();

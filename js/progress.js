@@ -86,13 +86,29 @@ const VIP_TIERS = [
 ];
 const CASHBACK_CAP = 25000;
 
+/* Patentes do nível do jogador (a cada 10 níveis). Depois do 100: Mito ★1, ★2... */
+const PLAYER_RANKS = [
+  { name: 'Novato', art: 'sparkles', color: '#94a3b8' },
+  { name: 'Aprendiz', art: 'medal3', color: '#d97706' },
+  { name: 'Apostador', art: 'medal2', color: '#cbd5e1' },
+  { name: 'Veterano', art: 'medal', color: '#fbbf24' },
+  { name: 'Profissional', art: 'trophy', color: '#f59e0b' },
+  { name: 'Especialista', art: 'star', color: '#38bdf8' },
+  { name: 'Mestre', art: 'crown', color: '#a78bfa' },
+  { name: 'Grão-Mestre', art: 'gem', color: '#c084fc' },
+  { name: 'Lenda', art: 'fire', color: '#f97316' },
+  { name: 'Ídolo', art: 'glowstar', color: '#facc15' },
+  { name: 'Mito', art: 'dragon', color: '#ef4444' },
+];
+
 /* =========================================================
    Store
    ========================================================= */
 const Progress = {
   KEY: 'fichabet_progress_v1',
-  XP_PER_LEVEL: 300,
-  PASS_LEVELS: 30,
+  PASS_LEVELS: 50,          // níveis principais; depois deles o passe continua infinito
+  PASS_EXTRA_COST: 4000,    // XP por nível além do 50
+
   SEASON_DAYS: 28,
   FS_BET: 2,
   AD_REWARD: 250,
@@ -134,32 +150,57 @@ const Progress = {
       Object.assign(this.s, { season: n, xp: 0, premium: false, claimed: { free: [], prem: [] } });
     }
   },
-  get level() { return Math.min(this.PASS_LEVELS, Math.floor(this.s.xp / this.XP_PER_LEVEL) + 1); },
-  get levelPct() {
-    if (this.level >= this.PASS_LEVELS) return 100;
-    return ((this.s.xp % this.XP_PER_LEVEL) / this.XP_PER_LEVEL) * 100;
+  /** XP para ir do nível L do passe ao L+1: cresce até o 50 e depois fica fixo. */
+  passCost(L) { return L < this.PASS_LEVELS ? 500 + 60 * (L - 1) : this.PASS_EXTRA_COST; },
+  /** { level, into, need } a partir de um total de XP e uma função de custo. */
+  levelFrom(xp, cost) {
+    let level = 1, rest = xp;
+    while (rest >= cost(level)) { rest -= cost(level); level++; }
+    return { level, into: rest, need: cost(level) };
+  },
+  get passInfo() { return this.levelFrom(this.s.xp, l => this.passCost(l)); },
+  get level() { return this.passInfo.level; },
+  get levelPct() { const i = this.passInfo; return (i.into / i.need) * 100; },
+
+  /* ---------- nível do jogador (infinito, nunca zera) ---------- */
+  playerCost(n) { return 1000 + 400 * (n - 1); },
+  get player() {
+    const i = this.levelFrom(this.s.totalXp, n => this.playerCost(n));
+    return { ...i, pct: (i.into / i.need) * 100, rank: this.rankOf(i.level) };
+  },
+  /** Patente pelo nível do jogador: troca a cada 10 níveis; depois do 100 vira Mito com estrelas. */
+  rankOf(level) {
+    const R = PLAYER_RANKS;
+    const idx = Math.min(R.length - 1, Math.floor((level - 1) / 10));
+    const r = R[idx];
+    const stars = level > 100 ? Math.floor((level - 101) / 10) + 1 : 0;
+    const div = level <= 100 ? ['I', 'II', 'III', 'IV', 'V'][Math.floor(((level - 1) % 10) / 2)] : '';
+    return { ...r, idx, stars, label: stars ? `${r.name} ★${stars}` : `${r.name} ${div}`, nextAt: level <= 100 ? (idx + 1) * 10 + 1 : (stars) * 10 + 101 };
   },
   addXp(n) {
     this.checkSeason();
     n = Math.round(n * (this.s.premium ? 1.25 : 1));
     if (n <= 0) return;
-    const before = this.level;
+    const before = this.level, pBefore = this.player.level;
     this.s.xp += n;
     this.s.totalXp += n;
     this.save();
     this.checkVipUp();
-    const after = this.level;
+    const after = this.level, pAfter = this.player.level;
     if (after > before) Bus.emit('levelup', after);
+    if (pAfter > pBefore) Bus.emit('playerup', this.player);
   },
 
   passReward(level, track) {
+    // além do nível 50 a recompensa é sempre a mesma
+    if (level > this.PASS_LEVELS) return track === 'free' ? { coins: 500 } : { coins: 1500, fs: 3 };
     if (track === 'free') {
-      if (level % 5 === 0) return { fs: 3 + level / 5 * 2 };
-      return { coins: 100 + level * 15 };
+      if (level % 5 === 0) return { fs: 3 + level / 5 };
+      return { coins: 150 + level * 20 };
     }
-    if (level === this.PASS_LEVELS) return { coins: 10000, fs: 30 };
-    if (level % 5 === 0) return { coins: 500 * (level / 5), fs: 10 };
-    return { coins: 250 + level * 40 };
+    if (level === this.PASS_LEVELS) return { coins: 25000, fs: 50 };
+    if (level % 5 === 0) return { coins: 600 * (level / 5), fs: 10 };
+    return { coins: 300 + level * 50 };
   },
   canClaimPass(level, track) {
     if (level > this.level) return false;
@@ -289,7 +330,7 @@ const Progress = {
     // jogados recentemente
     if (e.game) this.s.recent = [e.game, ...this.s.recent.filter(g => g !== e.game)].slice(0, 8);
     // XP: um pouco por rodada + raiz da aposta (não premia só apostas enormes)
-    const xp = e.stake > 0 ? Math.round(4 + Math.sqrt(e.stake) * 3) : 3;
+    const xp = e.stake > 0 ? Math.round(2 + Math.sqrt(e.stake) * 1.5) : 2;
     this.save(false);
     this.addXp(xp);
   },

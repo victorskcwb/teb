@@ -1227,3 +1227,29 @@ select { padding: 9px 10px; border-radius: 12px; background: var(--bg2); border:
 /* Símbolos premium com moldura brilhante */
 .kc.hi { background: radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--k1) 55%, #fff3), color-mix(in srgb, var(--k2) 65%, #0006)); box-shadow: inset 0 0 0 2px rgba(255, 247, 194, .55); }
 .kc.hi img { width: 90%; height: 90%; filter: drop-shadow(0 0 6px rgba(255, 247, 194, .6)) drop-shadow(0 2px 3px rgba(0, 0, 0, .45)); }
+
+/* Nível do jogador (topo) + perfil */
+.lvl-chip { position: relative; }
+.lvl-ring { background: conic-gradient(var(--rc, var(--gold)) calc(var(--p) * 1%), rgba(255, 255, 255, .12) 0); }
+.lvl-medal { position: absolute; right: -6px; bottom: -4px; width: 20px; height: 20px; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .6)); }
+.profile { display: flex; flex-direction: column; gap: 12px; }
+.pf-head { display: flex; align-items: center; gap: 14px; padding: 12px 14px; border-radius: 16px; background: linear-gradient(135deg, color-mix(in srgb, var(--rc) 45%, #1e1b4b), #1e1b4b); border: 1px solid var(--rc); }
+.pf-medal { position: relative; width: 64px; height: 64px; flex: none; }
+.pf-medal .ico { width: 64px; height: 64px; filter: drop-shadow(0 0 10px var(--rc)); }
+.pf-medal span { position: absolute; right: -4px; bottom: -4px; min-width: 26px; padding: 0 5px; border-radius: 999px; background: #0f0a2e; border: 1px solid var(--rc); font-family: var(--title); text-align: center; }
+.pf-head small { display: block; color: var(--muted); font-size: .75rem; }
+.pf-head b { display: block; font-family: var(--title); font-weight: 400; font-size: 1.5rem; color: var(--rc); line-height: 1.1; }
+.ranks { display: grid; grid-template-columns: repeat(auto-fill, minmax(78px, 1fr)); gap: 6px; }
+.rk { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 4px; border-radius: 12px; background: var(--bg2); border: 1px solid var(--border); opacity: .55; text-align: center; }
+.rk .ico { width: 30px; height: 30px; }
+.rk small { font-size: .68rem; font-weight: 800; }
+.rk b { font-size: .62rem; color: var(--muted); font-weight: 700; }
+.rk.done { opacity: .85; }
+.rk.cur { opacity: 1; border-color: var(--rc); box-shadow: 0 0 12px color-mix(in srgb, var(--rc) 60%, transparent); }
+.pf-pass { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 14px; background: var(--panel); border: 1px solid var(--border); }
+.pf-pass > .ico { width: 38px; height: 38px; }
+.pf-pass > div { flex: 1; min-width: 0; }
+.pf-pass small { display: block; color: var(--muted); font-size: .72rem; }
+.pt-inf { justify-content: center; min-width: 110px; }
+.pt-inf .pt-lv { font-size: 1.6rem; color: var(--gold); }
+.pt-inf-txt { font-size: .7rem; color: var(--muted); text-align: center; padding: 4px 6px; line-height: 1.25; }

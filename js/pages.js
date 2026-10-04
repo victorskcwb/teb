@@ -275,7 +275,7 @@ Pages.passe = {
       <section class="page">
         <div class="page-hero pass-hero" style="--c1:#7c3aed;--c2:#db2777">${ico('ticket', 'ph-img')}
           <div class="pass-head"><h1>Temporada: ${SEASON_NAMES[P.s.season % SEASON_NAMES.length]}</h1>
-            <p>Ganhe XP jogando e completando missões. Cada nível libera prêmios.</p>
+            <p>Ganhe XP jogando e completando missões. 50 níveis de prêmios crescentes e, depois, níveis infinitos.</p>
             <div class="pass-lvl"><span class="lvl-badge big"></span><div class="xpbar"><i></i><span></span></div></div>
             <span class="ph-timer"></span>
           </div>
@@ -303,11 +303,16 @@ Pages.passe = {
     const render = () => {
       $('.lvl-badge', el).textContent = 'Nv ' + P.level;
       $('.pass-lvl .xpbar i', el).style.width = P.levelPct + '%';
-      $('.pass-lvl .xpbar span', el).textContent = P.level >= P.PASS_LEVELS ? 'Nível máximo!' : `${P.s.xp % P.XP_PER_LEVEL} / ${P.XP_PER_LEVEL} XP`;
+      const pi = P.passInfo;
+      $('.pass-lvl .xpbar span', el).textContent = `${fmt(pi.into).replace(',00', '')} / ${fmt(pi.need).replace(',00', '')} XP`;
       let html = '<div class="pt-col pt-labels"><div class="pt-lv">Nível</div><div class="pt-name">Grátis</div><div class="pt-name prem">Premium 👑</div></div>';
-      for (let l = 1; l <= P.PASS_LEVELS; l++) {
+      // níveis 1–50 e, depois deles, os níveis infinitos perto do atual
+      const extraFrom = Math.max(P.PASS_LEVELS + 1, P.level - 15), extraTo = Math.max(P.PASS_LEVELS + 3, P.level + 3);
+      const levels = [...Array.from({ length: P.PASS_LEVELS }, (_, i) => i + 1), ...Array.from({ length: extraTo - extraFrom + 1 }, (_, i) => extraFrom + i)];
+      levels.forEach(l => {
+        if (l === P.PASS_LEVELS + 1 || (l === extraFrom && l > P.PASS_LEVELS)) html += `<div class="pt-col pt-inf"><div class="pt-lv">∞</div><div class="pt-inf-txt">Depois do ${P.PASS_LEVELS}: um nível a cada ${fmt(P.PASS_EXTRA_COST).replace(',00', '')} XP, sempre com o mesmo prêmio</div></div>`;
         html += `<div class="pt-col ${l === P.level ? 'cur' : ''} ${l <= P.level ? 'reached' : ''}"><div class="pt-lv">${l}</div>${cell(l, 'free')}${cell(l, 'prem')}</div>`;
-      }
+      });
       track.innerHTML = html;
       prem.innerHTML = P.s.premium
         ? `${ico('crown')}<div><b>Passe Premium ativo</b><small>+25% de XP e trilha premium liberada</small></div>`
