@@ -104,7 +104,7 @@
             <div class="slot-bet"></div>
             <button class="spin-btn" aria-label="Girar"><span>⟳</span></button>
             <div class="slot-toggles">
-              <button class="toggle" data-t="turbo">⚡ Turbo</button>
+              <button class="toggle speed" data-t="speed"></button>
               <button class="toggle" data-t="auto">🔁 Auto</button>
             </div>
           </div>
@@ -125,12 +125,12 @@
       stepper.el.addEventListener('click', renderBuy);
       renderBuy();
 
-      let busy = false, turbo = false, auto = false;
+      let busy = false, auto = false;
       let grid = Array.from({ length: N * N }, () => ({ ...RNG.weighted(SYMBOLS) }));
       let spots = new Array(N * N).fill(0); // 0 = nada, 1 = marcada, 2+ = multiplicador
       const msg = t => { msgEl.textContent = t; };
       const setAuto = v => { auto = v; $('[data-t="auto"]', el).classList.toggle('on', v); };
-      const wait = ms => ctx.sleep(turbo ? ms * 0.45 : ms);
+      const wait = ms => ctx.sleep(ms * Speed.f);
 
       function render(win = null) {
         let html = '';
@@ -142,7 +142,7 @@
           if (x.fresh) cls.push('drop');
           if (win && win.has(i)) cls.push('win');
           if (x.scatter) cls.push('scatter');
-          const delay = x.fresh ? ` style="animation-delay:${(turbo ? 10 : 25) * c + (N - r) * 10}ms"` : '';
+          const delay = x.fresh ? ` style="animation-delay:${(Speed.pick(10, 25)) * c + (N - r) * 10}ms"` : '';
           html += `<div class="${cls.join(' ')}"${delay}>${sp >= 2 ? `<i>x${sp}</i>` : ''}<img src="${IMG(x.img)}" alt=""></div>`;
           x.fresh = false;
         }
@@ -298,7 +298,7 @@
         fsBar.render();
         if (ctx.alive && (auto || (fsBar.active && Progress.s.fs > 0))) {
           (async () => {
-            await ctx.sleep(pay > 0 ? 900 : (turbo ? 200 : 450));
+            await ctx.sleep(pay > 0 ? 900 : (Speed.pick(200, 450)));
             while (ctx.alive && $('.bigwin, .ad-backdrop')) await ctx.sleep(300);
             if (ctx.alive && !busy && (auto || (fsBar.active && Progress.s.fs > 0))) spin();
           })();
@@ -307,11 +307,12 @@
 
       spinBtn.addEventListener('click', spin);
       buyBtn.addEventListener('click', buy);
-      $('.slot-toggles', el).addEventListener('click', e => {
+      Speed.bind($('[data-t="speed"]', el), ctx);
+        $('.slot-toggles', el).addEventListener('click', e => {
         const t = e.target.dataset.t;
         if (!t) return;
         Sfx.click();
-        if (t === 'turbo') { turbo = !turbo; e.target.classList.toggle('on', turbo); }
+        if (t === 'speed') Speed.next();
         if (t === 'auto') { setAuto(!auto); if (auto && !busy) spin(); }
       });
       const onKey = e => {

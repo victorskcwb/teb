@@ -53,8 +53,12 @@
   /* ---------- Nível no topo + badges ---------- */
   const lvlChip = $('#lvl-chip');
   function renderProgressUI() {
-    $('.lvl-num', lvlChip).textContent = Progress.level;
-    $('.lvl-ring', lvlChip).style.setProperty('--p', Progress.levelPct);
+    const pl = Progress.player;
+    $('.lvl-num', lvlChip).textContent = pl.level;
+    $('.lvl-ring', lvlChip).style.setProperty('--p', pl.pct);
+    $('.lvl-ring', lvlChip).style.setProperty('--rc', pl.rank.color);
+    $('.lvl-medal', lvlChip).src = IMG(pl.rank.art);
+    lvlChip.title = `Nível ${pl.level} · ${pl.rank.label}`;
     const pend = Progress.pending();
     const setDot = (sel, n) => { const d = $(sel); if (d) { d.textContent = n > 9 ? '9+' : n; d.classList.toggle('hidden', !n); } };
     setDot('[data-dot="bonus"]', pend.bonus);
@@ -62,7 +66,33 @@
     setDot('[data-dot="passe"]', pend.pass);
   }
   Bus.on('progress', renderProgressUI);
-  lvlChip.addEventListener('click', () => { location.hash = '#/passe'; });
+  /** Perfil: nível do jogador (infinito), patente e progresso do passe. */
+  function openProfile() {
+    const pl = Progress.player, pi = Progress.passInfo;
+    const ranks = PLAYER_RANKS.map((r, i) => `<div class="rk ${i === pl.rank.idx ? 'cur' : i < pl.rank.idx ? 'done' : ''}" style="--rc:${r.color}">${ico(r.art)}<small>${r.name}</small><b>${i < 10 ? `Nv ${i * 10 + 1}` : 'Nv 101+'}</b></div>`).join('');
+    const body = h(`
+      <div class="profile">
+        <div class="pf-head" style="--rc:${pl.rank.color}">
+          <div class="pf-medal">${ico(pl.rank.art)}<span>${pl.level}</span></div>
+          <div><small>Nível do jogador</small><b>${pl.rank.label}</b><span>Nível ${pl.level}</span></div>
+        </div>
+        <div class="xpbar"><i style="width:${pl.pct}%"></i><span>${fmt(pl.into).replace(',00', '')} / ${fmt(pl.need).replace(',00', '')} XP para o nível ${pl.level + 1}</span></div>
+        <p class="muted small">O nível do jogador é infinito e nunca zera: cada nível pede mais XP que o anterior. A patente muda a cada 10 níveis; depois do nível 100 você vira Mito e ganha uma estrela a cada 10 níveis.</p>
+        <h4>Patentes</h4><div class="ranks">${ranks}</div>
+        <div class="pf-pass">${ico('ticket')}<div><small>Passe da temporada</small><b>Nível ${pi.level}</b><div class="xpbar"><i style="width:${(pi.into / pi.need) * 100}%"></i><span>${fmt(pi.into).replace(',00', '')} / ${fmt(pi.need).replace(',00', '')} XP</span></div></div><a class="btn btn-gold" href="#/passe">Ver passe</a></div>
+        <div class="stats-grid"><div><small>XP total</small><b>${fmt(Progress.s.totalXp).replace(',00', '')}</b></div><div><small>VIP</small><b>${Progress.vipTier().name}</b></div></div>
+      </div>`);
+    const m = UI.modal('Perfil', body);
+    body.addEventListener('click', e => { if (e.target.closest('a')) m.close(); });
+  }
+  lvlChip.addEventListener('click', () => { Sfx.click(); openProfile(); });
+  Bus.on('playerup', pl => {
+    setTimeout(() => {
+      Sfx.levelUp();
+      UI.confetti(40, [pl.rank.art, 'star', 'coin']);
+      UI.toast(`🏅 Você subiu para o nível ${pl.level} do jogador! ${pl.level % 10 === 1 ? `Nova patente: ${pl.rank.label}` : ''}`, 'level', 3600);
+    }, 900);
+  });
 
   /* ---------- Som ---------- */
   Sfx.init();
@@ -188,6 +218,7 @@
           <div class="row-scroll popular"></div>
         </div>
         <div class="filters"></div>
+        <div class="studio-chips hidden"></div>
         <div class="all-games"></div>
       </section>`);
 
@@ -256,7 +287,7 @@
     $('.popular', el).innerHTML = POPULAR.map(gameById).filter(Boolean).map(g => card(g, true)).join('');
 
     /* todos os jogos com filtro por categoria */
-    const filters = $('.filters', el), all = $('.all-games', el);
+    const filters = $('.filters', el), studioEl = $('.studio-chips', el), all = $('.all-games', el);
     let filter = 'all';
     try { filter = sessionStorage.getItem('fichabet_filter') || 'all'; } catch { /* ignore */ }
     const section = (art, title, desc, games) => h(`<div class="cat"><div class="cat-head"><h2>${ico(art)} ${title}</h2><span>${desc}</span></div><div class="cards">${games.map(g => card(g)).join('')}</div></div>`);
@@ -264,9 +295,10 @@
       const studio = filter.startsWith('studio:') ? filter.slice(7) : null;
       const cat = studio ? 'slots' : filter;
       filters.innerHTML = [{ id: 'all', title: 'Todos', art: 'star' }, ...CATEGORIES].map(c =>
-        `<button class="fchip ${cat === c.id ? 'on' : ''}" data-f="${c.id}">${ico(c.art)}${c.title}</button>`).join('')
-        + (cat === 'slots' ? `<div class="studio-chips">${[{ id: 'slots', short: 'Todos os slots', art: 'slot' }, ...STUDIOS.map(s => ({ ...s, id: 'studio:' + s.id }))].map(s =>
-          `<button class="fchip ${filter === s.id ? 'on' : ''}" data-f="${s.id}">${ico(s.art)}${s.short}</button>`).join('')}</div>` : '');
+        `<button class="fchip ${cat === c.id ? 'on' : ''}" data-f="${c.id}">${ico(c.art)}${c.title}</button>`).join('');
+      studioEl.classList.toggle('hidden', cat !== 'slots');
+      studioEl.innerHTML = cat !== 'slots' ? '' : [{ id: 'slots', short: 'Todos os slots', art: 'slot' }, ...STUDIOS.map(s => ({ ...s, id: 'studio:' + s.id }))].map(s =>
+        `<button class="fchip ${filter === s.id ? 'on' : ''}" data-f="${s.id}">${ico(s.art)}${s.short}</button>`).join('');
       all.innerHTML = '';
       CATEGORIES.filter(c => cat === 'all' || cat === c.id).forEach(c => {
         const games = App.games.filter(g => g.category === c.id);
@@ -280,14 +312,16 @@
         });
       });
     }
-    filters.addEventListener('click', e => {
+    const onFilter = e => {
       const f = e.target.closest('[data-f]')?.dataset.f;
       if (!f) return;
       Sfx.click();
       filter = f;
       try { sessionStorage.setItem('fichabet_filter', f); } catch { /* ignore */ }
       renderAll();
-    });
+    };
+    filters.addEventListener('click', onFilter);
+    studioEl.addEventListener('click', onFilter);
     renderAll();
     return el;
   }
@@ -326,6 +360,21 @@
     render();
   }
 
+  /** Botão 🎯 (slots): missão infinita do jogo, com pontinho quando dá para coletar. */
+  function questButton(el, g, gctx) {
+    const btn = h(`<button class="icon-btn quest-btn" aria-label="Missões do jogo" title="Missões do jogo">${ico('bullseye')}<i class="q-ring"></i><i class="tdot hidden"></i></button>`);
+    $('.help', el).before(btn);
+    const render = () => {
+      const q = Progress.slotQuest(g.id);
+      if (!q) return;
+      $('.tdot', btn).classList.toggle('hidden', !q.done);
+      btn.style.setProperty('--qp', Math.min(100, (q.p / q.goal) * 100) + '%');
+    };
+    btn.addEventListener('click', () => { Sfx.click(); slotQuestModal(g.id); });
+    gctx.onUnmount(Bus.on('progress', render));
+    render();
+  }
+
   /* ---------- Roteador por hash ---------- */
   function setNav(id) {
     $$('.bottom-nav a').forEach(a => a.classList.toggle('on', a.dataset.nav === id));
@@ -340,12 +389,13 @@
     const page = Pages[id];
     document.body.classList.toggle('in-game', !!game);
     if (game) {
+      if (window.LITE) (game.sprites || []).forEach(s => { const i = new Image(); i.src = IMG(s); });
       const el = renderGame(game);
       app.append(el);
       ctx = new GameCtx(game);
       document.title = `${game.name} — FichaBet`;
       setNav('');
-      if (game.category === 'slots') historyButton(el, game, ctx);
+      if (game.category === 'slots') { historyButton(el, game, ctx); questButton(el, game, ctx); }
       game.mount($('.game-body', el), ctx);
       return;
     }
@@ -380,7 +430,8 @@
   // pré-carrega sprites dos jogos (giros sem "piscar")
   window.addEventListener('load', () => {
     const slugs = new Set();
-    App.games.forEach(g => { slugs.add(g.art); (g.sprites || []).forEach(s => slugs.add(s)); });
+    // no celular (modo leve) só as capas: os símbolos de cada jogo carregam quando ele é aberto
+    App.games.forEach(g => { slugs.add(g.art); if (!window.LITE) (g.sprites || []).forEach(s => slugs.add(s)); });
     slugs.forEach(s => { const i = new Image(); i.src = IMG(s); });
   });
 

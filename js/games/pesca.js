@@ -132,7 +132,7 @@
             <div class="slot-bet"></div>
             <button class="spin-btn" aria-label="Girar"><span>⟳</span></button>
             <div class="slot-toggles">
-              <button class="toggle" data-t="turbo">⚡ Turbo</button>
+              <button class="toggle speed" data-t="speed"></button>
               <button class="toggle" data-t="auto">🔁 Auto</button>
             </div>
           </div>
@@ -162,7 +162,7 @@
           cells[r][row] = c;
         }
       }
-      let bet = stepper.value, busy = false, turbo = false, auto = false;
+      let bet = stepper.value, busy = false, auto = false;
       const setCell = (r, row, s) => {
         const c = cells[r][row], img = c.firstChild;
         if (img.dataset.s !== s.img) { img.src = IMG(s.img); img.dataset.s = s.img; }
@@ -176,7 +176,7 @@
 
       const msg = t => { msgEl.textContent = t; };
       const setAuto = v => { auto = v; $('[data-t="auto"]', el).classList.toggle('on', v); };
-      const wait = ms => ctx.sleep(turbo ? ms * 0.45 : ms);
+      const wait = ms => ctx.sleep(ms * Speed.f);
 
       async function animate(final, fs) {
         const timers = [];
@@ -356,7 +356,7 @@
         fsBar.render();
         if (ctx.alive && (auto || (fsBar.active && Progress.s.fs > 0))) {
           (async () => {
-            await ctx.sleep(pay > 0 ? 1000 : (turbo ? 220 : 500));
+            await ctx.sleep(pay > 0 ? 1000 : (Speed.pick(220, 500)));
             while (ctx.alive && $('.bigwin, .ad-backdrop')) await ctx.sleep(300);
             if (ctx.alive && !busy && (auto || (fsBar.active && Progress.s.fs > 0))) spin();
           })();
@@ -365,11 +365,12 @@
 
       spinBtn.addEventListener('click', spin);
       buyBtn.addEventListener('click', buy);
-      $('.slot-toggles', el).addEventListener('click', e => {
+      Speed.bind($('[data-t="speed"]', el), ctx);
+        $('.slot-toggles', el).addEventListener('click', e => {
         const t = e.target.dataset.t;
         if (!t) return;
         Sfx.click();
-        if (t === 'turbo') { turbo = !turbo; e.target.classList.toggle('on', turbo); }
+        if (t === 'speed') Speed.next();
         if (t === 'auto') { setAuto(!auto); if (auto && !busy) spin(); }
       });
       const onKey = e => {

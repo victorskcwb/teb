@@ -217,17 +217,52 @@ Pages.bonus = {
 };
 
 /* ---------- Missões ---------- */
+/** Linha de missão infinita (geral ou de slot). */
+function questRow(q, btn, opts = {}) {
+  const pct = Math.min(100, (q.p / q.goal) * 100);
+  const prog = `${fmt0(Math.min(q.p, q.goal))} / ${fmt0(q.goal)}`;
+  return `<div class="mission ${q.done ? 'done' : ''}">
+    <div class="m-art">${ico(opts.art || q.art, 'm-img')}<span class="m-lv">Nv ${q.lv + 1}</span></div>
+    <div class="m-body">${opts.title ? `<small class="m-game">${opts.title}</small>` : ''}<b>${q.text}</b>
+      <div class="xpbar"><i style="width:${pct}%"></i><span>${prog}</span></div>
+      <small>Recompensa: ${rewardText(q.reward)}</small></div>
+    ${btn}
+  </div>`;
+}
+/** Modal com a missão infinita de um slot (aberta pelo botão 🎯 no jogo). */
+function slotQuestModal(gid) {
+  const body = h('<div class="missions"></div>');
+  const render = () => {
+    const q = Progress.slotQuest(gid);
+    if (!q) return;
+    body.innerHTML = questRow(q, q.done ? `<button class="btn btn-gold sq-claim">Coletar</button>` : '<button class="btn btn-ghost" disabled>…</button>')
+      + '<p class="muted small center">Cada slot tem missões infinitas: ao coletar, a próxima já aparece, um pouco mais difícil e com prêmio maior.</p>';
+  };
+  body.addEventListener('click', e => { if (e.target.closest('.sq-claim') && Progress.claimSlotQuest(gid)) { UI.confetti(25); render(); } });
+  render();
+  const m = UI.modal('Missões do jogo', body);
+  const off = Bus.on('progress', render);
+  new MutationObserver((_, o) => { if (!m.el.isConnected) { off(); o.disconnect(); } }).observe(document.getElementById('modal-root'), { childList: true });
+}
+
 Pages.missoes = {
   title: 'Missões',
   render(ctx) {
+    let tab = 'dia';
+    try { tab = sessionStorage.getItem('fichabet_mtab') || 'dia'; } catch { /* ignore */ }
     const el = h(`
       <section class="page">
-        <div class="page-hero" style="--c1:#f97316;--c2:#be123c">${ico('bullseye', 'ph-img')}<div><h1>Missões diárias</h1><p>Novas missões todo dia. Complete todas para abrir o baú!</p><span class="ph-timer"></span></div></div>
+        <div class="page-hero" style="--c1:#f97316;--c2:#be123c">${ico('bullseye', 'ph-img')}<div><h1>Missões</h1><p>Diárias, gerais e de cada slot. As gerais e as dos slots são <b>infinitas</b>!</p><span class="ph-timer"></span></div></div>
+        <div class="tabs m-tabs">
+          <button data-tab="dia">Diárias<i class="tdot hidden"></i></button>
+          <button data-tab="geral">Gerais ∞<i class="tdot hidden"></i></button>
+          <button data-tab="slots">Slots ∞<i class="tdot hidden"></i></button>
+        </div>
         <div class="missions"></div>
         <div class="panel chest-panel"></div>
       </section>`);
     const list = $('.missions', el), chest = $('.chest-panel', el), timer = $('.ph-timer', el);
-    const render = () => {
+    const daily = () => {
       const ms = Progress.missions();
       list.innerHTML = ms.map(m => {
         const pct = Math.min(100, (m.p / m.goal) * 100);
@@ -249,14 +284,45 @@ Pages.missoes = {
         <small>${ALL_MISSIONS_BONUS.fs} rodadas grátis + ${ALL_MISSIONS_BONUS.xp} XP</small></div>
         <button class="btn ${all && !got ? 'btn-gold' : 'btn-ghost'} chest-claim" ${all && !got ? '' : 'disabled'}>${got ? '✔' : 'Abrir'}</button>`;
     };
+    const general = () => {
+      const ts = Progress.tracks().sort((a, b) => b.done - a.done);
+      list.innerHTML = ts.map(t => questRow(t, t.done ? `<button class="btn btn-gold" data-track="${t.id}">Coletar</button>` : `<a class="btn btn-primary" href="#/">Jogar</a>`)).join('');
+      const lv = ts.reduce((s, t) => s + t.lv, 0);
+      chest.innerHTML = `${ico('trophy', 'chest-img')}<div class="m-body"><b>${fmt0(lv)} missões gerais concluídas</b><small>Cada missão coletada libera o próximo nível na hora. A cada 5 níveis de uma trilha vêm rodadas grátis.</small></div>`;
+    };
+    const slots = () => {
+      const ready = Progress.slotQuestsReady();
+      const recent = Progress.s.recent.map(id => Progress.slotQuest(id)).filter(Boolean);
+      const seen = new Set();
+      const qs = [...ready, ...recent].filter(q => (seen.has(q.gid) ? false : seen.add(q.gid)));
+      // completa com alguns slots ainda não jogados para dar ideia
+      App.games.filter(g => g.category === 'slots' && !seen.has(g.id)).slice(0, Math.max(0, 6 - qs.length)).forEach(g => qs.push(Progress.slotQuest(g.id)));
+      list.innerHTML = qs.map(q => questRow(q, q.done ? `<button class="btn btn-gold" data-slot="${q.gid}">Coletar</button>` : `<a class="btn btn-primary" href="#/${q.gid}">Jogar</a>`, { art: q.game.art, title: q.game.name })).join('');
+      const tot = Object.values(Progress.s.slotq).reduce((s, x) => s + x.lv, 0);
+      chest.innerHTML = `${ico('slot', 'chest-img')}<div class="m-body"><b>${fmt0(tot)} missões de slots concluídas</b><small>Todo slot tem a sua sequência infinita. Abra o 🎯 dentro de qualquer slot para ver a missão dele.</small></div>`;
+    };
+    const render = () => {
+      $$('.m-tabs button', el).forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
+      const dots = { dia: Progress.missions().filter(m => m.done && !m.claimed).length, geral: Progress.tracks().filter(t => t.done).length, slots: Progress.slotQuestsReady().length };
+      $$('.m-tabs button', el).forEach(b => $('.tdot', b).classList.toggle('hidden', !dots[b.dataset.tab]));
+      timer.classList.toggle('hidden', tab !== 'dia');
+      chest.classList.toggle('wide', tab !== 'dia');
+      ({ dia: daily, geral: general, slots })[tab]();
+    };
     el.addEventListener('click', e => {
+      const tb = e.target.closest('[data-tab]');
+      if (tb) { tab = tb.dataset.tab; try { sessionStorage.setItem('fichabet_mtab', tab); } catch { /* ignore */ } Sfx.click(); render(); return; }
       const b = e.target.closest('[data-id]');
       if (b && Progress.claimMission(b.dataset.id)) { UI.confetti(25); render(); }
+      const t = e.target.closest('[data-track]');
+      if (t && Progress.claimTrack(t.dataset.track)) { UI.confetti(25); render(); }
+      const sq = e.target.closest('[data-slot]');
+      if (sq && Progress.claimSlotQuest(sq.dataset.slot)) { UI.confetti(25); render(); }
       if (e.target.closest('.chest-claim') && Progress.claimMissionsBonus()) { UI.confetti(60, ['gift', 'coin', 'star']); render(); }
     });
     const tick = () => {
       const now = new Date(), mid = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
-      timer.textContent = '⏰ Novas missões em ' + fmtDur(mid - now);
+      timer.textContent = '⏰ Novas diárias em ' + fmtDur(mid - now);
     };
     ctx.interval(tick, 1000);
     tick();
@@ -275,7 +341,7 @@ Pages.passe = {
       <section class="page">
         <div class="page-hero pass-hero" style="--c1:#7c3aed;--c2:#db2777">${ico('ticket', 'ph-img')}
           <div class="pass-head"><h1>Temporada: ${SEASON_NAMES[P.s.season % SEASON_NAMES.length]}</h1>
-            <p>Ganhe XP jogando e completando missões. Cada nível libera prêmios.</p>
+            <p>Ganhe XP jogando e completando missões. 50 níveis de prêmios crescentes e, depois, níveis infinitos.</p>
             <div class="pass-lvl"><span class="lvl-badge big"></span><div class="xpbar"><i></i><span></span></div></div>
             <span class="ph-timer"></span>
           </div>
@@ -303,11 +369,16 @@ Pages.passe = {
     const render = () => {
       $('.lvl-badge', el).textContent = 'Nv ' + P.level;
       $('.pass-lvl .xpbar i', el).style.width = P.levelPct + '%';
-      $('.pass-lvl .xpbar span', el).textContent = P.level >= P.PASS_LEVELS ? 'Nível máximo!' : `${P.s.xp % P.XP_PER_LEVEL} / ${P.XP_PER_LEVEL} XP`;
+      const pi = P.passInfo;
+      $('.pass-lvl .xpbar span', el).textContent = `${fmt(pi.into).replace(',00', '')} / ${fmt(pi.need).replace(',00', '')} XP`;
       let html = '<div class="pt-col pt-labels"><div class="pt-lv">Nível</div><div class="pt-name">Grátis</div><div class="pt-name prem">Premium 👑</div></div>';
-      for (let l = 1; l <= P.PASS_LEVELS; l++) {
+      // níveis 1–50 e, depois deles, os níveis infinitos perto do atual
+      const extraFrom = Math.max(P.PASS_LEVELS + 1, P.level - 15), extraTo = Math.max(P.PASS_LEVELS + 3, P.level + 3);
+      const levels = [...Array.from({ length: P.PASS_LEVELS }, (_, i) => i + 1), ...Array.from({ length: extraTo - extraFrom + 1 }, (_, i) => extraFrom + i)];
+      levels.forEach(l => {
+        if (l === P.PASS_LEVELS + 1 || (l === extraFrom && l > P.PASS_LEVELS)) html += `<div class="pt-col pt-inf"><div class="pt-lv">∞</div><div class="pt-inf-txt">Depois do ${P.PASS_LEVELS}: um nível a cada ${fmt(P.PASS_EXTRA_COST).replace(',00', '')} XP, sempre com o mesmo prêmio</div></div>`;
         html += `<div class="pt-col ${l === P.level ? 'cur' : ''} ${l <= P.level ? 'reached' : ''}"><div class="pt-lv">${l}</div>${cell(l, 'free')}${cell(l, 'prem')}</div>`;
-      }
+      });
       track.innerHTML = html;
       prem.innerHTML = P.s.premium
         ? `${ico('crown')}<div><b>Passe Premium ativo</b><small>+25% de XP e trilha premium liberada</small></div>`

@@ -9,10 +9,7 @@
   const K = SlotKit;
   const { S, pool, ways, lines, cells, count, key, cascade, clusters, payClusters, table, heads, pay, tumble, scatters } = K;
   const STUDIO = 'pragmatic';
-  const SUITS = (pays, w = [9, 9, 10, 10]) => [
-    S('as', 'spade', 'Espadas', pays[0], w[0]), S('copas', 'heartsuit', 'Copas', pays[1], w[1]),
-    S('ouros', 'diamondsuit', 'Ouros', pays[2], w[2]), S('paus', 'clubsuit', 'Paus', pays[3], w[3]),
-  ];
+  const SUITS = (pays, w = [9, 9, 10, 10]) => K.ROYALS(pays, w);
   const randHeights = (n, min, max) => Array.from({ length: n }, () => RNG.int(min, max));
 
   /* =========================================================
@@ -21,7 +18,7 @@
   (() => {
     const SY = [
       S('rott', 'dog', 'Rottweiler', [0.5, 1, 2.5, 5], 4), S('poodle', 'poodle', 'Poodle', [0.4, 0.8, 2, 4], 5),
-      S('osso', 'bone', 'Osso', [0.3, 0.6, 1.5, 3], 6), S('bola', 'soccer', 'Bolinha', [0.25, 0.5, 1, 2], 7),
+      S('osso', 'bone', 'Osso', [0.3, 0.6, 1.5, 3], 6), S('bola', 'tennis', 'Bolinha', [0.25, 0.5, 1, 2], 7),
       ...SUITS([[0.1, 0.2, 0.4, 0.8], [0.1, 0.2, 0.4, 0.8], [0.05, 0.1, 0.25, 0.5], [0.05, 0.1, 0.25, 0.5]]),
     ];
     const WILD = { id: 'w', img: 'house', name: 'Casinha', wild: true, reels: [1, 2, 3, 4], w: 1.6, fw: 1.6, rw: 0 };
@@ -91,7 +88,7 @@
   (() => {
     const L25 = K.LINES_5x3.slice(0, 25);
     const SY = [
-      S('bisao', 'bison', 'Bisão', [5, 10, 25], 3), S('cavalo', 'horse', 'Cavalo', [2, 5, 15], 4), S('aguia', 'eagle', 'Águia', [1.5, 4, 10], 4),
+      S('bisao', 'ram', 'Carneiro', [5, 10, 25], 3), S('cavalo', 'horse', 'Cavalo', [2, 5, 15], 4), S('aguia', 'dove', 'Pomba', [1.5, 4, 10], 4),
       S('puma', 'leopard', 'Puma', [1, 3, 8], 5),
       ...SUITS([[0.5, 1.5, 4], [0.5, 1.5, 4], [0.25, 1, 2.5], [0.25, 1, 2.5]], [8, 8, 9, 9]),
     ];
@@ -162,7 +159,7 @@
     const T = n => (n < 5 ? -1 : n <= 6 ? 0 : n <= 8 ? 1 : n <= 10 ? 2 : n <= 12 ? 3 : n <= 14 ? 4 : 5);
     const SY = [
       S('morango', 'strawberry', 'Morango', [1, 2, 4, 10, 30, 100], 5), S('maca', 'apple', 'Maçã', [0.8, 1.5, 3, 7, 20, 80], 6),
-      S('ameixa', 'plum', 'Ameixa', [0.6, 1.2, 2.5, 5, 15, 60], 7), S('laranja', 'tangerine', 'Laranja', [0.5, 1, 2, 4, 10, 40], 8),
+      S('ameixa', 'plum', 'Ameixa', [0.6, 1.2, 2.5, 5, 15, 60], 7), S('laranja', 'peach', 'Pêssego', [0.5, 1, 2, 4, 10, 40], 8),
       S('limao', 'lemon', 'Limão', [0.4, 0.8, 1.5, 3, 8, 30], 9), S('uva', 'grapes', 'Uva', [0.3, 0.6, 1.2, 2.5, 6, 25], 10),
       S('banana', 'banana', 'Banana', [0.25, 0.5, 1, 2, 5, 20], 11),
     ];
@@ -319,7 +316,7 @@
       ...SUITS([[0.15, 0.3, 0.6, 1.2], [0.15, 0.3, 0.6, 1.2], [0.1, 0.2, 0.4, 0.8], [0.1, 0.2, 0.4, 0.8]]),
     ];
     const WILD = { id: 'w', img: 'eye', name: 'Madame', wild: true, m: 2, reels: [1, 2, 3, 4], w: 1.1 };
-    const SC = { id: 'sc', img: 'sparkles', name: 'Destino', sc: true, w: 0.68 };
+    const SC = { id: 'sc', img: 'dizzystar', name: 'Destino', sc: true, w: 0.68 };
     const all = [...SY, WILD, SC];
     const draw = pool(all);
     const SPINS = [{ v: 5, w: 15 }, { v: 6, w: 20 }, { v: 8, w: 25 }, { v: 10, w: 22 }, { v: 12, w: 18 }];
@@ -336,7 +333,7 @@
       tables: [table('Pagamento por caminho', heads(3, 4, ' rolos'), SY, 'Megaways: até 200.704 caminhos. A Madame (coringa x2) dobra o caminho em que entra; várias se somam.')],
       highlights: ['🔮 Megaways com até <b>200.704</b> caminhos', '👁️ Coringa da Madame (rolos 2 a 5) vale <b>x2</b>', '✨ 3+ scatters giram a <b>Roda do Destino</b>: define as rodadas grátis e um <b>multiplicador fixo de x2 a x25</b>', 'Prêmio máximo: <b>5.000x</b>'],
       how: `<p><b>6 rolos Megaways</b> (2 a 7 símbolos cada). Iguais em rolos seguidos a partir da esquerda pagam por caminho.</p><p>${ico('eye')} <b>Madame</b> é o coringa (rolos 2 a 5) e multiplica por <b>x2</b> as combinações em que entra.</p>`,
-      features: `<p>${ico('sparkles')} <b>3 ou mais scatters</b> giram a <b>Roda do Destino</b> duas vezes: a primeira define as rodadas grátis (5 a 12) e a segunda um <b>multiplicador de x2 a x25</b> que vale para <b>todos</b> os ganhos das rodadas.</p>
+      features: `<p>${ico('dizzystar')} <b>3 ou mais scatters</b> giram a <b>Roda do Destino</b> duas vezes: a primeira define as rodadas grátis (5 a 12) e a segunda um <b>multiplicador de x2 a x25</b> que vale para <b>todos</b> os ganhos das rodadas.</p>
         <p>3+ scatters durante as rodadas giram a roda de giros de novo (giros extras, sem limite).</p>`,
       make,
       async spin(rt) {
@@ -368,12 +365,12 @@
   (() => {
     const L40 = K.linesFor(4, 40);
     const SY = [
-      S('bastet', 'cat', 'Gata Bastet', [2, 5, 15], 3), S('preto', 'blackcat', 'Gato preto', [1.5, 4, 10], 3),
-      S('anfora', 'amphora', 'Ânfora', [1, 2.5, 6], 5), S('escaravelho', 'beetle', 'Escaravelho', [0.8, 2, 5], 5), S('olho', 'eye', 'Olho de Hórus', [0.6, 1.5, 4], 6),
+      S('bastet', 'heartcat', 'Gata apaixonada', [2, 5, 15], 3), S('preto', 'wrycat', 'Gato esperto', [1.5, 4, 10], 3),
+      S('anfora', 'yarn', 'Novelo', [1, 2.5, 6], 5), S('escaravelho', 'milk', 'Leite', [0.8, 2, 5], 5), S('olho', 'ribbon', 'Laço', [0.6, 1.5, 4], 6),
       ...SUITS([[0.2, 0.6, 1.5], [0.2, 0.6, 1.5], [0.15, 0.5, 1.2], [0.15, 0.5, 1.2]], [8, 8, 9, 9]),
     ];
-    const WILD = { id: 'w', img: 'catface', name: 'Cleogata', wild: true, reels: [1, 2, 3, 4], w: 1.3, fw: 2.2 };
-    const SC = { id: 'sc', img: 'paw', name: 'Pata', sc: true, w: 0.95, fw: 0.9 };
+    const WILD = { id: 'w', img: 'grincat', name: 'Cleogata', wild: true, reels: [1, 2, 3, 4], w: 1.3, fw: 2.2 };
+    const SC = { id: 'sc', img: 'fish', name: 'Peixe', sc: true, w: 0.95, fw: 0.9 };
     const all = [...SY, WILD, SC];
     const draw = pool(all);
     const fill = x => { if (x.wild) x.m = RNG.weighted([{ m: 2, w: 65 }, { m: 3, w: 35 }]).m; return x; };
@@ -395,9 +392,9 @@
       tables: [table('Pagamento por linha', heads(3, 3), SY, 'Iguais seguidos a partir do rolo da esquerda.'),
         { title: 'Pata (scatter)', head: ['3', '4', '5'], rows: [{ img: 'paw', name: 'Pata', badge: 'SCATTER', pays: [5, 5, 5] }], note: 'Paga 5x a aposta e abre 8, 12 ou 16 rodadas grátis.' }],
       highlights: ['😺 Cleogata é coringa (rolos 2 a 5) com <b>x2 ou x3</b> — vários na linha <b>se somam</b>', '🐾 3/4/5 patas = 5x + <b>8/12/16 rodadas grátis</b> com coringas <b>colantes</b>', '🐈 Pilha cheia de gatos no rolo 1 = <b>respin até ganhar</b>', 'Prêmio máximo: <b>5.000x</b>'],
-      how: `<p>Grade <b>5×4</b> com <b>40 linhas</b>.</p><p>${ico('catface')} <b>Cleogata</b> é o coringa (rolos 2 a 5) e traz <b>x2 ou x3</b>; numa linha com vários, os multiplicadores se somam.</p>
+      how: `<p>Grade <b>5×4</b> com <b>40 linhas</b>.</p><p>${ico('grincat')} <b>Cleogata</b> é o coringa (rolos 2 a 5) e traz <b>x2 ou x3</b>; numa linha com vários, os multiplicadores se somam.</p>
         <p><b>Respin:</b> se uma pilha cheia de gatos (Bastet ou gato preto) cair no rolo 1, ela e os gatos iguais travam e o resto gira de novo <b>até sair um ganho</b>.</p>`,
-      features: `<p>${ico('paw')} <b>3, 4 ou 5 patas</b> pagam 5x a aposta e dão <b>8, 12 ou 16 rodadas grátis</b>. Nelas todo coringa que cair <b>fica preso até o fim</b> com seu multiplicador. Pilha cheia de gatos no rolo 1 dá <b>+2 giros</b>.</p>`,
+      features: `<p>${ico('fish')} <b>3, 4 ou 5 patas</b> pagam 5x a aposta e dão <b>8, 12 ou 16 rodadas grátis</b>. Nelas todo coringa que cair <b>fica preso até o fim</b> com seu multiplicador. Pilha cheia de gatos no rolo 1 dá <b>+2 giros</b>.</p>`,
       make: () => make(),
       async spin(rt) {
         const g = make();
@@ -441,12 +438,12 @@
   (() => {
     const L25 = K.LINES_5x3.slice(0, 25);
     const SY = [
-      S('joao', 'cowboy', 'João Caçador', [5, 15, 50], 3), S('gata', 'cat', 'Gata dourada', [2.5, 8, 25], 4),
-      S('anfora', 'amphora', 'Ânfora', [1.5, 4, 12], 5), S('mapa', 'worldmap', 'Mapa', [1, 3, 8], 6),
+      S('joao', 'backpack', 'Mochila do João', [5, 15, 50], 3), S('gata', 'lizard', 'Lagarto', [2.5, 8, 25], 4),
+      S('anfora', 'urn', 'Urna', [1.5, 4, 12], 5), S('mapa', 'worldmap', 'Mapa', [1, 3, 8], 6),
       ...SUITS([[0.4, 1, 3], [0.4, 1, 3], [0.25, 0.6, 2], [0.25, 0.6, 2]], [8, 8, 9, 9]),
     ];
-    const WILD = { id: 'w', img: 'crown', name: 'Rainha', wild: true, w: 1.3 };
-    const SC = { id: 'sc', img: 'temple', name: 'Pirâmide', sc: true, reels: [1, 2, 3], w: 1.7 };
+    const WILD = { id: 'w', img: 'ladybug', name: 'Rainha', wild: true, w: 1.3 };
+    const SC = { id: 'sc', img: 'camping', name: 'Acampamento', sc: true, reels: [1, 2, 3], w: 1.7 };
     const MONEY = { id: 'm', img: 'beetle', name: 'Escaravelho', coin: true, reels: [0, 1, 2, 3], w: 2.6, fw: 9 };
     const COLLECT = { id: 'col', img: 'compass', name: 'Coletar', reels: [4], w: 1.8 };
     const VALS = [{ v: 0.5, w: 30 }, { v: 1, w: 30 }, { v: 2, w: 18 }, { v: 3, w: 10 }, { v: 5, w: 7 }, { v: 10, w: 3 }, { v: 25, w: 1.5 }, { v: 50, w: 0.5 }];
@@ -467,8 +464,8 @@
       tables: [table('Pagamento por linha', heads(3, 3), SY, 'Iguais seguidos a partir do rolo da esquerda. A Rainha é coringa.'),
         { title: 'Escaravelhos (valores)', head: ['valor'], rows: VALS.map(v => ({ img: 'beetle', name: 'Escaravelho', pays: [v.v] })) }],
       highlights: ['🪲 Escaravelhos com valor nos rolos 1 a 4; a <b>bússola</b> no rolo 5 <b>coleta tudo</b>', '🏛️ 3 pirâmides (rolos 2 a 4) = 1x + <b>8 rodadas grátis</b>', 'Nas rodadas grátis os valores vão para um <b>pote</b>; no fim, um <b>giro final</b> com escaravelho gigante decide se você leva o pote', 'Prêmio máximo: <b>10.500x</b>'],
-      how: `<p>Grade <b>5×3</b> com <b>25 linhas</b>. ${ico('crown')} A <b>Rainha</b> é coringa.</p><p>${ico('beetle')} <b>Escaravelhos</b> mostram valores em fichas (rolos 1 a 4). Se a ${ico('compass')} <b>bússola</b> cair no rolo 5, ela <b>coleta</b> a soma de todos os escaravelhos da tela.</p>`,
-      features: `<p>${ico('temple')} <b>3 pirâmides</b> (só nos rolos 2, 3 e 4) pagam 1x e dão <b>8 rodadas grátis</b> (3 pirâmides nelas = +8, sem limite).</p>
+      how: `<p>Grade <b>5×3</b> com <b>25 linhas</b>. ${ico('ladybug')} A <b>Rainha</b> é coringa.</p><p>${ico('beetle')} <b>Escaravelhos</b> mostram valores em fichas (rolos 1 a 4). Se a ${ico('compass')} <b>bússola</b> cair no rolo 5, ela <b>coleta</b> a soma de todos os escaravelhos da tela.</p>`,
+      features: `<p>${ico('camping')} <b>3 pirâmides</b> (só nos rolos 2, 3 e 4) pagam 1x e dão <b>8 rodadas grátis</b> (3 pirâmides nelas = +8, sem limite).</p>
         <p>Durante as rodadas, cada escaravelho que aparece soma seu valor no <b>pote</b>. Ao final, um <b>escaravelho gigante</b> ocupa os rolos 1 a 4 e o rolo 5 gira até 3 vezes: se cair a bússola, <b>você leva o pote inteiro</b>.</p>`,
       make,
       async spin(rt) {
@@ -518,12 +515,12 @@
   (() => {
     const L50 = K.linesFor(5, 50);
     const SY = [
-      S('melancia', 'watermelon', 'Melancia', [1, 3, 10], 4), S('abacaxi', 'pineapple', 'Abacaxi', [0.8, 2, 6], 5), S('uva', 'grapes', 'Uva', [0.6, 1.5, 4], 6),
-      S('ameixa', 'plum', 'Ameixa', [0.4, 1, 3], 7), S('laranja', 'tangerine', 'Laranja', [0.3, 0.8, 2], 8), S('limao', 'lemon', 'Limão', [0.2, 0.5, 1.5], 9),
+      S('melancia', 'watermelon', 'Melancia', [1, 3, 10], 4), S('abacaxi', 'pineapple', 'Abacaxi', [0.8, 2, 6], 5), S('uva', 'kiwi', 'Kiwi', [0.6, 1.5, 4], 6),
+      S('ameixa', 'pear', 'Pera', [0.4, 1, 3], 7), S('laranja', 'mango', 'Manga', [0.3, 0.8, 2], 8), S('limao', 'melon', 'Melão', [0.2, 0.5, 1.5], 9),
       S('cereja', 'cherries', 'Cereja', [0.1, 0.4, 1], 10),
     ];
-    const WILD = { id: 'w', img: 'crown', name: 'Coroa', wild: true, w: 0.5, fw: 0 };
-    const SC = { id: 'sc', img: 'bluediamond', name: 'Diamante', sc: true, w: 0.58, fw: 1.3 };
+    const WILD = { id: 'w', img: 'tropicaldrink', name: 'Coquetel', wild: true, w: 0.5, fw: 0 };
+    const SC = { id: 'sc', img: 'diamonddot', name: 'Diamante', sc: true, w: 0.58, fw: 1.3 };
     const all = [...SY, WILD, SC];
     const draw = pool(all);
     const make = (wk = 'w') => Array.from({ length: 5 }, (_, c) => Array.from({ length: 5 }, () => draw(c, wk)));
@@ -538,8 +535,8 @@
       lineList: { cols: 5, rows: 5, list: L50, text: '50 linhas fixas, da esquerda para a direita.' },
       tables: [table('Pagamento por linha', heads(3, 3), SY, 'Iguais seguidos a partir do rolo da esquerda.')],
       highlights: ['🍉 Grade <b>5×5</b> com <b>50 linhas</b>', '💎 3+ diamantes = <b>6 rodadas grátis</b> com <b>coroa coringa gigante</b> que anda pela grade', 'A cada 3 diamantes coletados a coroa <b>cresce</b> (1×1 → 2×2 → 3×3 → 4×4 → 5×5) e você ganha giros extras', 'Prêmio máximo: <b>5.000x</b>'],
-      how: `<p>Grade <b>5×5</b> com <b>50 linhas</b>. ${ico('crown')} A coroa é coringa.</p>`,
-      features: `<p>${ico('bluediamond')} <b>3 ou mais diamantes</b> dão <b>6 rodadas grátis</b>. Nelas a ${ico('crown')} <b>coroa gigante</b> aparece em um lugar aleatório a cada giro, começando com 1×1.</p>
+      how: `<p>Grade <b>5×5</b> com <b>50 linhas</b>. ${ico('tropicaldrink')} A coroa é coringa.</p>`,
+      features: `<p>${ico('diamonddot')} <b>3 ou mais diamantes</b> dão <b>6 rodadas grátis</b>. Nelas a ${ico('tropicaldrink')} <b>coroa gigante</b> aparece em um lugar aleatório a cada giro, começando com 1×1.</p>
         <p>Cada diamante que cair vai para o medidor: a cada <b>3 diamantes</b> a coroa sobe de tamanho (até 5×5) e você ganha de <b>1 a 3 giros extras</b> (até 4 melhorias).</p>`,
       make: () => make(),
       async spin(rt) {
@@ -580,8 +577,8 @@
      ========================================================= */
   (() => {
     const SY = [
-      S('bufalo', 'bison', 'Búfalo', [1, 2.5, 6, 15], 4), S('aguia', 'eagle', 'Águia', [0.6, 1.2, 3, 8], 5), S('lobo', 'wolf', 'Lobo', [0.5, 1, 2.5, 6], 5),
-      S('puma', 'leopard', 'Puma', [0.4, 0.8, 2, 5], 6), S('cervo', 'deer', 'Cervo', [0.3, 0.6, 1.5, 4], 6),
+      S('bufalo', 'bison', 'Búfalo', [1, 2.5, 6, 15], 4), S('aguia', 'eagle', 'Águia', [0.6, 1.2, 3, 8], 5), S('lobo', 'beaver', 'Castor', [0.5, 1, 2.5, 6], 5),
+      S('puma', 'skunk', 'Gambá', [0.4, 0.8, 2, 5], 6), S('cervo', 'deer', 'Cervo', [0.3, 0.6, 1.5, 4], 6),
       ...SUITS([[0.1, 0.2, 0.5, 1.2], [0.1, 0.2, 0.5, 1.2], [0.08, 0.15, 0.4, 1], [0.08, 0.15, 0.4, 1]]),
     ];
     const WILD = { id: 'w', img: 'sunset', name: 'Pôr do sol', wild: true, reels: [1, 2, 3, 4], w: 0.9, fw: 2 };

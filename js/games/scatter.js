@@ -72,7 +72,7 @@
               <div class="slot-bet"></div>
               <button class="spin-btn" aria-label="Girar"><span>⟳</span></button>
               <div class="slot-toggles">
-                <button class="toggle" data-t="turbo">⚡ Turbo</button>
+                <button class="toggle speed" data-t="speed"></button>
                 <button class="toggle" data-t="auto">🔁 Auto</button>
               </div>
             </div>
@@ -93,10 +93,10 @@
         stepper.el.addEventListener('click', renderBuy);
         renderBuy();
 
-        let busy = false, turbo = false, auto = false;
+        let busy = false, auto = false;
         const msg = t => { msgEl.textContent = t; };
         const setAuto = v => { auto = v; $('[data-t="auto"]', el).classList.toggle('on', v); };
-        const wait = ms => ctx.sleep(turbo ? ms * 0.45 : ms);
+        const wait = ms => ctx.sleep(ms * Speed.f);
 
         const newCell = fs => {
           const p = fs ? cfg.orbFS : cfg.orbBase;
@@ -116,7 +116,7 @@
               if (winIds && winIds.has(x.id)) cls.push('win');
               if (x.id === 'sc') cls.push('scatter');
               if (x.conv) cls.push('conv');
-              const delay = x.fresh ? `style="animation-delay:${(turbo ? 15 : 35) * c + (ROWS - r) * 12}ms"` : '';
+              const delay = x.fresh ? `style="animation-delay:${(Speed.pick(15, 35)) * c + (ROWS - r) * 12}ms"` : '';
               html += x.orb
                 ? `<div class="${cls.join(' ')} orb" ${delay}><img src="${IMG(cfg.orbImg)}" alt=""><b>x${x.orb}</b></div>`
                 : x.portal
@@ -330,7 +330,7 @@
           fsBar.render();
           if (ctx.alive && (auto || (fsBar.active && Progress.s.fs > 0))) {
             (async () => {
-              await ctx.sleep(pay > 0 ? 900 : (turbo ? 200 : 450));
+              await ctx.sleep(pay > 0 ? 900 : (Speed.pick(200, 450)));
               while (ctx.alive && $('.bigwin, .ad-backdrop')) await ctx.sleep(300);
               if (ctx.alive && !busy && (auto || (fsBar.active && Progress.s.fs > 0))) spin();
             })();
@@ -339,11 +339,12 @@
 
         spinBtn.addEventListener('click', spin);
         buyBtn.addEventListener('click', buy);
+        Speed.bind($('[data-t="speed"]', el), ctx);
         $('.slot-toggles', el).addEventListener('click', e => {
           const t = e.target.dataset.t;
           if (!t) return;
           Sfx.click();
-          if (t === 'turbo') { turbo = !turbo; e.target.classList.toggle('on', turbo); }
+          if (t === 'speed') Speed.next();
           if (t === 'auto') { setAuto(!auto); if (auto && !busy) spin(); }
         });
         const onKey = e => {

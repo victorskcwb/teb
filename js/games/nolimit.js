@@ -9,10 +9,7 @@
   const { S, pool, ways, cells, count, key, table, heads, pay, tumble, scatters } = K;
   const STUDIO = 'nolimit';
   const grid = (hs, f) => hs.map((hh, c) => Array.from({ length: hh }, (_, r) => f(c, r)));
-  const SUITS = (pays, w = [8, 8, 9, 9]) => [
-    S('as', 'spade', 'Espadas', pays[0], w[0]), S('copas', 'heartsuit', 'Copas', pays[1], w[1]),
-    S('ouros', 'diamondsuit', 'Ouros', pays[2], w[2]), S('paus', 'clubsuit', 'Paus', pays[3], w[3]),
-  ];
+  const SUITS = (pays, w = [8, 8, 9, 9]) => K.ROYALS(pays, w);
   const LOCK = () => ({ id: 'lock', img: 'locked', name: 'Bloqueado', c: 'locked', noPay: true });
   /** xNudge: coringa alto que empurra até cobrir o rolo; cada empurrão soma +1. */
   const nudge = (WILD, hgt, extra = 0) => { const n = RNG.int(0, hgt - 1); return { n, m: 1 + n + extra }; };
@@ -23,12 +20,12 @@
      ========================================================= */
   (() => {
     const SY = [
-      S('paciente', 'zombie', 'Paciente', [2, 6, 25], 3), S('fantasma', 'ghost', 'Fantasma', [1.5, 5, 18], 3), S('cerebro', 'brain', 'Cérebro', [1, 3, 12], 4),
+      S('paciente', 'maskface', 'Paciente', [2, 6, 25], 3), S('fantasma', 'dizzy', 'Tonto', [1.5, 5, 18], 3), S('cerebro', 'brain', 'Cérebro', [1, 3, 12], 4),
       S('seringa', 'syringe', 'Seringa', [0.8, 2.5, 8], 4), S('pilula', 'pill', 'Pílula', [0.6, 2, 6], 5), ...SUITS([[0.3, 0.8, 3], [0.3, 0.8, 3], [0.2, 0.6, 2], [0.2, 0.6, 2]], [6, 6, 7, 7]),
     ];
-    const WILD = { id: 'w', img: 'skull', name: 'xNudge', wild: true, reels: [1, 2, 3], w: 0.5 };
-    const XW = { id: 'xw', img: 'eye', name: 'xWays', xw: true, w: 0.55, fw: 0.9 };
-    const SC = { id: 'sc', img: 'spider', name: 'Escorpião', sc: true, w: 0.95, fw: 0 };
+    const WILD = { id: 'w', img: 'bandage', name: 'xNudge', wild: true, reels: [1, 2, 3], w: 0.5 };
+    const XW = { id: 'xw', img: 'eyes', name: 'xWays', xw: true, w: 0.55, fw: 0.9 };
+    const SC = { id: 'sc', img: 'microbe', name: 'Micróbio', sc: true, w: 0.95, fw: 0 };
     const all = [...SY, WILD, XW, SC];
     const draw = pool(all);
     const H = [2, 3, 3, 3, 2];
@@ -41,7 +38,7 @@
       if (RNG.float() < (fs ? 1 : 0.12)) {
         const k = RNG.int(1, fs ? 6 : 5), pos = RNG.shuffle(cells(g, x => !x.sc && !x.wild));
         pos.slice(0, k).forEach(([c, r]) => { const x = g[c][r]; g[c][r] = { ...x, n: (x.n || 1) * 2, t: '×' + (x.n || 1) * 2, c: 'fire', fresh: true }; });
-        rt.msg(`🔥 Fire Frames: ${Math.min(k, pos.length)} posições se dividiram!`);
+        rt.msg(`🔥 Fire Frames: ${Math.min(k, pos.length)} posições se dividiram!`); rt.fx('zap');
       }
       // xNudge no rolo inteiro
       for (let c = 1; c <= 3; c++) if (g[c].some(x => x.wild)) { const nd = nudge(WILD, H[c]); fillReel(g, c, { ...WILD, m: nd.m, t: 'x' + nd.m, c: 'duel' }); }
@@ -80,11 +77,11 @@
      ========================================================= */
   (() => {
     const SY = [
-      S('chefe', 'police', 'Guarda', [2, 6, 25], 3), S('detento', 'ogre', 'Detento', [1.5, 5, 18], 3), S('corrente', 'chains', 'Corrente', [1, 3, 12], 4),
+      S('chefe', 'police', 'Guarda', [2, 6, 25], 3), S('detento', 'cursing', 'Detento', [1.5, 5, 18], 3), S('corrente', 'chains', 'Corrente', [1, 3, 12], 4),
       S('chave', 'key', 'Chave', [0.8, 2.5, 8], 4), ...SUITS([[0.3, 0.8, 3], [0.3, 0.8, 3], [0.2, 0.6, 2], [0.2, 0.6, 2]]),
     ];
     const WILD = { id: 'w', img: 'policelight', name: 'Coringa', wild: true, reels: [1, 2, 3], w: 0.7, fw: 0.6 };
-    const XW = { id: 'xw', img: 'eye', name: 'xWays', xw: true, w: 0.45 };
+    const XW = { id: 'xw', img: 'mirror', name: 'xWays', xw: true, w: 0.45 };
     const SC = { id: 'sc', img: 'locked', name: 'Lockdown', sc: true, w: 0.95, fw: 0 };
     const all = [...SY, WILD, XW, SC];
     const draw = pool(all);
@@ -133,11 +130,11 @@
      ========================================================= */
   (() => {
     const SY = [
-      S('xerife', 'cowboy', 'Xerife', [3, 10, 40], 3), S('caixao', 'coffin', 'Caixão', [2, 6, 25], 3), S('pistola', 'pistol', 'Revólver', [1.5, 4, 15], 4),
-      S('cacto', 'cactus', 'Cacto', [1, 3, 10], 4), S('whisky', 'tumbler', 'Whisky', [0.8, 2, 8], 5), ...SUITS([[0.4, 1, 4], [0.4, 1, 4], [0.3, 0.8, 3], [0.3, 0.8, 3]], [7, 7, 8, 8]),
+      S('xerife', 'knot', 'Forca', [3, 10, 40], 3), S('caixao', 'coffin', 'Caixão', [2, 6, 25], 3), S('pistola', 'scorpion', 'Escorpião', [1.5, 4, 15], 4),
+      S('cacto', 'desert', 'Deserto', [1, 3, 10], 4), S('whisky', 'bottle', 'Garrafa', [0.8, 2, 8], 5), ...SUITS([[0.4, 1, 4], [0.4, 1, 4], [0.3, 0.8, 3], [0.3, 0.8, 3]], [7, 7, 8, 8]),
     ];
     const WILD = { id: 'w', img: 'crossbones', name: 'xNudge', wild: true, reels: [1, 2, 3], w: 0.55, fw: 0.8 };
-    const SPLIT = { id: 'split', img: 'collision', name: 'xSplit', wild: true, reels: [4], w: 0.9 };
+    const SPLIT = { id: 'split', img: 'scissors', name: 'xSplit', wild: true, reels: [4], w: 0.9 };
     const SC = { id: 'sc', img: 'headstone', name: 'Lápide', sc: true, reels: [0, 1, 2, 3], w: 1.25, fw: 0 };
     const all = [...SY, WILD, SPLIT, SC];
     const draw = pool(all);
@@ -192,11 +189,11 @@
      ========================================================= */
   (() => {
     const SY = [
-      S('xerife', 'cowboy', 'Pistoleira', [2, 6, 20], 3), S('cavalo', 'horse', 'Cavalo', [1.5, 4, 15], 3), S('distintivo', 'star', 'Distintivo', [1, 3, 10], 4),
-      S('whisky', 'tumbler', 'Whisky', [0.8, 2, 6], 4), ...SUITS([[0.3, 0.8, 2.5], [0.3, 0.8, 2.5], [0.2, 0.6, 2], [0.2, 0.6, 2]]),
+      S('xerife', 'boot', 'Bota', [2, 6, 20], 3), S('cavalo', 'moose', 'Alce', [1.5, 4, 15], 3), S('distintivo', 'medal', 'Medalha', [1, 3, 10], 4),
+      S('whisky', 'beers', 'Cervejas', [0.8, 2, 6], 4), ...SUITS([[0.3, 0.8, 2.5], [0.3, 0.8, 2.5], [0.2, 0.6, 2], [0.2, 0.6, 2]]),
     ];
-    const WILD = { id: 'w', img: 'pistol', name: 'Caçador xNudge', wild: true, w: 0.45, fw: 0.7 };
-    const SC = { id: 'sc', img: 'cactus', name: 'Bônus', sc: true, w: 0.85, fw: 0 };
+    const WILD = { id: 'w', img: 'bullseye', name: 'Caçador xNudge', wild: true, w: 0.45, fw: 0.7 };
+    const SC = { id: 'sc', img: 'railway', name: 'Ferrovia', sc: true, w: 0.85, fw: 0 };
     const all = [...SY, WILD, SC];
     const draw = pool(all);
     const H = [3, 4, 4, 4, 3];
@@ -249,12 +246,12 @@
      ========================================================= */
   (() => {
     const SY = [
-      S('anao', 'pick', 'Picareta', [1, 2, 4, 8], 3), S('lanterna', 'lantern', 'Lanterna', [0.8, 1.6, 3, 6], 4), S('dinamite', 'firecracker', 'Dinamite', [0.6, 1.2, 2.5, 5], 4),
-      S('ouro', 'gem', 'Pepita', [0.5, 1, 2, 4], 5), S('carvao', 'rock', 'Carvão', [0.2, 0.4, 0.8, 1.6], 8), S('martelo', 'hammer', 'Martelo', [0.2, 0.4, 0.8, 1.6], 8),
-      S('pa', 'wrench', 'Ferramenta', [0.15, 0.3, 0.6, 1.2], 9),
+      S('anao', 'pick', 'Picareta', [1, 2, 4, 8], 3), S('lanterna', 'flashlight', 'Lanterna', [0.8, 1.6, 3, 6], 4), S('dinamite', 'firecracker', 'Dinamite', [0.6, 1.2, 2.5, 5], 4),
+      S('ouro', 'mountain', 'Montanha', [0.5, 1, 2, 4], 5), K.L('A', [0.2, 0.4, 0.8, 1.6], 8), K.L('K', [0.2, 0.4, 0.8, 1.6], 8),
+      K.L('Q', [0.15, 0.3, 0.6, 1.2], 9),
     ];
     const BOMB = { id: 'w', img: 'bomb', name: 'xBomb', wild: true, bomb: true, w: 0.45 };
-    const SC = { id: 'sc', img: 'moneybag', name: 'Vagão', sc: true, w: 0.22 };
+    const SC = { id: 'sc', img: 'cart', name: 'Vagão', sc: true, w: 0.22 };
     const all = [...SY, BOMB, SC];
     const draw = pool(all);
     const R = 6;
@@ -280,7 +277,7 @@
         });
         const before = st.open;
         st.open = Math.min(R, st.open + 1 + boom);
-        if (boom) { st.m += boom; rt.chip('mult', 'MULT.', 'x' + st.m); rt.msg(`💣 xBomb! Multiplicador x${st.m}`); rt.fx('boom'); }
+        if (boom) { st.m += boom; rt.chip('mult', 'MULT.', 'x' + st.m); rt.msg(`💣 xBomb! Multiplicador x${st.m}`); rt.fx('v_fire'); rt.fx('boom'); }
         if (st.open > before) rt.chip('rows', 'LINHAS', st.open);
         refill(g, rm, st.open);
         await rt.drop(g);
@@ -345,10 +342,10 @@
      ========================================================= */
   (() => {
     const SY = [
-      S('capitao', 'militaryhelmet', 'Capitão', [2, 6, 20], 3), S('navio', 'ship', 'Navio', [1.5, 4, 15], 3), S('ancora', 'anchor', 'Âncora', [1, 3, 10], 4),
-      S('bussola', 'compass', 'Bússola', [0.8, 2, 6], 4), ...SUITS([[0.3, 0.8, 2.5], [0.3, 0.8, 2.5], [0.2, 0.6, 2], [0.2, 0.6, 2]]),
+      S('capitao', 'militaryhelmet', 'Capitão', [2, 6, 20], 3), S('navio', 'ship', 'Navio', [1.5, 4, 15], 3), S('ancora', 'wave', 'Onda', [1, 3, 10], 4),
+      S('bussola', 'shark', 'Tubarão', [0.8, 2, 6], 4), ...SUITS([[0.3, 0.8, 2.5], [0.3, 0.8, 2.5], [0.2, 0.6, 2], [0.2, 0.6, 2]]),
     ];
-    const WILD = { id: 'w', img: 'telescope', name: 'Periscópio xNudge', wild: true, reels: [1, 2, 3], w: 0.45 };
+    const WILD = { id: 'w', img: 'divingmask', name: 'Periscópio xNudge', wild: true, reels: [1, 2, 3], w: 0.45 };
     const TORP = { id: 'torp', img: 'rocket', name: 'Torpedo', wild: true, reels: [1, 2, 3, 4], w: 0, fw: 0.9 };
     const SC = { id: 'sc', img: 'satellite', name: 'Radar', sc: true, w: 0.65, fw: 0 };
     const all = [...SY, WILD, TORP, SC];
@@ -394,11 +391,11 @@
      ========================================================= */
   (() => {
     const SY = [
-      S('detento', 'ogre', 'Detento', [2, 6, 20], 3), S('guarda', 'police', 'Guarda', [1.5, 4, 15], 3), S('chave', 'key', 'Chave', [1, 3, 10], 4),
-      S('corrente', 'chains', 'Corrente', [0.8, 2, 6], 4), ...SUITS([[0.3, 0.8, 2.5], [0.3, 0.8, 2.5], [0.2, 0.6, 2], [0.2, 0.6, 2]]),
+      S('detento', 'zipper', 'Detento', [2, 6, 20], 3), S('guarda', 'guard', 'Guarda', [1.5, 4, 15], 3), S('chave', 'door', 'Porta', [1, 3, 10], 4),
+      S('corrente', 'spoon', 'Colher', [0.8, 2, 6], 4), ...SUITS([[0.3, 0.8, 2.5], [0.3, 0.8, 2.5], [0.2, 0.6, 2], [0.2, 0.6, 2]]),
     ];
     const NEST = { id: 'w', img: 'cockroach', name: 'Ninho de baratas', wild: true, nest: true, w: 0.5, fw: 0.8 };
-    const SC = { id: 'sc', img: 'locked', name: 'Scatter', sc: true, w: 0.95, fw: 0 };
+    const SC = { id: 'sc', img: 'alarm', name: 'Alarme', sc: true, w: 0.95, fw: 0 };
     const all = [...SY, NEST, SC];
     const draw = pool(all);
     const H = [4, 6, 6, 6, 4];
@@ -457,7 +454,7 @@
      8. Sangue e Sombra (Blood & Shadow) — Barra do Ritual
      ========================================================= */
   (() => {
-    const HI = [S('vampiro', 'bat', 'Vampiro', [2, 6, 20], 3), S('bruxa', 'crystal', 'Bola de cristal', [1.5, 4, 15], 3), S('vela', 'candle', 'Vela negra', [1, 3, 10], 4), S('rosa', 'wilted', 'Rosa murcha', [0.8, 2, 8], 4)];
+    const HI = [S('vampiro', 'vampire', 'Vampiro', [2, 6, 20], 3), S('bruxa', 'mage', 'Bruxa', [1.5, 4, 15], 3), S('vela', 'grimoire', 'Grimório', [1, 3, 10], 4), S('rosa', 'wilted', 'Rosa murcha', [0.8, 2, 8], 4)];
     const LO = SUITS([[0.3, 0.8, 2.5], [0.3, 0.8, 2.5], [0.2, 0.6, 2], [0.2, 0.6, 2]]);
     const WILD = { id: 'w', img: 'blooddrop', name: 'Coringa', wild: true, w: 0.55 };
     const SC = { id: 'sc', img: 'web', name: 'Ritual', sc: true, w: 0.45, fw: 0.3 };
@@ -516,7 +513,7 @@
      9. Gulag Gelado (Remember Gulag) — rolos 5 e 6 trancados
      ========================================================= */
   (() => {
-    const CH = [S('general', 'militaryhelmet', 'General', [2, 5, 15, 40], 3), S('urso', 'bear', 'Urso', [1.5, 4, 10, 30], 3), S('prisioneiro', 'ogre', 'Prisioneiro', [1, 3, 8, 20], 4), S('guarda', 'police', 'Guarda', [0.8, 2, 6, 15], 4)];
+    const CH = [S('general', 'snowman', 'Boneco de neve', [2, 5, 15, 40], 3), S('urso', 'bear', 'Urso', [1.5, 4, 10, 30], 3), S('prisioneiro', 'coldface', 'Prisioneiro', [1, 3, 8, 20], 4), S('guarda', 'matryoshka', 'Matrioska', [0.8, 2, 6, 15], 4)];
     const SY = [...CH, ...SUITS([[0.2, 0.5, 1.5, 4], [0.2, 0.5, 1.5, 4], [0.15, 0.4, 1, 3], [0.15, 0.4, 1, 3]])];
     const WILD = { id: 'w', img: 'snowflake', name: 'Coringa', wild: true, reels: [1, 2, 3, 4, 5], w: 0.5 };
     const SC = { id: 'sc', img: 'ice', name: 'Scatter', sc: true, reels: [0, 1, 2, 3], w: 0.95 };
@@ -568,10 +565,10 @@
      ========================================================= */
   (() => {
     const SY = [
-      S('detetive', 'detective', 'Detetive', [2, 6, 20], 3), S('policial', 'police', 'Policial', [1.5, 4, 15], 3), S('lupa', 'magnifier', 'Lupa', [1, 3, 10], 4),
-      S('camera', 'camera', 'Câmera', [0.8, 2, 6], 4), ...SUITS([[0.3, 0.8, 2.5], [0.3, 0.8, 2.5], [0.2, 0.6, 2], [0.2, 0.6, 2]]),
+      S('detetive', 'detective', 'Detetive', [2, 6, 20], 3), S('policial', 'policecar', 'Viatura', [1.5, 4, 15], 3), S('lupa', 'magnifier', 'Lupa', [1, 3, 10], 4),
+      S('camera', 'videocam', 'Câmera', [0.8, 2, 6], 4), ...SUITS([[0.3, 0.8, 2.5], [0.3, 0.8, 2.5], [0.2, 0.6, 2], [0.2, 0.6, 2]]),
     ];
-    const WILD = { id: 'w', img: 'policelight', name: 'Coringa', wild: true, w: 0.55 };
+    const WILD = { id: 'w', img: 'namebadge', name: 'Coringa', wild: true, w: 0.55 };
     const SC = { id: 'sc', img: 'footprints', name: 'Pegadas', sc: true, w: 0.95 };
     const all = [...SY, WILD, SC];
     const draw = pool(all);

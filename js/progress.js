@@ -62,6 +62,32 @@ const MISSION_POOL = [
   { id: 'ads2', text: 'Assista 2 anúncios', goal: 2, inc: null, coins: 100, xp: 100, art: 'tv' },
 ];
 const MISSIONS_PER_DAY = 5;
+
+/* Missões infinitas gerais: cada trilha tem níveis sem fim; o objetivo e a
+   recompensa crescem a cada nível. Progresso que passa do objetivo sobra
+   para o próximo nível. `abs` = progresso absoluto (contador total). */
+const MISSION_TRACKS = [
+  { id: 'spins', text: n => `Faça ${fmt0(n)} giros em slots`, base: 100, step: 60, inc: e => (e.cat === 'slots' && !e.buy ? 1 : 0), coins: 300, xp: 200, art: 'slot' },
+  { id: 'rounds', text: n => `Jogue ${fmt0(n)} rodadas em qualquer jogo`, base: 150, step: 90, inc: () => 1, coins: 300, xp: 200, art: 'die' },
+  { id: 'wins', text: n => `Vença ${fmt0(n)} rodadas`, base: 40, step: 25, inc: e => (e.payout > e.stake ? 1 : 0), coins: 300, xp: 220, art: 'trophy' },
+  { id: 'big', text: n => `Ganhe 10x ou mais ${n} vez${n > 1 ? 'es' : ''}`, base: 3, step: 2, inc: e => (e.mult >= 10 ? 1 : 0), coins: 400, xp: 250, art: 'fire' },
+  { id: 'huge', text: n => `Ganhe 100x ou mais ${n} vez${n > 1 ? 'es' : ''}`, base: 1, step: 1, inc: e => (e.mult >= 100 && !e.buy ? 1 : 0), coins: 1000, xp: 500, art: 'heartfire' },
+  { id: 'bonus', text: n => `Ative ${n} bônus em slots girando (sem comprar)`, base: 3, step: 2, inc: e => (e.bonus ? 1 : 0), coins: 500, xp: 300, art: 'gift' },
+  { id: 'wager', text: n => `Aposte 🪙 ${fmt0(n)} no total`, base: 2000, step: 1500, inc: e => e.stake, coins: 350, xp: 250, art: 'coin', money: true },
+  { id: 'earn', text: n => `Receba 🪙 ${fmt0(n)} em prêmios`, base: 1500, step: 1200, inc: e => e.payout, coins: 350, xp: 250, art: 'moneybag', money: true },
+  { id: 'explore', text: n => `Jogue ${n} jogos diferentes (total)`, base: 5, step: 5, abs: s => s.played.length, coins: 400, xp: 300, art: 'joker' },
+  { id: 'mega', text: n => `Ganhe 50x ou mais ${n} vez${n > 1 ? 'es' : ''} em slots`, base: 1, step: 1, inc: e => (e.cat === 'slots' && e.mult >= 50 && !e.buy ? 1 : 0), coins: 700, xp: 400, art: 'glowstar' },
+];
+/* Missões infinitas de cada slot: um ciclo de tipos que fica mais difícil a cada volta. */
+const SLOT_QUESTS = [
+  { k: 'spins', text: n => `Faça ${n} giros`, base: 25, step: 25, inc: e => (e.buy ? 0 : 1), art: 'slot' },
+  { k: 'wins', text: n => `Vença ${n} giros`, base: 8, step: 7, inc: e => (e.payout > e.stake && !e.buy ? 1 : 0), art: 'trophy' },
+  { k: 'bonus', text: n => `Ative o bônus ${n} vez${n > 1 ? 'es' : ''} girando`, base: 1, step: 1, inc: e => (e.bonus ? 1 : 0), art: 'gift', kit: true },
+  { k: 'big', text: n => `Ganhe 10x ou mais ${n} vez${n > 1 ? 'es' : ''}`, base: 1, step: 1, inc: e => (e.mult >= 10 ? 1 : 0), art: 'fire' },
+  { k: 'wager', text: n => `Aposte 🪙 ${fmt0(n)} neste jogo`, base: 300, step: 300, inc: e => e.stake, art: 'coin', money: true },
+  { k: 'mega', text: n => `Ganhe ${n}x ou mais numa rodada`, base: 25, step: 25, inc: (e, n) => (e.mult >= n ? 1 : 0), one: true, art: 'heartfire' },
+];
+const fmt0 = n => Math.round(n).toLocaleString('pt-BR');
 const ALL_MISSIONS_BONUS = { fs: 5, xp: 300 };
 
 const WHEEL_PRIZES = [
@@ -86,13 +112,29 @@ const VIP_TIERS = [
 ];
 const CASHBACK_CAP = 25000;
 
+/* Patentes do nível do jogador (a cada 10 níveis). Depois do 100: Mito ★1, ★2... */
+const PLAYER_RANKS = [
+  { name: 'Novato', art: 'sparkles', color: '#94a3b8' },
+  { name: 'Aprendiz', art: 'medal3', color: '#d97706' },
+  { name: 'Apostador', art: 'medal2', color: '#cbd5e1' },
+  { name: 'Veterano', art: 'medal', color: '#fbbf24' },
+  { name: 'Profissional', art: 'trophy', color: '#f59e0b' },
+  { name: 'Especialista', art: 'star', color: '#38bdf8' },
+  { name: 'Mestre', art: 'crown', color: '#a78bfa' },
+  { name: 'Grão-Mestre', art: 'gem', color: '#c084fc' },
+  { name: 'Lenda', art: 'fire', color: '#f97316' },
+  { name: 'Ídolo', art: 'glowstar', color: '#facc15' },
+  { name: 'Mito', art: 'dragon', color: '#ef4444' },
+];
+
 /* =========================================================
    Store
    ========================================================= */
 const Progress = {
   KEY: 'fichabet_progress_v1',
-  XP_PER_LEVEL: 300,
-  PASS_LEVELS: 30,
+  PASS_LEVELS: 50,          // níveis principais; depois deles o passe continua infinito
+  PASS_EXTRA_COST: 4000,    // XP por nível além do 50
+
   SEASON_DAYS: 28,
   FS_BET: 2,
   AD_REWARD: 250,
@@ -110,6 +152,7 @@ const Progress = {
       fs: 0, wheelAt: 0, recent: [], totalXp: 0,
       vip: { week: this.weekNum(), net: 0, pending: 0 }, vipSeen: 0,
       scratch: { day: null },
+      tracks: {}, slotq: {}, played: [],
     };
     this.s = Object.assign(d, this.s || {});
     this.checkSeason();
@@ -134,32 +177,57 @@ const Progress = {
       Object.assign(this.s, { season: n, xp: 0, premium: false, claimed: { free: [], prem: [] } });
     }
   },
-  get level() { return Math.min(this.PASS_LEVELS, Math.floor(this.s.xp / this.XP_PER_LEVEL) + 1); },
-  get levelPct() {
-    if (this.level >= this.PASS_LEVELS) return 100;
-    return ((this.s.xp % this.XP_PER_LEVEL) / this.XP_PER_LEVEL) * 100;
+  /** XP para ir do nível L do passe ao L+1: cresce até o 50 e depois fica fixo. */
+  passCost(L) { return L < this.PASS_LEVELS ? 500 + 60 * (L - 1) : this.PASS_EXTRA_COST; },
+  /** { level, into, need } a partir de um total de XP e uma função de custo. */
+  levelFrom(xp, cost) {
+    let level = 1, rest = xp;
+    while (rest >= cost(level)) { rest -= cost(level); level++; }
+    return { level, into: rest, need: cost(level) };
+  },
+  get passInfo() { return this.levelFrom(this.s.xp, l => this.passCost(l)); },
+  get level() { return this.passInfo.level; },
+  get levelPct() { const i = this.passInfo; return (i.into / i.need) * 100; },
+
+  /* ---------- nível do jogador (infinito, nunca zera) ---------- */
+  playerCost(n) { return 1000 + 400 * (n - 1); },
+  get player() {
+    const i = this.levelFrom(this.s.totalXp, n => this.playerCost(n));
+    return { ...i, pct: (i.into / i.need) * 100, rank: this.rankOf(i.level) };
+  },
+  /** Patente pelo nível do jogador: troca a cada 10 níveis; depois do 100 vira Mito com estrelas. */
+  rankOf(level) {
+    const R = PLAYER_RANKS;
+    const idx = Math.min(R.length - 1, Math.floor((level - 1) / 10));
+    const r = R[idx];
+    const stars = level > 100 ? Math.floor((level - 101) / 10) + 1 : 0;
+    const div = level <= 100 ? ['I', 'II', 'III', 'IV', 'V'][Math.floor(((level - 1) % 10) / 2)] : '';
+    return { ...r, idx, stars, label: stars ? `${r.name} ★${stars}` : `${r.name} ${div}`, nextAt: level <= 100 ? (idx + 1) * 10 + 1 : (stars) * 10 + 101 };
   },
   addXp(n) {
     this.checkSeason();
     n = Math.round(n * (this.s.premium ? 1.25 : 1));
     if (n <= 0) return;
-    const before = this.level;
+    const before = this.level, pBefore = this.player.level;
     this.s.xp += n;
     this.s.totalXp += n;
     this.save();
     this.checkVipUp();
-    const after = this.level;
+    const after = this.level, pAfter = this.player.level;
     if (after > before) Bus.emit('levelup', after);
+    if (pAfter > pBefore) Bus.emit('playerup', this.player);
   },
 
   passReward(level, track) {
+    // além do nível 50 a recompensa é sempre a mesma
+    if (level > this.PASS_LEVELS) return track === 'free' ? { coins: 500 } : { coins: 1500, fs: 3 };
     if (track === 'free') {
-      if (level % 5 === 0) return { fs: 3 + level / 5 * 2 };
-      return { coins: 100 + level * 15 };
+      if (level % 5 === 0) return { fs: 3 + level / 5 };
+      return { coins: 150 + level * 20 };
     }
-    if (level === this.PASS_LEVELS) return { coins: 10000, fs: 30 };
-    if (level % 5 === 0) return { coins: 500 * (level / 5), fs: 10 };
-    return { coins: 250 + level * 40 };
+    if (level === this.PASS_LEVELS) return { coins: 25000, fs: 50 };
+    if (level % 5 === 0) return { coins: 600 * (level / 5), fs: 10 };
+    return { coins: 300 + level * 50 };
   },
   canClaimPass(level, track) {
     if (level > this.level) return false;
@@ -273,8 +341,74 @@ const Progress = {
     return true;
   },
 
+  /* ---------- missões infinitas gerais ---------- */
+  trackDef(id) { return MISSION_TRACKS.find(t => t.id === id); },
+  trackState(id) { return this.s.tracks[id] || (this.s.tracks[id] = { lv: 0, p: 0 }); },
+  trackGoal(t, lv) { return Math.round(t.base + t.step * lv * (1 + lv / 25)); },
+  /** Recompensa de nível lv (0 = primeiro): cresce devagar; a cada 5 níveis vem com rodadas grátis. */
+  questReward(coins, xp, lv) {
+    const r = { coins: Math.round((coins * (1 + 0.3 * lv)) / 10) * 10, xp: Math.round(xp * (1 + 0.2 * lv)) };
+    if ((lv + 1) % 5 === 0) r.fs = 3 + Math.floor(lv / 5);
+    return r;
+  },
+  tracks() {
+    return MISSION_TRACKS.map(t => {
+      const st = this.trackState(t.id), goal = this.trackGoal(t, st.lv);
+      const p = t.abs ? t.abs(this.s) : st.p;
+      return { ...t, lv: st.lv, p, goal, text: t.text(goal), done: p >= goal, reward: this.questReward(t.coins, t.xp, st.lv) };
+    });
+  },
+  claimTrack(id) {
+    const t = this.tracks().find(x => x.id === id);
+    if (!t || !t.done) return false;
+    const st = this.trackState(id);
+    if (!t.abs) st.p = round2(st.p - t.goal);
+    st.lv++;
+    this.grant(t.reward, `Missão ${t.lv + 1}`);
+    return true;
+  },
+
+  /* ---------- missões infinitas de cada slot ---------- */
+  slotQuestList(g) { return SLOT_QUESTS.filter(q => !q.kit || (g && g.studio)); },
+  slotQuest(gid) {
+    const g = App.games.find(x => x.id === gid);
+    if (!g) return null;
+    const st = this.s.slotq[gid] || { lv: 0, p: 0 };
+    const list = this.slotQuestList(g);
+    const q = list[st.lv % list.length], tier = Math.floor(st.lv / list.length);
+    const goal = q.base + q.step * tier;
+    const n = q.one ? 1 : goal;
+    return { ...q, gid, game: g, lv: st.lv, p: st.p, goal: n, text: q.text(goal), done: st.p >= n, reward: this.questReward(150, 100, st.lv), tierGoal: goal };
+  },
+  claimSlotQuest(gid) {
+    const q = this.slotQuest(gid);
+    if (!q || !q.done) return false;
+    this.s.slotq[gid] = { lv: q.lv + 1, p: 0 };
+    this.grant(q.reward, `Missão ${q.game.name}`);
+    return true;
+  },
+  /** Slots com missão pronta para coletar (para a página e os pontinhos). */
+  slotQuestsReady() { return Object.keys(this.s.slotq).map(id => this.slotQuest(id)).filter(q => q && q.done); },
+
   onRound(e) {
     this.ensureMissions();
+    // missões infinitas gerais
+    if (e.game && !this.s.played.includes(e.game)) this.s.played.push(e.game);
+    for (const t of MISSION_TRACKS) {
+      if (!t.inc) continue;
+      const st = this.trackState(t.id), goal = this.trackGoal(t, st.lv), was = st.p >= goal;
+      st.p = round2(st.p + t.inc(e, this.s));
+      if (!was && st.p >= goal) Bus.emit('missionDone', { text: t.text(goal) });
+    }
+    // missão do slot
+    if (e.cat === 'slots' && e.game) {
+      const q = this.slotQuest(e.game);
+      if (q && !q.done) {
+        const st = this.s.slotq[e.game] || (this.s.slotq[e.game] = { lv: 0, p: 0 });
+        st.p = round2(st.p + Number(q.inc(e, q.tierGoal) || 0));
+        if (st.p >= q.goal) Bus.emit('missionDone', { text: `${q.game.name}: ${q.text}` });
+      }
+    }
     this.rollWeek();
     this.s.vip.net = round2(this.s.vip.net + e.stake - e.payout);
     const ms = this.s.missions;
@@ -289,7 +423,7 @@ const Progress = {
     // jogados recentemente
     if (e.game) this.s.recent = [e.game, ...this.s.recent.filter(g => g !== e.game)].slice(0, 8);
     // XP: um pouco por rodada + raiz da aposta (não premia só apostas enormes)
-    const xp = e.stake > 0 ? Math.round(4 + Math.sqrt(e.stake) * 3) : 3;
+    const xp = e.stake > 0 ? Math.round(2 + Math.sqrt(e.stake) * 1.5) : 2;
     this.save(false);
     this.addXp(xp);
   },
@@ -394,7 +528,8 @@ const Progress = {
   pending() {
     const ck = this.checkinStatus().canClaim ? 1 : 0;
     const wh = (this.wheelIn() === 0 ? 1 : 0) + (this.freeScratch() ? 1 : 0) + (this.s.vip.pending > 0 ? 1 : 0);
-    const ms = this.missions().filter(m => m.done && !m.claimed).length + (this.allMissionsClaimed() && !this.s.missions.bonus ? 1 : 0);
+    const ms = this.missions().filter(m => m.done && !m.claimed).length + (this.allMissionsClaimed() && !this.s.missions.bonus ? 1 : 0)
+      + this.tracks().filter(t => t.done).length + this.slotQuestsReady().length;
     let ps = 0;
     for (let l = 1; l <= this.level; l++) ps += (this.canClaimPass(l, 'free') ? 1 : 0) + (this.canClaimPass(l, 'prem') ? 1 : 0);
     return { bonus: ck + wh, missions: ms, pass: ps };

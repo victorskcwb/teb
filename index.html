@@ -9,13 +9,24 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@600;700;800;900&display=swap">
   <link rel="stylesheet" href="css/style.css">
+  <script>
+    // modo leve só em celular/tablet (tela de toque sem mouse); no PC tudo fica como está.
+    // ?lite=1 / ?lite=0 força o modo para testes (fica salvo); ?lite=auto volta ao automático.
+    (function () {
+      var q = (location.search.match(/[?&]lite=(1|0|auto)/) || [])[1], k = 'fichabet_lite', v = null;
+      try { if (q === 'auto') localStorage.removeItem(k); else if (q) localStorage.setItem(k, q); v = localStorage.getItem(k); } catch (e) { /* sem storage */ }
+      var lite = v ? v === '1' : matchMedia('(hover: none) and (pointer: coarse)').matches;
+      window.LITE = lite;
+      if (lite) document.documentElement.classList.add('lite');
+    })();
+  </script>
 </head>
 <body>
   <header class="topbar">
     <a href="#/" class="logo"><img src="assets/img/slot.webp" alt=""><span><b>Ficha</b>Bet</span></a>
     <div class="top-right">
-      <button id="lvl-chip" class="lvl-chip" title="Passe da temporada" aria-label="Nível do passe">
-        <span class="lvl-ring"><span class="lvl-num">1</span></span>
+      <button id="lvl-chip" class="lvl-chip" title="Nível do jogador" aria-label="Nível do jogador">
+        <span class="lvl-ring"><span class="lvl-num">1</span></span><img class="lvl-medal" src="assets/img/sparkles.webp" alt="">
       </button>
       <button id="balance" class="balance" title="Carteira">
         <img class="coin" src="assets/img/coin.webp" alt=""><span id="balance-value">0,00</span><span class="bal-plus">+</span>
@@ -44,6 +55,7 @@
   <div id="modal-root"></div>
 
   <script src="assets/audio/sfx.js"></script>
+  <script src="assets/audio/slotsfx.js"></script>
   <script src="js/core.js"></script>
   <script src="js/progress.js"></script>
   <script src="js/history.js"></script>
@@ -55,12 +67,22 @@
   <script src="js/games/linhas.js"></script>
   <script src="js/games/rush.js"></script>
   <script src="js/games/calib.js"></script>
+  <script src="js/slotaudio.js"></script>
   <script src="js/games/kit.js"></script>
+  <script src="js/games/templates.js"></script>
   <script src="js/games/pragmatic.js"></script>
   <script src="js/games/pgsoft.js"></script>
   <script src="js/games/hacksaw.js"></script>
   <script src="js/games/tada.js"></script>
   <script src="js/games/nolimit.js"></script>
+  <script src="js/games/pragmatic2.js"></script>
+  <script src="js/games/pragmatic3.js"></script>
+  <script src="js/games/pgsoft2.js"></script>
+  <script src="js/games/pgsoft3.js"></script>
+  <script src="js/games/hacksaw2.js"></script>
+  <script src="js/games/hacksaw3.js"></script>
+  <script src="js/games/nolimit2.js"></script>
+  <script src="js/games/nolimit3.js"></script>
   <script src="js/games/crash.js"></script>
   <script src="js/games/double.js"></script>
   <script src="js/games/mines.js"></script>
