@@ -37,7 +37,7 @@ Para testar no celular na mesma rede: `python -m http.server 8000` e acesse `htt
 
 Os RTPs dos slots foram calibrados por simulação; o do Keno é exato (hipergeométrica).
 
-### Slots de estúdio (50 jogos)
+### Slots de estúdio
 
 Recriações com nomes e artes próprios dos slots mais jogados de cada estúdio, seguindo as regras públicas dos originais (grade, linhas/caminhos, recursos, rodadas grátis e prêmio máximo). Todos rodam no mesmo motor (`js/games/kit.js`) e aparecem no lobby agrupados por estúdio. O "Starlight Princess" já existia como **Princesa Estelar**.
 
@@ -54,6 +54,45 @@ Recriações com nomes e artes próprios dos slots mais jogados de cada estúdio
 | Caçador João e a Rainha Escaravelho | John Hunter and the Tomb of the Scarab Queen | Coleta de escaravelhos · pote final | ~96,5% | 10.500x |
 | Frutas Suculentas | Juicy Fruits | Coringa gigante que cresce | ~96,5% | 5.000x |
 | Rei Búfalo Megaways | Buffalo King Megaways | Megaways · coringas x2/x3/x5 | ~96,5% | 5.000x |
+| Portões do Olimpo 1000 | Gates of Olympus 1000 | Orbes até x1.000 · 15.000x | ~96,5% | 15.000x |
+| Doce Rush 1000 | Sugar Rush 1000 | Posições até x1.024 · 25.000x | ~96,5% | 25.000x |
+| Princesa Estelar 1000 | Starlight Princess 1000 | Corações até x1.000 · 15.000x | ~96,5% | 15.000x |
+| Doce Bonança 1000 | Sweet Bonanza 1000 | Bombas até x1.000 · 25.000x | ~96,5% | 25.000x |
+| 5 Leões Megaways | 5 Lions Megaways | Escolha giros ou multiplicador | ~96,5% | 5.000x |
+| Poder de Thor Megaways | Power of Thor Megaways | Martelo transforma rolos | ~96,5% | 5.000x |
+| Riquezas Selvagens | Wild Wild Riches | Coringa coleta os potes de ouro | ~96,8% | 4.600x |
+| Casa dos Cães Multihold | The Dog House Multihold | Até 4 telas com coringas colantes | ~95,1% | 6.750x |
+| Festa das Frutas 2 | Fruit Party 2 | Coringas que crescem até x729 | ~96,5% | 5.000x |
+| Extra Suculento | Extra Juicy | Paga de qualquer rolo · mult. +1 por giro | ~96,5% | 60.000x |
+| Extra Suculento Megaways | Extra Juicy Megaways | Megaways · diamantes x3 a x15 | ~96,4% | 10.000x |
+| Liberte o Kraken 2 | Release the Kraken 2 | Respins de coringas · até x10 | ~96% | 5.000x |
+| Sabedoria de Atena | Wisdom of Athena | Cascatas abrem a linha de cima | ~96,5% | 5.000x |
+| Forja do Olimpo | Forge of Olympus | Multiplicadores sobem de nível | ~96,5% | 5.000x |
+| Festa na Praia | Wild Beach Party | 7×7 · coringas até x729 | ~96,5% | 5.000x |
+| Ovo da Galinha | Chicken Drop | Ovo gigante até 6×6 e x10 | ~96% | 5.000x |
+| Festa na Fazenda | Barn Festival | Money Respin com 8 modificadores | ~96,4% | 20.000x |
+| Portões de Valhalla | Gates of Valhalla | Coringa de gelo anda e cresce | ~96,5% | 10.000x |
+| Carnaval Zumbi | Zombie Carnival | Ursos zumbis colantes com multiplicador | ~96,5% | 5.000x |
+| Roubo dos Goblins | Goblin Heist Powernudge | Powernudge · respin dos leões | ~95,4% | 4.000x |
+| Mochimon | Mochimon | Posições até x128 · 5.000x | ~96,5% | 5.000x |
+| Jardim dos Coelhos | Rabbit Garden | Grupos coletam moedas vizinhas | ~96,5% | 5.000x |
+| Abelhas Grudentas | Sticky Bees | Super abelhas colantes | ~96,5% | 5.000x |
+| Ônibus das Celebridades Megaways | Wild Celebrity Bus Megaways | Respin de estrelas · mult. sem teto | ~96,5% | 10.000x |
+| Assalto às Pepitas | Heist for the Golden Nuggets | Coringas coletores até x16 | ~96,5% | 5.000x |
+| Panda Gordo | Fat Panda | Rolo modificador · coringas colantes | ~96,5% | 20.000x |
+| 3 Coringas Zunindo | 3 Buzzing Wilds | 3 tipos de coringa · grátis colantes | ~96,5% | 5.000x |
+| Recompensa do Céu | Sky Bounty | Molduras de coringa até 6×6 | ~96,5% | 5.000x |
+| Reis do Bar | Pub Kings | Colete reis para virar coringa | ~96,5% | 5.000x |
+| Trilha do Mustang | Mustang Trail | Coringas que se duplicam | ~96,5% | 5.000x |
+| Bonança da Gravidade | Gravity Bonanza | Buraco negro suga e multiplica | ~96,5% | 10.000x |
+| Princesa do Crepúsculo | Twilight Princess | Coringas x2 a x10 colantes · 7.500x | ~96,5% | 7.500x |
+| Coringa Infectante | Infective Wild | Infecção vira coringas · 40 linhas | ~96,5% | 5.000x |
+| Pilhas de Madeira | Timber Stacks | Até 100.000 caminhos | ~96,5% | 10.000x |
+| Açúcar Supremo Powernudge | Sugar Supreme Powernudge | 6×6 · posições até x128 | ~96,5% | 5.000x |
+| Estouro de Fogo | Fire Stampede | Respin com jackpots até 4.000x | ~96,5% | 5.000x |
+| O Alter Ego | The Alter Ego | Mistérios · até 100.000 caminhos | ~96,5% | 10.000x |
+| Pompeia Megareels Megaways | Pompeii Megareels Megaways | Rolos que crescem até 8 · 10.000x | ~96,5% | 10.000x |
+| Riquezas de Loki | Loki's Riches | Símbolo especial expande · 10.000x | ~96,5% | 10.000x |
 
 **Estilo PG Soft**
 
@@ -123,6 +162,8 @@ Os RTPs e preços de compra de bônus são calibrados por simulação: `node too
 - **Bônus diário (check-in):** calendário de 7 dias com sequência; perdeu um dia, volta ao Dia 1. Abre sozinho na primeira visita do dia.
 - **Roda de prêmios grátis:** a cada 4 horas (fichas, XP ou rodadas grátis).
 - **Missões diárias:** 5 por dia (sorteadas pela data), com fichas + XP; completar todas abre um baú com rodadas grátis.
+- **Missões gerais ∞:** 10 trilhas sem fim (giros, vitórias, ganhos de 10x/50x/100x, bônus ativados, total apostado/recebido, jogos diferentes). Ao coletar, o próximo nível aparece na hora com objetivo e prêmio maiores; a cada 5 níveis vêm rodadas grátis.
+- **Missões de cada slot ∞:** todo slot tem a sua sequência infinita (giros, vitórias, bônus, ganho de 10x, valor apostado, ganho de Nx), que fica mais difícil a cada volta. O botão 🎯 no topo do slot mostra a missão dele; a página Missões tem as abas Diárias / Gerais / Slots.
 - **Passe da temporada:** 50 níveis com custo crescente (500 XP no nível 2 até ~3.400 XP no 50; ~95 mil XP no total) e, depois, **níveis infinitos** de 4.000 XP com recompensa fixa (grátis 🪙 500; premium 🪙 1.500 + 3 giros). Temporadas de 28 dias. Trilha grátis + trilha Premium (ativada com fichas, dá +25% de XP).
 - **Nível do jogador:** infinito e nunca zera (cada nível custa `1000 + 400·(n−1)` XP). Patente a cada 10 níveis — Novato, Aprendiz, Apostador, Veterano, Profissional, Especialista, Mestre, Grão-Mestre, Lenda, Ídolo — e Mito ★N depois do 100. Aparece no topo (anel com medalha) e abre o perfil.
 - **XP:** cada rodada dá `2 + 1,5·√aposta` XP (não premia só apostas enormes).

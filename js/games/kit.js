@@ -299,7 +299,7 @@ const SlotKit = (() => {
         this.total += x;
         if (this.total * K >= cfg.maxWin) { this.total = cfg.maxWin / K; this.capped = true; }
       },
-      coins: () => '', xs: () => '', msg: noop, show: noop, head: noop, chip: noop, fx: noop, mark: noop, clear: noop,
+      coins: () => '', xs: () => '', msg: noop, show: noop, head: noop, chip: noop, fx: noop, mark: noop, clear: noop, layout: noop,
       wait: () => Promise.resolve(), spin: () => Promise.resolve(), drop: () => Promise.resolve(),
       banner: () => Promise.resolve(), reveal: () => Promise.resolve(),
       choose: async (title, opts) => (opts.find(o => o.sim) || RNG.pick(opts)).id,
@@ -390,7 +390,7 @@ const SlotKit = (() => {
         stepper.el.addEventListener('click', renderBuy);
         renderBuy();
         el.style.setProperty('--cols', cfg.cols);
-        const ar = cfg.cols / (cfg.rows * (cfg.cellH || 1));
+        let arNow = cfg.cols / (cfg.rows * (cfg.cellH || 1));
         gridEl.style.aspectRatio = `${cfg.cols} / ${cfg.rows * (cfg.cellH || 1)}`;
         /** Ajusta a largura da grade para o jogo inteiro (até o botão de girar) caber acima da barra de navegação. */
         const frameEl = $('.kit-frame', el);
@@ -402,7 +402,7 @@ const SlotKit = (() => {
           const below = ['.slot-winbar', '.fs-slot', '.slot-controls'].reduce((sum, q) => sum + ($(q, el).offsetHeight || 0), 0) + 3 * 10 + 10;
           const head = headEl.classList.contains('hidden') ? 0 : headEl.offsetHeight;
           const avail = innerHeight - navH - top - below - 16 - head;
-          frameEl.style.width = Math.round(Math.max(230, Math.min(el.clientWidth, avail * ar + 16))) + 'px';
+          frameEl.style.width = Math.round(Math.max(230, Math.min(el.clientWidth, avail * arNow + 16))) + 'px';
         };
         requestAnimationFrame(fit);
         addEventListener('resize', fit);
@@ -497,6 +497,12 @@ const SlotKit = (() => {
             }));
           },
           clear() { $$('.kc', gridEl).forEach(x => x.classList.remove('win', 'dim', 'hl')); },
+          /** Muda a altura da grade (nº de linhas) e reajusta a tela. */
+          layout(rows) {
+            gridEl.style.aspectRatio = `${cfg.cols} / ${rows * (cfg.cellH || 1)}`;
+            arNow = cfg.cols / (rows * (cfg.cellH || 1));
+            requestAnimationFrame(fit);
+          },
           /** Faixa acima das colunas (valores por coluna) ou null. */
           head(vals) {
             const was = headEl.classList.contains('hidden');
@@ -610,10 +616,14 @@ const SlotKit = (() => {
           rt.clear();
           winEl.textContent = fmt(0);
           rt.msg(free ? '🎁 Rodada grátis!' : 'Girando...');
-          try { await game.spin(rt); } catch (e) { console.error(e); }
+          // marca se o giro entrou no bônus (missões)
+          const ob = game.bonus;
+          let trig = false;
+          game.bonus = function (...a) { trig = true; return ob.apply(this, a); };
+          try { await game.spin(rt); } catch (e) { console.error(e); } finally { game.bonus = ob; }
           const pay = round2(Math.min(rt.total * K, cfg.maxWin) * bet);
           if (!pay && ctx.alive) rt.msg('Não foi dessa vez...');
-          finish(free ? 0 : bet, pay, bet);
+          finish(free ? 0 : bet, pay, bet, { bonus: trig });
         }
 
         async function buy() {

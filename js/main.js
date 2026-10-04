@@ -360,6 +360,21 @@
     render();
   }
 
+  /** Botão 🎯 (slots): missão infinita do jogo, com pontinho quando dá para coletar. */
+  function questButton(el, g, gctx) {
+    const btn = h(`<button class="icon-btn quest-btn" aria-label="Missões do jogo" title="Missões do jogo">${ico('bullseye')}<i class="q-ring"></i><i class="tdot hidden"></i></button>`);
+    $('.help', el).before(btn);
+    const render = () => {
+      const q = Progress.slotQuest(g.id);
+      if (!q) return;
+      $('.tdot', btn).classList.toggle('hidden', !q.done);
+      btn.style.setProperty('--qp', Math.min(100, (q.p / q.goal) * 100) + '%');
+    };
+    btn.addEventListener('click', () => { Sfx.click(); slotQuestModal(g.id); });
+    gctx.onUnmount(Bus.on('progress', render));
+    render();
+  }
+
   /* ---------- Roteador por hash ---------- */
   function setNav(id) {
     $$('.bottom-nav a').forEach(a => a.classList.toggle('on', a.dataset.nav === id));
@@ -379,7 +394,7 @@
       ctx = new GameCtx(game);
       document.title = `${game.name} — FichaBet`;
       setNav('');
-      if (game.category === 'slots') historyButton(el, game, ctx);
+      if (game.category === 'slots') { historyButton(el, game, ctx); questButton(el, game, ctx); }
       game.mount($('.game-body', el), ctx);
       return;
     }

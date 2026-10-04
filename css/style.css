@@ -1172,6 +1172,9 @@ select { padding: 9px 10px; border-radius: 12px; background: var(--bg2); border:
 .kc.locked { background: repeating-linear-gradient(90deg, #1f2937 0 8px, #4b5563 8px 12px); }
 .kc.locked img { width: 45%; opacity: .7; }
 .kc.gsq { background: radial-gradient(circle, rgba(253, 224, 71, .75), rgba(202, 138, 4, .55)); box-shadow: inset 0 0 0 2px #fde047; }
+.kc.mark { box-shadow: inset 0 0 0 2px rgba(250, 204, 21, .75); background: rgba(250, 204, 21, .18); }
+.kc.mult { box-shadow: inset 0 0 0 3px #f59e0b, 0 0 10px rgba(245, 158, 11, .6); background: radial-gradient(circle, rgba(253, 224, 71, .45), rgba(217, 119, 6, .35)); }
+.kc.bandtop { margin-top: 5px; box-shadow: 0 -4px 0 -1px var(--gold); }
 .kc.coin-prata b { color: #e2e8f0; }
 .kc.coin-ouro b { color: #fde047; background: #7c2d12; }
 .kc.xways { background: radial-gradient(circle, rgba(167, 139, 250, .7), rgba(76, 29, 149, .5)); }
@@ -1253,3 +1256,15 @@ select { padding: 9px 10px; border-radius: 12px; background: var(--bg2); border:
 .pt-inf { justify-content: center; min-width: 110px; }
 .pt-inf .pt-lv { font-size: 1.6rem; color: var(--gold); }
 .pt-inf-txt { font-size: .7rem; color: var(--muted); text-align: center; padding: 4px 6px; line-height: 1.25; }
+
+/* Missões infinitas */
+.m-tabs { display: flex; gap: 6px; margin: 0 0 12px; }
+.m-tabs button { flex: 1; position: relative; padding: 9px 6px; border-radius: 12px; border: 1px solid var(--border); background: var(--panel); color: var(--muted); font-weight: 700; font-size: .85rem; cursor: pointer; }
+.m-tabs button.on { background: linear-gradient(180deg, #f97316, #be123c); color: #fff; border-color: transparent; }
+.m-tabs .tdot, .quest-btn .tdot { position: absolute; top: 4px; right: 6px; width: 8px; height: 8px; border-radius: 50%; background: #ef4444; box-shadow: 0 0 0 2px var(--bg); }
+.m-art { position: relative; flex: none; }
+.m-lv { position: absolute; left: 50%; bottom: -6px; transform: translateX(-50%); padding: 1px 6px; border-radius: 8px; background: #0f172a; border: 1px solid var(--gold); color: var(--gold); font-size: .62rem; font-weight: 800; white-space: nowrap; }
+.m-game { color: var(--gold) !important; font-weight: 700; }
+.chest-panel.wide .m-body small { line-height: 1.35; }
+.quest-btn { position: relative; }
+.quest-btn .q-ring { position: absolute; inset: 1px; border-radius: 50%; pointer-events: none; background: conic-gradient(var(--gold) var(--qp, 0%), transparent 0); -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px)); mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px)); }

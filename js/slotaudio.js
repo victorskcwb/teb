@@ -51,6 +51,10 @@ const SlotAudio = (() => {
     mahjong1: 'china', mahjong2: 'china', ninhodragao: 'china', bandidoselvagem: 'latin', tesourosastecas: 'jungle', riquezasduende: 'irish', ouroganesha: 'india', recompensacapitao: 'pirate', ninjasamurai: 'japan', caishen: 'china',
     procurado: 'western', cidaderip: 'noir', banditoguaxinim: 'cartoon', gangucaos: 'party', maoanubis: 'egypt', gladiadores: 'epic', unidadedork: 'cartoon', empilhaai: 'cartoon', mortosvivos: 'horror', despencou: 'space',
     imperiodourado: 'jungle', joiasfortuna: 'classic', joiasfortuna2: 'gems', lampadamagica: 'arabia', romax: 'epic', superrico: 'classic', fortunaossos: 'latin', alibaba: 'arabia', bufalofurioso: 'prairie', reiselva: 'jungle', noitefesta: 'party',
+    olimpo1000: 'epic', docerush1000: 'candy', princesa1000: 'mystic', doce1000: 'candy', cincoleoes: 'china', poderthor: 'epic', riquezasselvagens: 'irish', casacaesmulti: 'cartoon', festafrutas2: 'tropical', extrasuculento: 'classic',
+    extrasuculentomw: 'gems', kraken2: 'ocean', sabedoriaatena: 'epic', forjaolimpo: 'mine', festapraia: 'tropical', ovogalinha: 'cartoon', festafazenda: 'prairie', portaisvalhalla: 'snow', carnavalzumbi: 'horror', goblinheist: 'irish',
+    mochimon: 'japan', jardimcoelhos: 'cartoon', abelhasgrudentas: 'cartoon', onibuscelebridades: 'party', assaltopepitas: 'mine', pandagordo: 'china', tresabelhas: 'prairie', recompensaceu: 'space', reisbar: 'irish', trilhamustang: 'western',
+    gravidade: 'space', princesacrepusculo: 'dark', coringainfectante: 'horror', pilhasmadeira: 'prairie', acucarsupremo: 'candy', estourofogo: 'western', alterego: 'epic', pompeia: 'epic', riquezasloki: 'epic',
     manicomio: 'horror', celaxways: 'dark', lapiderip: 'western', cidadefantasma: 'western', buracofogo: 'mine', submarino: 'ocean', blococelas: 'dark', sanguesombra: 'horror', gulaggelado: 'snow', detetiveserial: 'noir',
   };
 

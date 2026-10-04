@@ -480,7 +480,7 @@ class GameCtx {
   /** Informa uma rodada resolvida (missões, XP, passe). base = aposta de referência p/ multiplicador. */
   round(stake, payout, base = stake, extra = {}) {
     const g = this.game || {};
-    Bus.emit('round', { game: g.id, cat: g.category, stake: round2(stake), payout: round2(payout), base: round2(base), mult: base > 0 ? payout / base : 0, ...extra });
+    Bus.emit('round', { game: g.id, cat: g.category, studio: g.studio, stake: round2(stake), payout: round2(payout), base: round2(base), mult: base > 0 ? payout / base : 0, ...extra });
   }
   destroy() {
     this.alive = false;
