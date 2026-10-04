@@ -7,7 +7,12 @@
    game.info = { maxWin, vol, rtp, how, lines, tables, features }.
    ========================================================= */
 const SlotInfo = {
-  VOL: { 1: 'Baixa', 2: 'Média', 3: 'Média-alta', 4: 'Alta' },
+  /** Bolinhas de volatilidade (1 a 5); valores fora da escala são ajustados em vez de quebrar o painel. */
+  volHTML(v) {
+    const n = Math.max(1, Math.min(5, Math.round(Number(v) || 3)));
+    return `<span class="vol vol-${n}">${'●'.repeat(n)}${'○'.repeat(5 - n)}</span> ${this.VOL[n]}`;
+  },
+  VOL: { 1: 'Baixa', 2: 'Média', 3: 'Média-alta', 4: 'Alta', 5: 'Muito alta' },
 
   /** Botão "Prêmios" ao lado do ganho; ctx.bet() dá a aposta atual. */
   attach(el, ctx) {
@@ -60,7 +65,7 @@ const SlotInfo = {
           <div class="stats-grid si-stats">
             <div><small>Aposta atual</small><b>🪙 ${fmt(bet)}</b></div>
             <div><small>RTP (retorno teórico)</small><b>${info.rtp}</b></div>
-            <div><small>Volatilidade</small><b><span class="vol vol-${info.vol}">${'●'.repeat(info.vol)}${'○'.repeat(4 - info.vol)}</span> ${this.VOL[info.vol]}</b></div>
+            <div><small>Volatilidade</small><b>${this.volHTML(info.vol)}</b></div>
             <div><small>Chance de ganho</small><b>${info.hit}</b></div>
           </div>
           <h4>Como ganhar</h4>${info.how}

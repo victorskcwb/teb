@@ -502,7 +502,9 @@ const SlotKit = (() => {
         const rt = {
           sim: false, k: K, total: 0, capped: false, mode: 'base', stats: {},
           get bet() { return bet; },
-          reset() { this.total = 0; this.capped = false; this.mode = 'base'; },
+          reset() { this.total = 0; this.capped = false; this.mode = 'base'; this.revealed = false; },
+          /** false até a grade do giro aparecer: a 1ª revelação de cada giro é sempre com rolos girando. */
+          revealed: false,
           win(x) {
             if (this.capped || !(x > 0)) return;
             this.total += x;
@@ -525,11 +527,16 @@ const SlotKit = (() => {
           },
           stat: () => {},
           show: grid => render(grid),
-          async drop(grid) { render(grid, true); SlotAudio.drop(); await wait(460); },
+          async drop(grid) {
+            // jogos que revelam a grade com drop (paga em qualquer lugar, grupos...) também ganham o giro dos rolos
+            if (!this.revealed) return this.spin(grid, { tease: true });
+            render(grid, true); SlotAudio.drop(); await wait(460);
+          },
           /** Giro com rolos: cada coluna roda e para da esquerda para a direita. */
           async spin(grid, { tease = true } = {}) {
             const rand = () => { const x = RNG.pick(blur); return `<div class="kc${x.letter ? ' lt lt-' + x.letter : ''}">${face(x)}</div>`; };
             const colHTML = n => Array.from({ length: n }, rand).join('');
+            this.revealed = true;
             gridEl.innerHTML = grid.map(col => `<div class="kcol spinning">${colHTML(col.length)}</div>`).join('');
             const cols = [...gridEl.children];
             SlotAudio.spin();
@@ -641,6 +648,7 @@ const SlotKit = (() => {
               this.chip('fs', label, left);
               if (!left && api.i > 2) SlotAudio.finalSpin();
               this.clear();
+              this.revealed = false;
               await body(api);
               api.i++;
               await wait(260);
