@@ -88,7 +88,7 @@ Recriações com nomes e artes próprios dos slots mais jogados de cada estúdio
 | Princesa do Crepúsculo | Twilight Princess | Coringas x2 a x10 colantes · 7.500x | ~96,5% | 7.500x |
 | Coringa Infectante | Infective Wild | Infecção vira coringas · 40 linhas | ~96,5% | 5.000x |
 | Pilhas de Madeira | Timber Stacks | Até 100.000 caminhos | ~96,5% | 10.000x |
-| Açúcar Supremo Powernudge | Sugar Supreme Powernudge | 6×6 · posições até x128 | ~96,5% | 5.000x |
+| Açúcar Supremo Powernudge | Sugar Supreme Powernudge | 6×6 · Powernudge · biscoitos multiplicadores | ~96,1% | 5.000x |
 | Estouro de Fogo | Fire Stampede | Respin com jackpots até 4.000x | ~96,5% | 5.000x |
 | O Alter Ego | The Alter Ego | Mistérios · até 100.000 caminhos | ~96,5% | 10.000x |
 | Pompeia Megareels Megaways | Pompeii Megareels Megaways | Rolos que crescem até 8 · 10.000x | ~96,5% | 10.000x |
