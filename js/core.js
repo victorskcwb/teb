@@ -549,8 +549,23 @@ const Speed = {
   pick(turboVal, normalVal) { return this.turbo ? turboVal : normalVal * this.f; },
   next() {
     this.i = (this.i + 1) % this.MODES.length;
-    try { localStorage.setItem(this.KEY, this.mode.id); } catch { /* ignore */ }
+    // dentro do bônus a troca vale só até ele acabar (não mexe na velocidade do jogo normal)
+    if (!this.depth) { try { localStorage.setItem(this.KEY, this.mode.id); } catch { /* ignore */ } }
     Bus.emit('speed', this.mode);
+  },
+  /**
+   * Roda um bônus (rodadas grátis, compra, recurso) sempre na velocidade Normal.
+   * A velocidade do jogo normal fica guardada à parte e volta quando o bônus termina.
+   */
+  depth: 0,
+  async bonus(fn) {
+    if (this.depth++ === 0) {
+      this.saved = this.i;
+      if (this.i !== 0) { this.i = 0; Bus.emit('speed', this.mode); }
+    }
+    try { return await fn(); } finally {
+      if (--this.depth === 0 && this.i !== this.saved) { this.i = this.saved; Bus.emit('speed', this.mode); }
+    }
   },
   /** Liga um botão .toggle: mostra o modo atual e troca ao clicar. */
   bind(btn, ctx) {

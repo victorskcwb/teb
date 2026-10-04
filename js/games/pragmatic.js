@@ -229,25 +229,74 @@
       S('esmeralda', 'greenheart', 'Esmeralda', [0.2, 0.4, 0.8, 1.6, 4, 15], 11),
     ];
     const WILD = { id: 'w', img: 'sparkles', name: 'Coringa', wild: true, w: 0 };
-    const all = [...SY, WILD];
-    const draw = pool(SY);
+    const SC = { id: 'sc', img: 'gemsparkle', name: 'Bônus', sc: true, w: 0.25, fw: 0.18 };
+    const all = [...SY, WILD, SC];
+    const draw = pool(SY), drawSC = pool([...SY, SC]);
     const MODS = [
       { id: 'nuclear', c: 'mk-blue', name: 'Nuclear', w: 3 }, { id: 'wildgem', c: 'mk-pink', name: 'Joia Coringa', w: 2 },
       { id: 'squares', c: 'mk-brown', name: 'Quadrados', w: 3 }, { id: 'colossal', c: 'mk-red', name: 'Colossal', w: 2 },
       { id: 'lucky', c: 'mk-green', name: 'Coringas da Sorte', w: 2 },
     ];
     const FEVER = [[114, 2], [116, 4], [120, 6], [125, 8], [132, 10]];
-    const make = () => Array.from({ length: 8 }, (_, c) => Array.from({ length: 8 }, () => draw(c)));
+    const FS_T = n => (n >= 5 ? 20 : n === 4 ? 15 : 12);
+    const make = (wk = 'w') => Array.from({ length: 8 }, (_, c) => Array.from({ length: 8 }, () => drawSC(c, wk)));
+    const nSC = g => count(g, x => x.sc);
+
+    // um giro completo (cascatas + modificadores). st guarda a contagem da Febre do Ouro:
+    // no giro normal zera a cada giro; nas rodadas grátis acumula durante todo o bônus.
+    async function play(rt, g, st) {
+      const P = st.markP;
+      const markOne = x => { if (!x.sc && !x.mk && RNG.float() < P) { const m = RNG.weighted(MODS); x.mk = m.id; x.c = m.c; } return x; };
+      g.forEach(col => col.forEach(markOne));
+      await rt.drop(g);
+      const queued = new Set();
+      const drawM = c => markOne(draw(c));
+      const show = () => { if (st.fever > 1) rt.chip('fever', 'FEBRE', 'x' + st.fever); rt.chip('cnt', 'SÍMBOLOS', st.n); };
+      show();
+      for (let round = 0; round < 12 && !rt.capped; round++) {
+        await tumble(rt, g, {
+          draw: drawM,
+          mult: () => st.fever,
+          evaluate: gg => {
+            const res = payClusters(clusters(gg, 5), T);
+            res.cells.forEach(k => { const [c, r] = K.unkey(k); if (gg[c][r].mk) queued.add(gg[c][r].mk); });
+            return res;
+          },
+          onStep: async (step, gg, res) => {
+            st.n += res.cells.size;
+            const lv = FEVER.filter(([t]) => st.n >= t).pop();
+            if (lv && lv[1] > st.fever) { st.fever = lv[1]; show(); rt.msg(`🔥 FEBRE DO OURO x${st.fever}! (${st.n} símbolos)`); rt.fx('big'); await rt.wait(800); }
+            else show();
+          },
+        });
+        if (!queued.size) break;
+        const order = MODS.map(m => m.id).filter(id => queued.has(id));
+        queued.clear();
+        for (const id of order) {
+          const m = MODS.find(x => x.id === id);
+          rt.msg(`🎨 ${m.name}!`);
+          rt.fx('big');
+          const put = (c, r, x) => { if (!g[c][r].sc) g[c][r] = x; };
+          if (id === 'nuclear') { g.forEach((col, c) => col.forEach((_, r) => put(c, r, { ...draw(c), fresh: true }))); }
+          if (id === 'wildgem') { const s = RNG.pick(g.flat().filter(x => !x.wild && !x.sc)); g.forEach((col, c) => col.forEach((x, r) => { if (x.id === s.id) g[c][r] = { ...WILD, fresh: true }; })); }
+          if (id === 'squares') { const s = RNG.pick(SY); for (let i = RNG.int(2, 4); i > 0; i--) { const c0 = RNG.int(0, 6), r0 = RNG.int(0, 6); for (let a = 0; a < 2; a++) for (let b = 0; b < 2; b++) put(c0 + a, r0 + b, { ...s, fresh: true }); } }
+          if (id === 'colossal') { const s = RNG.pick(SY), z = RNG.weighted([{ z: 3, w: 6 }, { z: 4, w: 3 }, { z: 5, w: 1 }]).z; const c0 = RNG.int(0, 8 - z), r0 = RNG.int(0, 8 - z); for (let a = 0; a < z; a++) for (let b = 0; b < z; b++) put(c0 + a, r0 + b, { ...s, fresh: true }); }
+          if (id === 'lucky') { for (let i = RNG.int(5, 15); i > 0; i--) put(RNG.int(0, 7), RNG.int(0, 7), { ...WILD, fresh: true }); }
+          await rt.drop(g);
+          await rt.wait(500);
+        }
+      }
+    }
 
     App.register(K.create({
       id: 'joiasbonanca', name: 'Joias Bonança', studio: STUDIO, art: 'ring', mascot: 'crown',
-      tag: '8×8 · 5 modificadores · Febre do Ouro', colors: ['#7c3aed', '#059669'], bg: 'linear-gradient(180deg,#78350f,#451a03 60%,#1c0a02)',
-      cols: 8, rows: 8, maxWin: 10000, vol: 4, rtp: '~96,5%', target: 0.965, buy: false,
+      tag: '8×8 · modificadores · Febre do Ouro · grátis', colors: ['#7c3aed', '#059669'], bg: 'linear-gradient(180deg,#78350f,#451a03 60%,#1c0a02)',
+      cols: 8, rows: 8, maxWin: 10000, vol: 4, rtp: '~96,5%', target: 0.965,
       intro: 'Inspirado no "Gems Bonanza" (Pragmatic Play).',
       hello: 'Ganhe em cima das marcas coloridas!',
       symbols: all,
       tables: [table('Pagamento por tamanho do grupo', ['5–6', '7–8', '9–10', '11–12', '13–14', '15+'], SY, 'Grupos de 5+ iguais encostados. Grupos diferentes se somam.')],
-      highlights: ['💎 Grade <b>8×8</b> com grupos de 5+ e cascata', '🎨 Ganhe em cima de uma <b>marca colorida</b> para ativar um dos 5 modificadores', '🔥 <b>Febre do Ouro:</b> 114+ símbolos vencedores numa sequência liberam multiplicador de <b>x2 até x10</b>', 'Prêmio máximo: <b>10.000x</b>'],
+      highlights: ['💎 Grade <b>8×8</b> com grupos de 5+ e cascata', '🎨 Ganhe em cima de uma <b>marca colorida</b> para ativar um dos 5 modificadores', '🔥 <b>Febre do Ouro:</b> 114+ símbolos vencedores numa sequência liberam multiplicador de <b>x2 até x10</b>', '🎁 3+ joias bônus: <b>12 a 20 rodadas grátis</b> com a Febre do Ouro acumulando o bônus inteiro', 'Prêmio máximo: <b>10.000x</b>'],
       how: `<p>Grade <b>8×8</b>: grupos de <b>5 ou mais</b> joias iguais encostadas pagam, com <b>cascata</b>.</p>
         <p>Algumas casas aparecem com uma <b>marca colorida</b> atrás da joia. Se um ganho acontece em cima dela, o modificador da cor é guardado e roda quando as cascatas param.</p>`,
       features: `<h4>Modificadores (rodam nesta ordem)</h4><ul class="si-list">
@@ -257,52 +306,26 @@
         <li><b class="mkt mk-red">Colossal (vermelho)</b>: um bloco gigante 3×3, 4×4 ou 5×5 de uma joia.</li>
         <li><b class="mkt mk-green">Coringas da Sorte (verde)</b>: de 5 a 15 coringas caem em posições aleatórias.</li></ul>
         <h4>Febre do Ouro</h4><p>Conte os símbolos vencedores de uma mesma sequência de cascatas: ao passar de <b>114</b> o resto dos ganhos dessa sequência vale <b>x2</b>; com 116 vale x4, 120 x6, 125 x8 e <b>132 x10</b>.</p>
-        <p class="muted small">Este jogo não tem rodadas grátis nem compra de bônus: tudo acontece no giro normal.</p>`,
+        <h4>Rodadas grátis</h4><p>${ico('gemsparkle')} <b>3, 4 ou 5+ joias bônus</b> na tela dão <b>12, 15 ou 20 rodadas grátis</b>. Nelas as marcas coloridas aparecem com mais frequência e a contagem da <b>Febre do Ouro não zera</b> entre os giros: ela acumula durante todo o bônus. 3+ joias bônus nas grátis dão <b>+5 giros</b>.</p>`,
       make,
       async spin(rt) {
         const g = make();
-        const mark = gg => gg.forEach(col => col.forEach(x => { if (!x.mk && RNG.float() < 0.022) { const m = RNG.weighted(MODS); x.mk = m.id; x.c = m.c; } }));
-        mark(g);
-        await rt.drop(g);
-        let n = 0, fever = 1;
-        const queued = new Set();
-        const drawM = c => { const x = draw(c); if (RNG.float() < 0.022) { const m = RNG.weighted(MODS); x.mk = m.id; x.c = m.c; } return x; };
-        for (let round = 0; round < 12 && !rt.capped; round++) {
-          await tumble(rt, g, {
-            draw: drawM,
-            mult: () => fever,
-            evaluate: gg => {
-              const res = payClusters(clusters(gg, 5), T);
-              res.cells.forEach(k => { const [c, r] = K.unkey(k); if (gg[c][r].mk) queued.add(gg[c][r].mk); });
-              return res;
-            },
-            onStep: async (step, gg, res) => {
-              n += res.cells.size;
-              const lv = FEVER.filter(([t]) => n >= t).pop();
-              if (lv && lv[1] > fever) { fever = lv[1]; rt.chip('fever', 'FEBRE', 'x' + fever); rt.msg(`🔥 FEBRE DO OURO x${fever}! (${n} símbolos)`); rt.fx('big'); await rt.wait(800); }
-              else rt.chip('cnt', 'SÍMBOLOS', n);
-            },
-          });
-          if (!queued.size) break;
-          const order = MODS.map(m => m.id).filter(id => queued.has(id));
-          queued.clear();
-          for (const id of order) {
-            const m = MODS.find(x => x.id === id);
-            rt.msg(`🎨 ${m.name}!`);
-            rt.fx('big');
-            if (id === 'nuclear') { g.forEach((col, c) => col.forEach((_, r) => { g[c][r] = { ...draw(c), fresh: true }; })); }
-            if (id === 'wildgem') { const s = RNG.pick(g.flat().filter(x => !x.wild)); g.forEach((col, c) => col.forEach((x, r) => { if (x.id === s.id) g[c][r] = { ...WILD, fresh: true }; })); }
-            if (id === 'squares') { const s = RNG.pick(SY); for (let i = RNG.int(2, 4); i > 0; i--) { const c0 = RNG.int(0, 6), r0 = RNG.int(0, 6); for (let a = 0; a < 2; a++) for (let b = 0; b < 2; b++) g[c0 + a][r0 + b] = { ...s, fresh: true }; } }
-            if (id === 'colossal') { const s = RNG.pick(SY), z = RNG.weighted([{ z: 3, w: 6 }, { z: 4, w: 3 }, { z: 5, w: 1 }]).z; const c0 = RNG.int(0, 8 - z), r0 = RNG.int(0, 8 - z); for (let a = 0; a < z; a++) for (let b = 0; b < z; b++) g[c0 + a][r0 + b] = { ...s, fresh: true }; }
-            if (id === 'lucky') { for (let i = RNG.int(5, 15); i > 0; i--) { const c = RNG.int(0, 7); g[c][RNG.int(0, 7)] = { ...WILD, fresh: true }; } }
-            await rt.drop(g);
-            await rt.wait(500);
-          }
-        }
+        await play(rt, g, { n: 0, fever: 1, markP: 0.022 });
+        rt.chip('fever', null);
+        rt.chip('cnt', null);
+        const n = nSC(g);
+        if (n >= 3) { rt.mark(scatters(g)); await rt.wait(1000); await this.bonus(rt, { n }); }
+      },
+      async bonus(rt, { n = 3 } = {}) {
+        const st = { n: 0, fever: 1, markP: 0.07 };
+        await rt.fsLoop(FS_T(n), async api => {
+          const g = make('fw');
+          await play(rt, g, st);
+          if (nSC(g) >= 3) { rt.mark(scatters(g)); rt.msg('🎁 +5 rodadas grátis!'); api.add(5); await rt.wait(700); }
+        }, { sub: `${FS_T(n)} giros · Febre do Ouro acumula` });
         rt.chip('fever', null);
         rt.chip('cnt', null);
       },
-      async bonus() {},
     }));
   })();
 
@@ -315,25 +338,26 @@
       S('coruja', 'owl', 'Coruja', [0.6, 1.2, 3, 6], 5), S('vela', 'candle', 'Vela', [0.5, 1, 2.5, 5], 6), S('olho', 'nazar', 'Olho grego', [0.4, 0.8, 2, 4], 6),
       ...SUITS([[0.15, 0.3, 0.6, 1.2], [0.15, 0.3, 0.6, 1.2], [0.1, 0.2, 0.4, 0.8], [0.1, 0.2, 0.4, 0.8]]),
     ];
-    const WILD = { id: 'w', img: 'eye', name: 'Madame', wild: true, m: 2, reels: [1, 2, 3, 4], w: 1.1 };
-    const SC = { id: 'sc', img: 'dizzystar', name: 'Destino', sc: true, w: 0.68 };
+    const WILD = { id: 'w', img: 'eye', name: 'Madame', wild: true, m: 2, reels: [1, 2, 3, 4], w: 1.1, fw: 1.8 };
+    const SC = { id: 'sc', img: 'dizzystar', name: 'Destino', sc: true, w: 0.68, fw: 0.5 };
     const all = [...SY, WILD, SC];
     const draw = pool(all);
-    const SPINS = [{ v: 5, w: 15 }, { v: 6, w: 20 }, { v: 8, w: 25 }, { v: 10, w: 22 }, { v: 12, w: 18 }];
-    const MULTS = [{ v: 2, w: 18 }, { v: 3, w: 24 }, { v: 5, w: 26 }, { v: 10, w: 18 }, { v: 15, w: 9 }, { v: 25, w: 5 }];
-    const make = () => K.stack(randHeights(6, 2, 7).map((hh, c) => Array.from({ length: hh }, () => draw(c))), 0.3);
+    const SPINS = [{ v: 8, w: 20 }, { v: 10, w: 26 }, { v: 12, w: 24 }, { v: 15, w: 18 }, { v: 20, w: 12 }];
+    const MULTS = [{ v: 1, w: 30 }, { v: 2, w: 30 }, { v: 3, w: 22 }, { v: 4, w: 12 }, { v: 5, w: 6 }];
+    const make = (wk = 'w') => K.stack(randHeights(6, 2, 7).map((hh, c) => Array.from({ length: hh }, () => draw(c, wk))), 0.3);
 
     App.register(K.create({
       id: 'madamedestino', name: 'Madame Destino Megaways', studio: STUDIO, art: 'crystal', mascot: 'crystal',
-      tag: 'Roda do destino · até x25', colors: ['#7e22ce', '#0f766e'], bg: 'radial-gradient(circle at 50% 0%,#6d28d9,#1e1b4b 70%)',
+      tag: 'Roda do destino · multiplicador crescente', colors: ['#7e22ce', '#0f766e'], bg: 'radial-gradient(circle at 50% 0%,#6d28d9,#1e1b4b 70%)',
       cols: 6, rows: 7, maxWin: 5000, vol: 4, rtp: '~96,5%', target: 0.965,
       intro: 'Inspirado no "Madame Destiny Megaways" (Pragmatic Play).',
       hello: 'A Madame dobra cada ganho que toca!',
       symbols: all,
       tables: [table('Pagamento por caminho', heads(3, 4, ' rolos'), SY, 'Megaways: até 200.704 caminhos. A Madame (coringa x2) dobra o caminho em que entra; várias se somam.')],
-      highlights: ['🔮 Megaways com até <b>200.704</b> caminhos', '👁️ Coringa da Madame (rolos 2 a 5) vale <b>x2</b>', '✨ 3+ scatters giram a <b>Roda do Destino</b>: define as rodadas grátis e um <b>multiplicador fixo de x2 a x25</b>', 'Prêmio máximo: <b>5.000x</b>'],
+      highlights: ['🔮 Megaways com até <b>200.704</b> caminhos', '👁️ Coringa da Madame (rolos 2 a 5) vale <b>x2</b>', '✨ 3+ scatters giram a <b>Roda do Destino</b>: define as rodadas grátis e o multiplicador inicial (x1 a x5)', '📈 Nas grátis o multiplicador <b>sobe +1 a cada combinação vencedora</b> e nunca volta', 'Prêmio máximo: <b>5.000x</b>'],
       how: `<p><b>6 rolos Megaways</b> (2 a 7 símbolos cada). Iguais em rolos seguidos a partir da esquerda pagam por caminho.</p><p>${ico('eye')} <b>Madame</b> é o coringa (rolos 2 a 5) e multiplica por <b>x2</b> as combinações em que entra.</p>`,
-      features: `<p>${ico('dizzystar')} <b>3 ou mais scatters</b> giram a <b>Roda do Destino</b> duas vezes: a primeira define as rodadas grátis (5 a 12) e a segunda um <b>multiplicador de x2 a x25</b> que vale para <b>todos</b> os ganhos das rodadas.</p>
+      features: `<p>${ico('dizzystar')} <b>3 ou mais scatters</b> giram a <b>Roda do Destino</b> duas vezes: a primeira define as rodadas grátis (8 a 20) e a segunda o <b>multiplicador inicial</b> (x1 a x5).</p>
+        <p>📈 Cada giro grátis com ganho paga com o multiplicador atual e depois ele <b>sobe +1 para cada combinação vencedora</b> do giro. O multiplicador nunca volta durante o bônus.</p>
         <p>3+ scatters durante as rodadas giram a roda de giros de novo (giros extras, sem limite).</p>`,
       make,
       async spin(rt) {
@@ -346,14 +370,17 @@
         const si = SPINS.indexOf(RNG.weighted(SPINS)), mi = MULTS.indexOf(RNG.weighted(MULTS));
         await rt.reveal('RODA DO DESTINO: GIROS', SPINS.map(s => ({ img: 'crystal', t: `${s.v} giros` })), si);
         await rt.reveal('RODA DO DESTINO: MULTIPLICADOR', MULTS.map(s => ({ img: 'sparkles', t: `x${s.v}` })), mi);
-        const M = MULTS[mi].v;
+        let M = MULTS[mi].v;
         rt.chip('mult', 'MULT.', 'x' + M);
         await rt.fsLoop(SPINS[si].v, async api => {
-          const g = make();
+          const g = make('fw');
           await rt.spin(g, { tease: false });
-          await pay(rt, ways(g, SY, { wildMult: 'add' }), M);
+          const res = ways(g, SY, { wildMult: 'add' });
+          await pay(rt, res, M);
+          // cada combinação vencedora (símbolo pago) faz o multiplicador subir +1
+          if (res.total && !rt.capped) { M += res.wins.length; rt.chip('mult', 'MULT.', 'x' + M); rt.msg(`📈 +${res.wins.length} · multiplicador agora x${M}!`); await rt.wait(450); }
           if (count(g, x => x.sc) >= 3) { const r = RNG.weighted(SPINS); await rt.reveal('MAIS GIROS!', SPINS.map(s => ({ img: 'crystal', t: `+${s.v}` })), SPINS.indexOf(r)); api.add(r.v); }
-        }, { sub: `${SPINS[si].v} giros · tudo x${M}` });
+        }, { sub: `${SPINS[si].v} giros · começa em x${M} e sobe a cada ganho` });
         rt.chip('mult', null);
       },
     }));

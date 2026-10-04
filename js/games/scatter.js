@@ -294,7 +294,7 @@
             $$('.scatter', gridEl).forEach(x => x.classList.add('win'));
             msg(`${r.scatters} scatters! 🪙 ${fmt(scPay)} + rodadas grátis`);
             await wait(1200);
-            pay = round2(pay + await freeSpins(bet));
+            pay = round2(pay + await Speed.bonus(() => freeSpins(bet)));
           } else if (pay === 0) {
             msg('Não foi dessa vez...');
           }
@@ -317,7 +317,7 @@
           render();
           $$('.scatter', gridEl).forEach(x => x.classList.add('win'));
           await wait(1200);
-          const total = await freeSpins(bet);
+          const total = await Speed.bonus(() => freeSpins(bet));
           finish(price, total, price, { buy: true });
         }
 

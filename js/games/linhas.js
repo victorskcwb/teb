@@ -326,7 +326,7 @@
             msg(`${sc} ${scatter.name.toLowerCase()}s! 🪙 ${fmt(cfg.scatterPay[sc] * bet)} + rodadas grátis`);
             winEl.textContent = fmt(pay);
             await wait(1300);
-            pay = round2(pay + await freeSpins(cfg.fsCount));
+            pay = round2(pay + await Speed.bonus(() => freeSpins(cfg.fsCount)));
           } else if (pay === 0) {
             msg('Não foi dessa vez...');
           }
@@ -350,7 +350,7 @@
           await animate(grid, 'base');
           allCells().forEach(c => { if (c.classList.contains('scatter')) c.classList.add('win'); });
           await wait(1100);
-          const total = await freeSpins(cfg.fsCount);
+          const total = await Speed.bonus(() => freeSpins(cfg.fsCount));
           finish(price, total, price, { buy: true });
         }
 

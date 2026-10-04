@@ -48,8 +48,8 @@ Recriações com nomes e artes próprios dos slots mais jogados de cada estúdio
 | Casa dos Cães Megaways | The Dog House Megaways | Megaways · casinhas colantes | ~96,5% | 12.305x |
 | Lobo de Ouro | Wolf Gold | Respin das luas · jackpot 1.000x | ~96% | 2.500x |
 | Festa das Frutas | Fruit Party | 7×7 · multiplicadores até 256x | ~96,5% | 5.000x |
-| Joias Bonança | Gems Bonanza | 8×8 · 5 modificadores · Febre do Ouro | ~96,5% | 10.000x |
-| Madame Destino Megaways | Madame Destiny Megaways | Roda do destino · até x25 | ~96,5% | 5.000x |
+| Joias Bonança | Gems Bonanza | 8×8 · 5 modificadores · Febre do Ouro · rodadas grátis | ~96,5% | 10.000x |
+| Madame Destino Megaways | Madame Destiny Megaways | Roda do destino · multiplicador crescente | ~96,5% | 5.000x |
 | Cleogata | Cleocatra | Gatos coringa colantes x2/x3 | ~96,2% | 5.000x |
 | Caçador João e a Rainha Escaravelho | John Hunter and the Tomb of the Scarab Queen | Coleta de escaravelhos · pote final | ~96,5% | 10.500x |
 | Frutas Suculentas | Juicy Fruits | Coringa gigante que cresce | ~96,5% | 5.000x |
