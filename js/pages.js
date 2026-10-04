@@ -393,9 +393,9 @@ Pages.passe = {
       if (b && P.claimPass(Number(b.dataset.l), b.dataset.t)) { UI.confetti(25); render(); }
       if (e.target.closest('.claim-all')) { const g = P.claimAllPass(); if (g.coins || g.fs) UI.confetti(60); render(); }
       if (e.target.closest('.buy-prem')) {
-        if (confirm(`Ativar o Passe Premium por 🪙 ${fmt(P.PREMIUM_PRICE)} fichas fictícias?`) && P.buyPremium()) {
+        UI.ask('Passe Premium', `Ativar o Passe Premium por 🪙 ${fmt(P.PREMIUM_PRICE)} fichas fictícias?`, '👑 Ativar').then(ok => { if (!ok || !P.buyPremium()) return;
           Sfx.big(); UI.confetti(70, ['crown', 'coin', 'star']); UI.toast('👑 Passe Premium ativado!', 'win'); render();
-        }
+        });
       }
     });
     const tick = () => { timer.textContent = '⏰ Temporada termina em ' + fmtDur(P.seasonEndsIn()); };

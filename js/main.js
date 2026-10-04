@@ -152,7 +152,7 @@
     body.addEventListener('click', async e => {
       const a = e.target.closest('[data-a]')?.dataset.a;
       if (a === 'refill' && Wallet.refill()) { Sfx.win(); UI.toast('Fichas recarregadas! 🎁', 'win'); m.close(); }
-      if (a === 'reset' && confirm('Zerar saldo e estatísticas?')) { Wallet.reset(); UI.toast('Progresso zerado'); m.close(); }
+      if (a === 'reset') UI.ask('Zerar progresso', 'Zerar saldo e estatísticas?', 'Zerar', 'btn-danger').then(ok => { if (ok) { Wallet.reset(); UI.toast('Progresso zerado'); m.close(); } });
       if (a === 'ad') {
         m.close();
         Progress.adForCoins();
