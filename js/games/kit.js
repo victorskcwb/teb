@@ -61,10 +61,16 @@ const SlotKit = (() => {
   /** Cascata: remove as chaves e completa cada coluna por cima com draw(c). */
   function cascade(grid, keys, draw, keep = () => false) {
     const rm = keys instanceof Set ? keys : new Set(keys);
+    // casas trancadas (lock/fixed) não caem: os outros símbolos descem só pelas casas livres
+    const fixed = x => x && (x.fixed || x.id === 'lock');
     grid.forEach((col, c) => {
-      const stay = col.filter((x, r) => !rm.has(key(c, r)) || keep(x));
-      const add = Array.from({ length: col.length - stay.length }, () => ({ ...draw(c), fresh: true }));
-      grid[c] = [...add, ...stay];
+      const slots = col.map((x, r) => r).filter(r => !fixed(col[r]));
+      const stay = slots.filter(r => !rm.has(key(c, r)) || keep(col[r])).map(r => col[r]);
+      const add = Array.from({ length: slots.length - stay.length }, () => ({ ...draw(c), fresh: true }));
+      const fill = [...add, ...stay];
+      const out = col.slice();
+      slots.forEach((r, i) => { out[r] = fill[i]; });
+      grid[c] = out;
     });
     return grid;
   }

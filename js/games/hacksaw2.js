@@ -469,11 +469,11 @@
     const draw = pool([...SY, SEED, FERT, EPIC, DROP, SC]);
     const make = wk => grid([7, 7, 7, 7, 7, 7, 7], c => draw(c, wk));
     async function play(rt, g, wk, st) {
-      const flowers = st ? st.flowers : new Map();
+      const flowers = st ? st.flowers : new Map(), CAP = st ? 15 : 8;
       let drops = 0;
       const apply = gg => {
-        cells(gg, x => x.seed).forEach(([c, r]) => { if (flowers.size < 4) flowers.set(key(c, r), 2); gg[c][r] = { ...draw(c, wk), fresh: true }; });
-        cells(gg, x => x.fert || x.epic).forEach(([c, r]) => { const x = gg[c][r]; if (x.epic) flowers.forEach((m, k) => flowers.set(k, m + 1)); else if (flowers.size) { const k = RNG.pick([...flowers.keys()]); flowers.set(k, flowers.get(k) + 1); } gg[c][r] = { ...draw(c, wk), fresh: true }; });
+        cells(gg, x => x.seed).forEach(([c, r]) => { if (flowers.size < 3) flowers.set(key(c, r), 2); gg[c][r] = { ...draw(c, wk), fresh: true }; });
+        cells(gg, x => x.fert || x.epic).forEach(([c, r]) => { const x = gg[c][r]; if (x.epic) flowers.forEach((m, k) => flowers.set(k, Math.min(CAP, m + 1))); else if (flowers.size) { const k = RNG.pick([...flowers.keys()]); flowers.set(k, Math.min(CAP, flowers.get(k) + 1)); } gg[c][r] = { ...draw(c, wk), fresh: true }; });
         cells(gg, x => x.drop).forEach(([c, r]) => { drops = Math.min(5, drops + 1); gg[c][r] = { ...draw(c, wk), fresh: true }; });
         flowers.forEach((m, k) => { const [c, r] = unkey(k); gg[c][r] = mult({ ...SUN, c: 'sticky' }, m); });
       };
@@ -484,10 +484,12 @@
           draw: c => draw(c, wk),
           evaluate: gg => payClusters(clusters(gg, 5), TT, k => k.cells.reduce((s, kk) => { const [c, r] = unkey(kk); return s + (gg[c][r].m || 0); }, 0) || 1),
           keep: x => x.wild,
-          onStep: async (s, gg) => {
-            // girassóis pulam para outra casa e crescem +1
-            const nf = new Map();
-            flowers.forEach((m, k) => { let kk; do kk = key(RNG.int(0, 6), RNG.int(0, 6)); while (nf.has(kk)); nf.set(kk, Math.min(st ? 25 : 10, m + 1)); const [c, r] = unkey(k); gg[c][r] = { ...draw(c, wk), fresh: true }; });
+          onStep: async (s, gg, res) => {
+            // girassóis pulam para outra casa; só os que fizeram parte do ganho crescem +1
+            const nf = new Map(), won = res && res.cells ? res.cells : new Set();
+            flowers.forEach((m, k) => { let kk; do kk = key(RNG.int(0, 6), RNG.int(0, 6)); while (nf.has(kk)); nf.set(kk, Math.min(CAP, m + (won.has(k) ? 1 : 0))); });
+            // a cascata pode ter derrubado os girassóis: tira todos da grade antes de recolocar nas casas novas
+            gg.forEach((col, c) => col.forEach((x, r) => { if (x.wild) gg[c][r] = { ...draw(c, wk), fresh: true }; }));
             flowers.clear(); nf.forEach((m, k) => flowers.set(k, m));
             apply(gg);
           },
@@ -507,8 +509,8 @@
       intro: 'Inspirado no "Harvest Wilds" (Hacksaw Gaming).', hello: 'Plante sementes e colha girassóis!',
       symbols: [...SY, SUN, SEED, FERT, EPIC, DROP, SC],
       tables: [table('Pagamento por tamanho do grupo', CLH, SY, 'Grupos de 5+ iguais encostados, com cascata.')],
-      highlights: ['🌻 7×7 com grupos e cascata', '🌱 Sementes viram <b>girassóis coringa x2</b> que <b>pulam</b> para outra casa e sobem <b>+1</b> a cada cascata (até 4 ao mesmo tempo)', '🪣 Adubo dá +1 num girassol; o épico dá +1 em todos', '💧 Gotas (até 5) dão <b>respins</b> no fim das cascatas', '🚜 3+ tratores = <b>10 rodadas grátis</b> com os girassóis guardados', 'Prêmio máximo: <b>10.000x</b>'],
-      how: '<p>Grade 7×7: grupos de 5+ iguais encostados pagam (cascata). Girassóis são coringas com multiplicador; vários no mesmo grupo se somam. A cada cascata eles pulam para uma casa nova e crescem +1.</p>',
+      highlights: ['🌻 7×7 com grupos e cascata', '🌱 Sementes viram <b>girassóis coringa x2</b> que <b>pulam</b> para outra casa a cada cascata e sobem <b>+1</b> quando fazem parte de um ganho (até 3 ao mesmo tempo)', '🪣 Adubo dá +1 num girassol; o épico dá +1 em todos', '💧 Gotas (até 5) dão <b>respins</b> no fim das cascatas', '🚜 3+ tratores = <b>10 rodadas grátis</b> com os girassóis guardados', 'Prêmio máximo: <b>10.000x</b>'],
+      how: '<p>Grade 7×7: grupos de 5+ iguais encostados pagam (cascata). Girassóis são coringas com multiplicador; vários no mesmo grupo se somam. A cada cascata eles pulam para uma casa nova; os que participaram do ganho crescem +1 (até x8 no jogo base e x15 nas rodadas grátis).</p>',
       features: '<p>🚜 <b>3 ou mais tratores</b> dão <b>10 rodadas grátis</b> (+5 com 3 nelas). Os girassóis ficam de um giro para o outro durante todo o bônus.</p>',
       make: () => make('w'),
       async spin(rt) { const g = make('w'); if (await play(rt, g, 'w', null) >= 3) { rt.mark(scatters(g)); await rt.wait(1000); await this.bonus(rt, {}); } },
