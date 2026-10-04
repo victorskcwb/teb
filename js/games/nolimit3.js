@@ -77,7 +77,7 @@
   (() => {
     const SY = msyms([['astronauta', 'astronaut', 'Astronauta'], ['foguete', 'rocket', 'Foguete'], ['planeta', 'ringedplanet', 'Planeta'], ['cometa', 'comet', 'Cometa']]);
     const WILD = { id: 'w', img: 'sunface', name: 'Coringa solar', wild: true, w: 0.55, fw: 0.22 };
-    const SC = { id: 'sc', img: 'milkyway', name: 'Galáxia', sc: true, w: 0.9, fw: 0 };
+    const SC = { id: 'sc', img: 'milkyway', name: 'Galáxia', sc: true, w: 1.05, fw: 0 };
     const draw = pool([...SY, WILD, SC]);
     const cell = (c, wk) => { const x = draw(c, wk); if (x.wild) mult(x, RNG.int(1, wk === 'fw' ? 2 : 3)); if (x.m === 1) { delete x.m; delete x.t; } return x; };
     const make = (rows, wk) => grid([rows, rows, rows, rows, rows], c => cell(c, wk));
@@ -88,9 +88,9 @@
       intro: 'Inspirado no "Milky Ways" (Nolimit City).', hello: 'Coringas solares se multiplicam!',
       symbols: [...SY, WILD, SC],
       tables: [table('Pagamento por caminho', heads(3, 3, ' rolos'), SY, 'De 243 (5×3) até 3.125 (5×5) caminhos.')],
-      highlights: ['🌌 5×3 com 243 caminhos', '☀️ <b>Coringas solares</b> com x1 a x3 que <b>se multiplicam</b>', '3 galáxias = <b>3 giros</b> numa grade <b>5×5</b> (3.125 caminhos) com <b>1 coringa garantido</b>', '🔗 <b>Giros de Fusão:</b> cada ganho nas grátis prende os vencedores e gira o resto (até 2 vezes)', 'Prêmio máximo: <b>5.664x</b>'],
+      highlights: ['🌌 5×3 com 243 caminhos', '☀️ <b>Coringas solares</b> com x1 a x3 que <b>se multiplicam</b>', '3 galáxias = <b>3 giros</b> numa grade <b>5×5</b> (3.125 caminhos) com <b>1 coringa garantido</b>', '🔗 <b>Giros de Fusão:</b> cada ganho nas grátis prende os vencedores e gira o resto mais uma vez', 'Prêmio máximo: <b>5.664x</b>'],
       how: '<p>Grade 5×3 que paga por caminhos. Coringas solares podem vir com multiplicador, e os multiplicadores de coringas no mesmo caminho se multiplicam.</p>',
-      features: '<p>🌌 <b>3 galáxias</b> dão <b>3 rodadas grátis</b> numa grade 5×5 com um coringa garantido. Sempre que houver ganho, começa a <b>Fusão</b>: os símbolos vencedores ficam presos e o resto gira de novo, até 2 vezes ou até não aparecer ganho novo. 3 galáxias nas grátis dão +3.</p>',
+      features: '<p>🌌 <b>3 galáxias</b> dão <b>3 rodadas grátis</b> numa grade 5×5 com um coringa garantido. Sempre que houver ganho, começa a <b>Fusão</b>: os símbolos vencedores ficam presos e o resto gira mais uma vez. 3 galáxias nas grátis dão +3.</p>',
       make: () => make(3, 'w'),
       async spin(rt) { rt.layout(3); const g = make(3, 'w'); await rt.spin(g); await pay(rt, ways(g, SY)); if (count(g, x => x.sc) >= 3) { rt.mark(scatters(g)); await rt.wait(1000); await this.bonus(rt, {}); } },
       async bonus(rt) {
@@ -100,7 +100,7 @@
           g[RNG.int(0, 4)][RNG.int(0, 4)] = { ...WILD };
           await rt.spin(g, { tease: false });
           let res = ways(g, SY); await pay(rt, res);
-          for (let guard = 0; guard < 2 && res.total && !rt.capped; guard++) {
+          for (let guard = 0; guard < 1 && res.total && !rt.capped; guard++) {
             const ng = make(5, 'fw'); res.cells.forEach(k => { const [c, r] = unkey(k); ng[c][r] = { ...g[c][r], c: 'sticky' }; });
             g = ng; rt.msg('🔗 Fusão: vencedores presos!'); await rt.spin(g, { tease: false });
             const nr = ways(g, SY);
@@ -195,16 +195,16 @@
 
   /* 25. Ouro do Macaco (xPays) — símbolos colossais */
   (() => {
-    const SY = [S('macaco', 'monkey', 'Macaco', [1, 2, 5, 12], 3), S('idolo', 'moai', 'Ídolo', [0.8, 1.6, 4, 10], 4), S('banana', 'banana', 'Banana', [0.6, 1.2, 3, 8], 5), S('coco', 'coconut', 'Coco', [0.5, 1, 2.5, 6], 5), ...R([[0.15, 0.3, 0.6, 1.5], [0.15, 0.3, 0.6, 1.5], [0.12, 0.25, 0.5, 1.2], [0.12, 0.25, 0.5, 1.2]])];
+    const SY = [S('macaco', 'monkey', 'Macaco', [1, 2, 5, 12], 3), S('idolo', 'moai', 'Ídolo', [0.8, 1.6, 4, 10], 4), S('banana', 'banana', 'Banana', [0.6, 1.2, 3, 8], 5), S('coco', 'coconut', 'Coco', [0.5, 1, 2.5, 6], 5), ...R([[0.15, 0.3, 0.6, 1.5], [0.15, 0.3, 0.6, 1.5], [0.12, 0.25, 0.5, 1.2], [0.12, 0.25, 0.5, 1.2]]), K.L('10', [0.1, 0.2, 0.4, 1], 9), K.L('9', [0.1, 0.2, 0.4, 1], 9)];
     const WILD = { id: 'w', img: 'see', name: 'Coringa', wild: true, w: 0.4 };
-    const SC = { id: 'sc', img: 'temple', name: 'Templo', sc: true, w: 0.16, fw: 0.12 };
+    const SC = { id: 'sc', img: 'temple', name: 'Templo', sc: true, w: 0.72, fw: 0.3 };
     const draw = pool([...SY, WILD, SC]);
-    const make = wk => grid(Array(6).fill(6), c => draw(c, wk));
-    const COL = [{ m: 4, w: 40 }, { m: 5, w: 25 }, { m: 10, w: 18 }, { m: 25, w: 10 }, { m: 100, w: 5 }, { m: 500, w: 0.5 }];
+    const make = wk => grid(Array(6).fill(4), c => draw(c, wk));
+    const COL = [{ m: 4, w: 40 }, { m: 5, w: 25 }, { m: 10, w: 18 }, { m: 25, w: 10 }, { m: 50, w: 5 }, { m: 250, w: 0.4 }];
     async function play(rt, g, wk, st) {
       let col = 1;
       if (RNG.float() < (st ? 0.3 : 0.08)) {
-        const size = RNG.float() < 0.3 ? 3 : 2, s = RNG.pick(SY.slice(0, 4)), c0 = RNG.int(0, 6 - size), r0 = RNG.int(0, 6 - size);
+        const size = RNG.float() < 0.3 ? 3 : 2, s = RNG.pick(SY.slice(0, 4)), c0 = RNG.int(0, 6 - size), r0 = RNG.int(0, 4 - size);
         col = wm(COL);
         for (let a = 0; a < size; a++) for (let b = 0; b < size; b++) g[c0 + a][r0 + b] = { ...s, c: 'giant', t: a === 0 && b === 0 ? 'x' + col : undefined };
         rt.msg(`🐒 Símbolo colossal ${size}×${size} com x${col}!`);
@@ -219,13 +219,13 @@
     }
     App.register(K.create({
       id: 'ouromacaco', name: 'Ouro do Macaco', studio: STUDIO, art: 'monkey', mascot: 'banana',
-      tag: 'Colossais até x500 · cipó multiplicador', colors: ['#16a34a', '#ca8a04'], bg: 'linear-gradient(180deg,#14532d,#3f6212 50%,#713f12)',
-      cols: 6, rows: 6, maxWin: 12683, vol: 4, rtp: '~96%', target: 0.96,
+      tag: 'Colossais até x250 · cipó multiplicador', colors: ['#16a34a', '#ca8a04'], bg: 'linear-gradient(180deg,#14532d,#3f6212 50%,#713f12)',
+      cols: 6, rows: 4, maxWin: 12683, vol: 4, rtp: '~96%', target: 0.96,
       intro: 'Inspirado no "Monkey\'s Gold xPays" (Nolimit City).', hello: 'Símbolos colossais na selva!',
       symbols: [...SY, WILD, SC],
-      tables: [table('Pagamento por caminho', heads(3, 4, ' rolos'), SY, '6×6 por caminhos, a partir de 3 rolos, com cascata.')],
-      highlights: ['🐒 6×6 com cascata, pagando por caminhos a partir de 3 rolos', '🗿 <b>Símbolos colossais</b> 2×2 ou 3×3 com multiplicador de <b>x4 a x500</b> no primeiro ganho', '🛕 3+ templos = <b>10 rodadas grátis</b> com o <b>cipó multiplicador</b>: ele sobe de 1 a 3 a cada cascata e não zera', 'Prêmio máximo: <b>12.683x</b>'],
-      how: '<p>Grade 6×6 que paga por caminhos (3 ou mais rolos seguidos), com cascata. Um símbolo colossal multiplica o primeiro ganho do giro pelo seu valor.</p>',
+      tables: [table('Pagamento por caminho', heads(3, 4, ' rolos'), SY, '6×4 = 4.096 caminhos, a partir de 3 rolos, com cascata.')],
+      highlights: ['🐒 6×4 com 4.096 caminhos e cascata, pagando a partir de 3 rolos', '🗿 <b>Símbolos colossais</b> 2×2 ou 3×3 com multiplicador de <b>x4 a x250</b> no primeiro ganho', '🛕 3+ templos = <b>10 rodadas grátis</b> com o <b>cipó multiplicador</b>: ele sobe de 1 a 3 a cada cascata e não zera', 'Prêmio máximo: <b>12.683x</b>'],
+      how: '<p>Grade 6×4 que paga por caminhos (3 ou mais rolos seguidos), com cascata. Um símbolo colossal multiplica o primeiro ganho do giro pelo seu valor.</p>',
       features: '<p>🛕 <b>3 ou mais templos</b> dão <b>10 rodadas grátis</b>. Antes de começar, o passo do cipó é sorteado (+1, +2 ou +3): a cada cascata o multiplicador sobe esse passo e nunca volta.</p>',
       make: () => make('w'),
       async spin(rt) { const g = make('w'); if (await play(rt, g, 'w', null) >= 3) { rt.mark(scatters(g)); await rt.wait(1000); await this.bonus(rt, {}); } },

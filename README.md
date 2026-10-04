@@ -257,7 +257,7 @@ Recriações com nomes e artes próprios dos slots mais jogados de cada estúdio
 | Vias Lácteas | Milky Ways | Coringas solares · fusão | ~96,1% | 5.664x |
 | Livro das Sombras | Book of Shadows | Livro com linhas sombrias · 30.338x | ~96% | 30.338x |
 | Caçador de Búfalos | Buffalo Hunter | Manada e multiplicadores da pradaria | ~96% | 12.647x |
-| Ouro do Macaco | Monkey's Gold xPays | Colossais até x500 · cipó multiplicador | ~96% | 12.683x |
+| Ouro do Macaco | Monkey's Gold xPays | Colossais até x250 · cipó multiplicador | ~96% | 12.683x |
 | Cemitério dos Guerreiros | Warrior Graveyard | Lápides xNudge · mult. sem teto | ~96,2% | 9.797x |
 | Buraco de Fogo 2 | Fire in the Hole 2 | Mina desaba · até 46.656 caminhos | ~96,1% | 65.000x |
 | Sangue e Sombra 2 | Blood & Shadow 2 | Barra do ritual · coringas colantes | ~96,1% | 16.161x |

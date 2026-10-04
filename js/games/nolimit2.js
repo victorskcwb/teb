@@ -234,7 +234,7 @@
     // com o.meter os ingredientes ganhos ficam guardados entre os giros
     const kept = new Set();
     async function play(rt, g, fs) {
-      const conv = gg => { if (fs) gg.forEach((col, c) => col.forEach((x, r) => { if (ING.includes(x.id) && RNG.float() < 0.35) gg[c][r] = fs === 'mult' ? mult({ ...WILD, c: 'gold' }, RNG.int(2, 3)) : { ...WILD, c: 'gold' }; })); };
+      const conv = gg => { if (fs) gg.forEach((col, c) => col.forEach((x, r) => { if (ING.includes(x.id) && RNG.float() < (o.conv || 0.35)) gg[c][r] = fs === 'mult' ? mult({ ...WILD, c: 'gold' }, RNG.int(2, 3)) : { ...WILD, c: 'gold' }; })); };
       // coringa clone: transforma de 1 a 3 vizinhos em coringa
       const clone = gg => cells(gg, x => x.wild && !x.cl).forEach(([c, r]) => { gg[c][r].cl = true; RNG.shuffle(near(c, r)).slice(0, RNG.int(o.cloneMin, o.cloneMax)).forEach(([a, b]) => { if (gg[a] && gg[a][b] && !gg[a][b].wild) gg[a][b] = { ...WILD, cl: true, fresh: true }; }); });
       conv(g); clone(g);
@@ -268,10 +268,10 @@
     });
   }
   App.register(kitchen({
-    id: 'sushimania', name: 'Drama na Cozinha: Sushi Mania', art: 'sushi', mascot: 'ninja', wildImg: 'ninja', cloneMin: 1, cloneMax: 3, fsN: 10, fsMode: 'wild', fsTitle: 'SUSHI SELVAGEM', fsSub: 'Ingredientes viram coringa',
+    id: 'sushimania', name: 'Drama na Cozinha: Sushi Mania', art: 'sushi', mascot: 'ninja', wildImg: 'ninja', cloneMin: 1, cloneMax: 3, fsN: 10, fsMode: 'wild', conv: 0.18, fsTitle: 'SUSHI SELVAGEM', fsSub: 'Ingredientes viram coringa',
     tag: 'Clones coringa · ingredientes', colors: ['#dc2626', '#111827'], bg: 'linear-gradient(180deg,#fef2f2,#fecaca 40%,#7f1d1d)', maxWin: 697,
     intro: 'Inspirado no "Kitchen Drama: Sushi Mania" (Nolimit City).', hello: 'Os ninjas se clonam!',
-    syms: [S('salmao', 'sushi', 'Salmão', [1.5, 5, 20], 6.5), S('atum', 'fishcake', 'Atum', [1.5, 5, 20], 6.5), S('camarao', 'shrimp', 'Camarão', [1.5, 5, 20], 6.5), S('wasabi', 'leafygreen', 'Wasabi', [0.8, 2.5, 10], 5), S('hashi', 'chopsticks', 'Hashi', [0.6, 2, 8], 6), ...R([[0.2, 0.6, 2], [0.2, 0.6, 2], [0.15, 0.5, 1.5], [0.15, 0.5, 1.5]])], ing: ['salmao', 'atum', 'camarao'],
+    syms: [S('salmao', 'sushi', 'Salmão', [1.5, 5, 20], 9.5), S('atum', 'fishcake', 'Atum', [1.5, 5, 20], 9.5), S('camarao', 'shrimp', 'Camarão', [1.5, 5, 20], 9.5), S('wasabi', 'leafygreen', 'Wasabi', [0.8, 2.5, 10], 5), S('hashi', 'chopsticks', 'Hashi', [0.6, 2, 8], 6), ...R([[0.2, 0.6, 2], [0.2, 0.6, 2], [0.15, 0.5, 1.5], [0.15, 0.5, 1.5]])], ing: ['salmao', 'atum', 'camarao'],
     highlights: ['🍣 5×3 com 20 linhas e cascata', '🥷 <b>Coringas Bunshin</b> se clonam em 1 a 3 casas vizinhas', '🐟 Ganhe com os <b>3 ingredientes</b> (salmão, atum e camarão) no mesmo giro = <b>10 rodadas grátis</b> em que eles podem virar coringas', 'Prêmio máximo: <b>697x</b>'],
     how: '<p>Grade 5×3 com 20 linhas e cascata. Cada coringa ninja que cai transforma de 1 a 3 casas vizinhas em coringas.</p>',
     features: '<p>🐟 Se no mesmo giro (somando as cascatas) houver ganhos com <b>salmão, atum e camarão</b>, você ganha <b>10 rodadas grátis</b> em que esses três ingredientes podem virar coringas.</p>',
