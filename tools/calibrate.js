@@ -17,6 +17,8 @@ const { Worker, isMainThread, parentPort, workerData } = require('worker_threads
 const os = require('os');
 
 const ROOT = path.join(__dirname, '..');
+/** Retorno da compra de bônus (o jogo normal usa o target de cada slot). */
+const BUY_RTP = 0.94;
 const FILES = ['js/games/kit.js', 'js/games/templates.js', 'js/games/pragmatic.js', 'js/games/pgsoft.js', 'js/games/hacksaw.js', 'js/games/tada.js', 'js/games/nolimit.js', 'js/games/pragmatic2.js', 'js/games/pragmatic3.js', 'js/games/pgsoft2.js', 'js/games/pgsoft3.js', 'js/games/hacksaw2.js', 'js/games/hacksaw3.js', 'js/games/nolimit2.js', 'js/games/nolimit3.js'];
 const OUT = path.join(ROOT, 'js/games/calib.js');
 
@@ -93,7 +95,8 @@ async function calibrate(game, SlotKit, spins, bonusN) {
   const fin = await run(game, SlotKit, K, spins, bonusN);
   const K2 = K * (target / fin.rtp);
   const s = K2 / K;
-  const buy = game.logic.buy === false ? 0 : Math.max(10, Math.round((fin.bonus * s) / target));
+  // a compra de bônus devolve BUY_RTP (um pouco abaixo do jogo normal, como nos cassinos)
+  const buy = game.logic.buy === false ? 0 : Math.max(10, Math.round((fin.bonus * s) / BUY_RTP));
   return { id: game.id, k: +K2.toPrecision(5), buy, hit: +fin.hit.toFixed(4), fs: +fin.fs.toPrecision(3), rtp: fin.rtp, se: fin.sd / Math.sqrt(spins), bonusAvg: fin.bonus * s, hold: fin.hold };
 }
 

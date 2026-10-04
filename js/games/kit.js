@@ -350,7 +350,7 @@ const SlotKit = (() => {
         tables: (cfg.tables || []).map(t => ({ ...t, rows: t.raw ? t.rows : scale(t.rows) })),
         features: `${cfg.features}
           ${fsEvery && cfg.buy !== false ? `<p class="muted small">O bônus aparece em média 1 vez a cada ~${fsEvery} giros.</p>` : ''}
-          ${buyX ? `<p>💰 <b>Comprar bônus:</b> entra direto no bônus por <b>${buyX}x</b> a aposta.</p>` : ''}
+          ${buyX ? `<p>💰 <b>Comprar bônus:</b> entra direto no bônus por <b>${buyX}x</b> a aposta (retorno médio da compra ~94%).</p>` : ''}
           <p class="muted small">Prêmio máximo: ${maxTxt}x a aposta — ao atingir, a rodada termina.</p>`,
         lines: L ? { cols: L.cols, rows: L.rows, list: L.list.map(line => line.map((r, c) => `${c}:${r}`)), text: L.text } : null,
       },
