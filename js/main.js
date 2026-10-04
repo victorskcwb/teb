@@ -7,9 +7,9 @@
     { id: 'mesa', title: 'Mesa & Ao vivo', art: 'cards', desc: 'Roleta, Blackjack, Futebol Studio' },
   ];
   // ranking aproximado dos jogos mais jogados em cassinos online no Brasil
-  const POPULAR = ['tigrinho', 'touro', 'raspadinha', 'crash', 'doce', 'coelho', 'mines', 'olimpo', 'pescaria', 'ratinho', 'princesa', 'double', 'futebol', 'roleta', 'plinko', 'dragaozinho', 'blackjack'];
+  const POPULAR = ['tigrinho', 'touro', 'docerush', 'raspadinha', 'crash', 'doce', 'zeushades', 'coelho', 'mines', 'olimpo', 'anubis', 'pescaria', 'portais', 'ratinho', 'princesa', 'double', 'futebol', 'roleta', 'plinko', 'dragaozinho', 'blackjack'];
   const BADGE = {
-    tigrinho: 'hot', crash: 'hot', mines: 'hot', touro: 'new', coelho: 'new', pescaria: 'new', princesa: 'new', doce: 'top', olimpo: 'top', ratinho: 'new',
+    tigrinho: 'hot', crash: 'hot', mines: 'hot', touro: 'new', coelho: 'new', pescaria: 'new', princesa: 'new', docerush: 'new', portais: 'new', zeushades: 'new', anubis: 'new', doce: 'top', olimpo: 'top', ratinho: 'new',
     futebol: 'new', raspadinha: 'new', limbo: 'new', dice: 'new', hilo: 'new', keno: 'new', torre: 'new', double: 'top',
   };
   const BADGE_TXT = { hot: '🔥 HOT', new: 'NOVO', top: 'TOP' };
@@ -154,7 +154,9 @@
     const ck = Progress.checkinStatus();
     const slides = [];
     if (ck.canClaim) slides.push({ art: 'gift', c: ['#10b981', '#0e7490'], t: `Bônus diário: Dia ${ck.nextIdx + 1}`, s: `Colete ${rewardText(CHECKIN[ck.nextIdx])} agora!`, cta: 'Coletar', go: 'checkin' });
-    slides.push({ art: 'fish', c: ['#0284c7', '#0f766e'], t: 'NOVO: Pescaria Bonança', s: 'O pescador fisga peixes de até 1.000x nas rodadas grátis.', cta: 'Jogar', go: '#/pescaria' });
+    slides.push({ art: 'teddy', c: ['#db2777', '#7c3aed'], t: 'NOVO: Doce Rush', s: 'Multiplicadores de até x128 que ficam na grade nas rodadas grátis.', cta: 'Jogar', go: '#/docerush' });
+    slides.push({ art: 'zeus', c: ['#2563eb', '#b91c1c'], t: 'NOVO: Zeus x Hades', s: 'Escolha seu deus nas rodadas grátis: coringas de até x50.', cta: 'Jogar', go: '#/zeushades' });
+    slides.push({ art: 'fish', c: ['#0284c7', '#0f766e'], t: 'Pescaria Bonança', s: 'O pescador fisga peixes de até 1.000x nas rodadas grátis.', cta: 'Jogar', go: '#/pescaria' });
     slides.push({ art: 'ox', c: ['#dc2626', '#a16207'], t: 'NOVOS: Touro e Coelho da Sorte', s: 'Touro Furioso com tela cheia x10 e cenouras de prêmio de até 200x.', cta: 'Jogar', go: '#/touro' });
     slides.push({ art: 'ticket', c: ['#7c3aed', '#db2777'], t: `Passe da Temporada · Nível ${Progress.level}`, s: `Termina em ${fmtDur(Progress.seasonEndsIn())}. Jogue, ganhe XP e libere prêmios!`, cta: 'Ver passe', go: '#/passe' });
     slides.push({ art: 'princess', c: ['#c026d3', '#4338ca'], t: 'NOVO: Princesa Estelar', s: 'Estrelas multiplicadoras que se acumulam nas rodadas grátis.', cta: 'Jogar', go: '#/princesa' });

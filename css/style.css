@@ -1079,3 +1079,49 @@ select { padding: 9px 10px; border-radius: 12px; background: var(--bg2); border:
   .si-wide td small { font-size: .64rem; }
 }
 .si-max b.si-coins { display: inline; font-family: inherit; font-size: inherit; font-weight: 900; color: #fff7c2; }
+
+/* =========================================================
+   Doce Rush, Portais de Fogo, Zeus x Hades, Livro de Anúbis
+   ========================================================= */
+.rush .scat-frame { background: linear-gradient(160deg, #fbcfe8, #db2777 40%, #a78bfa 70%, #fbcfe8); }
+.rush-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; padding: 5px; border-radius: 16px; overflow: hidden; background: linear-gradient(180deg, #fdf2f8, #f5d0fe 60%, #c4b5fd); }
+.rc { position: relative; aspect-ratio: 1; display: grid; place-items: center; border-radius: 8px; background: rgba(255, 255, 255, .35); transition: background .3s; }
+.rc img { width: 86%; height: 86%; object-fit: contain; filter: drop-shadow(0 2px 2px rgba(0, 0, 0, .25)); position: relative; z-index: 1; }
+.rc.drop { animation: scDrop .36s cubic-bezier(.3, 1.4, .5, 1) backwards; }
+.rc.mark { background: rgba(250, 204, 21, .45); box-shadow: inset 0 0 0 2px rgba(234, 179, 8, .8); }
+.rc.mult { background: radial-gradient(circle, #fde047, #f97316); box-shadow: inset 0 0 0 2px #fff, 0 0 8px rgba(249, 115, 22, .8); }
+.rc.mult.m8, .rc.mult.m16 { background: radial-gradient(circle, #f9a8d4, #db2777); }
+.rc.mult.m32, .rc.mult.m64, .rc.mult.m128 { background: radial-gradient(circle, #c4b5fd, #7c3aed); animation: pulse 1s infinite; }
+.rc i { position: absolute; top: 0; right: 1px; z-index: 2; font-style: normal; font-family: var(--title); font-size: clamp(.55rem, 2.4vw, .8rem); color: #fff; text-shadow: 0 1px 0 #000, 0 0 3px #000; }
+.rc.win { background: #fff; box-shadow: 0 0 12px #fff; }
+.rc.win img { animation: winSym .45s ease-in-out infinite; }
+.rc.scatter img { filter: drop-shadow(0 0 6px #fde047); }
+
+.scat-portais .scat-frame { background: linear-gradient(160deg, #fdba74, #ea580c 40%, #7e22ce 70%, #fdba74); }
+.scat-portais .scat-grid { background: radial-gradient(circle at 50% 100%, #c2410c, #3b0764 60%, #1e0b2e); }
+.scat-portais .sc-cell { background: rgba(255, 255, 255, .08); }
+.sc-cell.portal img { animation: portalSpin 1.2s linear infinite; filter: drop-shadow(0 0 10px #f97316); }
+.sc-cell.portal.open { animation: pulse .35s 2; background: rgba(249, 115, 22, .55); }
+@keyframes portalSpin { to { transform: rotate(360deg); } }
+.sc-cell.conv { animation: convIn .6s ease-out; background: rgba(249, 115, 22, .45); box-shadow: 0 0 12px #f97316; }
+@keyframes convIn { 0% { transform: scale(.3) rotate(-90deg); opacity: 0; } 70% { transform: scale(1.15); } }
+
+.lslot-zeushades .pesca-frame { background: linear-gradient(160deg, #bfdbfe, #2563eb 40%, #fde68a 55%, #b91c1c); box-shadow: var(--shadow), 0 0 26px rgba(37, 99, 235, .45); }
+.lslot-zeushades .pesca-grid { background: linear-gradient(180deg, #1e3a8a, #312e81 55%, #450a0a); }
+.lslot-zeushades[data-god="hades"] .pesca-grid { background: linear-gradient(180deg, #450a0a, #1c0505); }
+.lslot-zeushades[data-god="hades"] .pesca-frame { background: linear-gradient(160deg, #fca5a5, #b91c1c 45%, #1c0505); }
+.lslot-anubis .pesca-frame { background: linear-gradient(160deg, #fde68a, #ca8a04 40%, #1e3a8a 70%, #fde68a); box-shadow: var(--shadow), 0 0 26px rgba(202, 138, 4, .45); }
+.lslot-anubis .pesca-grid { background: linear-gradient(180deg, #78350f, #451a03 60%, #1c0a02); }
+.lslot .pcell.wild .val { color: #fff; background: #b91c1c; }
+.lslot .pcell.expand { background: radial-gradient(circle, #fde68a, #ca8a04); box-shadow: inset 0 0 0 2px #fff7c2, 0 0 14px rgba(250, 204, 21, .8); }
+.lslot .pcell.expand img { animation: winSym .6s ease-in-out 3; }
+.ls-special img { width: 30px; height: 30px; }
+.god-pick { display: flex; gap: 10px; margin-top: 10px; padding: 0 10px; }
+.god { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 10px 6px; border-radius: 16px; border: 2px solid #fff7c2; color: #fff; box-shadow: 0 4px 0 rgba(0, 0, 0, .4); animation: pop .4s cubic-bezier(.2, 1.5, .4, 1); }
+.god .ico { width: 54px; height: 54px; }
+.god strong { font-family: var(--title); font-weight: 400; font-size: 1.3rem; }
+.god small { font-size: .72rem; line-height: 1.2; opacity: .9; }
+.god-zeus { background: linear-gradient(180deg, #60a5fa, #1d4ed8); }
+.god-hades { background: linear-gradient(180deg, #f87171, #7f1d1d); }
+.ls-reveal { width: 96px; height: 96px; margin-top: 8px; filter: drop-shadow(0 0 16px #fde047); }
+.ls-reveal.pop { animation: pop .5s cubic-bezier(.2, 1.6, .4, 1); }

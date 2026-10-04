@@ -2,11 +2,13 @@
 
 /* =========================================================
    Slots "scatter pays" 6×5 com cascata (estilo Sweet Bonanza /
-   Gates of Olympus / Starlight Princess):
+   Gates of Olympus / Starlight Princess / Fire Portals):
    - 8+ símbolos iguais em QUALQUER lugar pagam
    - símbolos vencedores somem e novos caem (cascata)
    - 4+ scatters = 10 rodadas grátis (3+ durante elas = +5)
    - orbes de multiplicador somam e multiplicam o ganho da sequência
+   - portais (Portais de Fogo) transformam casas num mesmo símbolo;
+     nas rodadas grátis cada portal soma +1 ao multiplicador de fogo
    Parâmetros calibrados por simulação (1,6M giros).
    ========================================================= */
 (function () {
@@ -18,7 +20,7 @@
     const all = [...cfg.symbols, cfg.scatter];
     return {
       id: cfg.id, name: cfg.name, art: cfg.art, category: 'slots', tag: cfg.tag, colors: cfg.colors,
-      sprites: [...all.map(s => s.img), cfg.orbImg],
+      sprites: [...all.map(s => s.img), cfg.orbImg, cfg.portal?.img].filter(Boolean),
       rules: `
         <p>${cfg.intro}</p>
         <p>Grade <b>6×5</b> sem linhas: <b>8 ou mais</b> símbolos iguais em qualquer posição pagam. Os símbolos vencedores explodem e novos caem no lugar (<b>cascata</b>), podendo gerar novos ganhos na mesma rodada.</p>
@@ -49,7 +51,7 @@
         features: `
           <p>${ico(cfg.scatter.img)} <b>Rodadas grátis:</b> 4 ou mais ${cfg.scatter.name.toLowerCase()}s dão <b>${cfg.fsCount} rodadas grátis</b> com a mesma aposta. Durante elas, 3+ dão <b>+5 rodadas</b>.</p>
           ${cfg.orbRules}
-          <table class="paytable"><tr class="si-head"><td>Multiplicador</td><td>Chance (entre os multiplicadores)</td></tr>${cfg.orbs.map(o => `<tr><td><b>x${o.m}</b></td><td>${Math.round((o.w / cfg.orbs.reduce((s, x) => s + x.w, 0)) * 100)}%</td></tr>`).join('')}</table>
+          ${cfg.orbs ? `<table class="paytable"><tr class="si-head"><td>Multiplicador</td><td>Chance (entre os multiplicadores)</td></tr>${cfg.orbs.map(o => `<tr><td><b>x${o.m}</b></td><td>${Math.round((o.w / cfg.orbs.reduce((s, x) => s + x.w, 0)) * 100)}%</td></tr>`).join('')}</table>` : ''}
           <p>💰 <b>Comprar bônus:</b> entra direto nas rodadas grátis por <b>${cfg.buyX}x</b> a aposta.</p>
           <p class="muted small">As rodadas grátis aparecem em média 1 a cada ~${cfg.fsEvery} giros. Prêmio máximo: ${fmt(cfg.maxWin).replace(',00', '')}x a aposta — ao atingir, a rodada termina.</p>`,
       },
@@ -99,6 +101,7 @@
         const newCell = fs => {
           const p = fs ? cfg.orbFS : cfg.orbBase;
           if (p && RNG.float() < p) return { orb: RNG.weighted(cfg.orbs).m, fresh: true };
+          if (cfg.portal && RNG.float() < (fs ? cfg.portal.pFS : cfg.portal.pBase)) return { portal: true, fresh: true };
           return { ...RNG.weighted(all), fresh: true };
         };
         let grid = Array.from({ length: COLS }, () => Array.from({ length: ROWS }, () => ({ ...RNG.weighted(cfg.symbols) })));
@@ -112,25 +115,59 @@
               if (x.fresh) cls.push('drop');
               if (winIds && winIds.has(x.id)) cls.push('win');
               if (x.id === 'sc') cls.push('scatter');
+              if (x.conv) cls.push('conv');
               const delay = x.fresh ? `style="animation-delay:${(turbo ? 15 : 35) * c + (ROWS - r) * 12}ms"` : '';
               html += x.orb
                 ? `<div class="${cls.join(' ')} orb" ${delay}><img src="${IMG(cfg.orbImg)}" alt=""><b>x${x.orb}</b></div>`
-                : `<div class="${cls.join(' ')}" ${delay}><img src="${IMG(x.img)}" alt=""></div>`;
+                : x.portal
+                  ? `<div class="${cls.join(' ')} portal" ${delay}><img src="${IMG(cfg.portal.img)}" alt=""></div>`
+                  : `<div class="${cls.join(' ')}" ${delay}><img src="${IMG(x.img)}" alt=""></div>`;
               x.fresh = false;
+              x.conv = false;
             }
           }
           gridEl.innerHTML = html;
         }
         render();
 
-        /** Um giro completo com cascatas. Retorna { win, scatters, orbSum }. */
+        /** Abre os portais da tela: cada um vira um símbolo e transforma outras casas nele. */
+        async function openPortals() {
+          let n = 0;
+          for (let c = 0; c < COLS; c++) {
+            for (let r = 0; r < ROWS; r++) {
+              if (!grid[c][r].portal) continue;
+              n++;
+              const s = RNG.pick(cfg.symbols);
+              const cand = [];
+              for (let cc = 0; cc < COLS; cc++) for (let rr = 0; rr < ROWS; rr++) {
+                const x = grid[cc][rr];
+                if (x.id && x.id !== 'sc' && !(cc === c && rr === r)) cand.push([cc, rr]);
+              }
+              const k = RNG.int(cfg.portal.min, cfg.portal.max);
+              RNG.shuffle(cand).slice(0, k).forEach(([cc, rr]) => { grid[cc][rr] = { ...s, conv: true }; });
+              grid[c][r] = { ...s, conv: true };
+              msg(`🌀 Portal! ${Math.min(k, cand.length) + 1} casas viraram ${s.name}`);
+            }
+          }
+          if (n) {
+            $$('.portal', gridEl).forEach(x => x.classList.add('open'));
+            Sfx.big();
+            await wait(650);
+            render();
+            await wait(700);
+          }
+          return n;
+        }
+
+        /** Um giro completo com cascatas. Retorna { win, scatters, orbSum, portals }. */
         async function playSpin(bet, fs) {
           grid = Array.from({ length: COLS }, () => Array.from({ length: ROWS }, () => newCell(fs)));
           render();
           Sfx.reel();
           await wait(520);
-          let win = 0;
+          let win = 0, portals = 0;
           for (;;) {
+            if (cfg.portal) portals += await openPortals();
             const cnt = {};
             grid.flat().forEach(x => { if (x.id && x.id !== 'sc') cnt[x.id] = (cnt[x.id] || 0) + 1; });
             const wins = cfg.symbols.filter(s => cnt[s.id] >= 8);
@@ -154,7 +191,7 @@
           const flat = grid.flat();
           const orbSum = flat.reduce((s, x) => s + (x.orb || 0), 0);
           const scatters = flat.filter(x => x.id === 'sc').length;
-          return { win, scatters, orbSum };
+          return { win, scatters, orbSum, portals };
         }
 
         function setBusy(b) {
@@ -178,24 +215,34 @@
 
         /** Rodadas grátis internas do jogo. Retorna o total ganho. */
         async function freeSpins(bet) {
-          let left = cfg.fsCount, total = 0, accum = 0;
+          let left = cfg.fsCount, total = 0, accum = 0, fire = 1;
           el.classList.add('in-fs');
           mascot.classList.add('roar');
-          banner.innerHTML = `<b>RODADAS GRÁTIS!</b><span>${cfg.fsCount} giros${cfg.accumulate ? ' · multiplicadores acumulam' : ''}</span>`;
+          banner.innerHTML = `<b>RODADAS GRÁTIS!</b><span>${cfg.fsCount} giros${cfg.accumulate ? ' · multiplicadores acumulam' : ''}${cfg.portal ? ' · cada portal soma +1 no multiplicador' : ''}</span>`;
           banner.classList.remove('hidden');
           Sfx.big();
           UI.confetti(40, [cfg.scatter.img, 'star', 'coin']);
           await ctx.sleep(1800);
           banner.classList.add('hidden');
           fsEl.classList.remove('hidden');
-          if (cfg.accumulate) accEl.classList.remove('hidden');
+          if (cfg.accumulate || cfg.portal) accEl.classList.remove('hidden');
+          if (cfg.portal) $('small', accEl).textContent = 'FOGO';
           while (left > 0) {
             left--;
             $('b', fsEl).textContent = left;
-            $('b', accEl).textContent = 'x' + accum;
+            $('b', accEl).textContent = 'x' + (cfg.portal ? fire : accum);
             const r = await playSpin(bet, true);
             let w = r.win;
-            if (cfg.accumulate) {
+            if (cfg.portal) {
+              fire += r.portals;
+              $('b', accEl).textContent = 'x' + fire;
+              if (w > 0 && fire > 1) {
+                msg(`Multiplicador de fogo x${fire}! 🪙 ${fmt(w)} → 🪙 ${fmt(w * fire)}`);
+                Sfx.big();
+                await wait(1000);
+              }
+              w = round2(w * fire);
+            } else if (cfg.accumulate) {
               if (w > 0 && r.orbSum > 0) { accum += r.orbSum; $('b', accEl).textContent = 'x' + accum; }
               w = await applyOrbs(w, r.orbSum, accum);
             } else {
@@ -224,6 +271,7 @@
           mascot.classList.remove('roar');
           fsEl.classList.add('hidden');
           accEl.classList.add('hidden');
+          $('small', accEl).textContent = 'MULT.';
           msg(`Rodadas grátis: total 🪙 ${fmt(total)}`);
           return total;
         }
@@ -327,7 +375,7 @@
     scatter: { id: 'sc', img: 'lollipop', name: 'Pirulito', w: 1.25 },
     orbImg: 'rainbow', orbs: ORBS, orbBase: 0, orbFS: 0.048,
     fsCount: 10, buyX: 87, accumulate: false,
-    maxWin: 21100, vol: 3, hit: '~1 em 3 giros (33%)', fsEvery: 460,
+    maxWin: 21100, vol: 3, hit: '~1 em 3 giros (33%)', fsEvery: 300,
     highlights: ['🍭 4+ pirulitos = <b>10 rodadas grátis</b>', '🌈 Nas rodadas grátis caem <b>bombas de 2x a 100x</b> que se somam', 'Cascatas: um giro pode pagar várias vezes', 'Prêmio máximo: <b>21.100x</b>'],
   }));
 
@@ -343,7 +391,7 @@
     scatter: { id: 'sc', img: 'voltage', name: 'Raio de Zeus', w: 1.25 },
     orbImg: 'crystal', orbs: ORBS, orbBase: 0.0048, orbFS: 0.03,
     fsCount: 10, buyX: 60, accumulate: true,
-    maxWin: 5000, vol: 4, hit: '~1 em 3 giros (32%)', fsEvery: 510,
+    maxWin: 5000, vol: 4, hit: '~1 em 3 giros (32%)', fsEvery: 295,
     highlights: ['⚡ Orbes de <b>2x a 100x</b> podem cair em qualquer giro', 'Nas rodadas grátis os orbes <b>acumulam</b> e valem para todos os ganhos seguintes', '4+ raios = <b>10 rodadas grátis</b>', 'Prêmio máximo: <b>5.000x</b>'],
   }));
 
@@ -359,7 +407,25 @@
     scatter: { id: 'sc', img: 'shootingstar', name: 'Estrela cadente', w: 1.25 },
     orbImg: 'glowstar', orbs: ORBS, orbBase: 0.0048, orbFS: 0.03,
     fsCount: 10, buyX: 60, accumulate: true,
-    maxWin: 5000, vol: 4, hit: '~1 em 3 giros (32%)', fsEvery: 510,
+    maxWin: 5000, vol: 4, hit: '~1 em 3 giros (32%)', fsEvery: 295,
     highlights: ['🌟 Estrelas de <b>2x a 100x</b> podem cair em qualquer giro', 'Nas rodadas grátis as estrelas <b>acumulam</b> e valem para todos os ganhos seguintes', '4+ estrelas cadentes = <b>10 rodadas grátis</b>', 'Prêmio máximo: <b>5.000x</b>'],
+  }));
+
+  App.register(createScatterSlot({
+    id: 'portais', name: 'Portais de Fogo', art: 'cyclone', mascot: 'fire',
+    tag: 'Portais transformam a grade', colors: ['#ea580c', '#7e22ce'], rtp: '~95%',
+    intro: 'Inspirado no "Fire Portals": portais de fogo transformam casas da grade num mesmo símbolo.',
+    orbRules: `<p>🌀 <b>Portais:</b> podem cair em qualquer giro (e nas cascatas). Cada portal vira um símbolo sorteado e transforma de <b>2 a 5 outras casas</b> nesse mesmo símbolo — ótimo para completar 8+.</p>
+      <p>🔥 <b>Multiplicador de fogo:</b> nas rodadas grátis os portais são mais frequentes e <b>cada portal soma +1</b> num multiplicador que começa em x1 e vale para todos os ganhos seguintes, até o fim.</p>`,
+    symbols: scale(mk([
+      ['dragao', 'dragon', 'Dragão'], ['coracao', 'heartfire', 'Coração em chamas'], ['cometa', 'comet', 'Cometa'], ['varinha', 'wand', 'Varinha'],
+      ['bola', 'crystal', 'Bola de cristal'], ['rubi', 'gem', 'Rubi'], ['topazio', 'orangediamond', 'Topázio'], ['safira', 'bluediamond', 'Safira'], ['chama', 'fire', 'Chama'],
+    ]), 1.5),
+    scatter: { id: 'sc', img: 'volcano', name: 'Vulcão', w: 1.25 },
+    portal: { img: 'cyclone', pBase: 0.004, pFS: 0.0205, min: 2, max: 5 },
+    orbBase: 0, orbFS: 0,
+    fsCount: 10, buyX: 104, accumulate: false,
+    maxWin: 5000, vol: 4, hit: '~1 em 3 giros (35%)', fsEvery: 285,
+    highlights: ['🌀 Portais transformam de <b>2 a 5 casas</b> num mesmo símbolo', '🔥 Nas rodadas grátis cada portal soma <b>+1 no multiplicador</b>, que nunca zera', '🌋 4+ vulcões (≈1 em 285 giros) = <b>10 rodadas grátis</b>', 'Prêmio máximo: <b>5.000x</b>'],
   }));
 })();

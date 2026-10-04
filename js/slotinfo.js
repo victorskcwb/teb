@@ -36,16 +36,18 @@ const SlotInfo = {
     let tab = 'resumo';
     const body = h('<div class="sinfo"></div>');
 
-    const table = t => `
+    // tabelas com muitas colunas mostram só o "x da aposta" para caber no celular
+    const table = t => { const compact = t.head.length > 3; return `
       <h4>${t.title}</h4>
       ${t.note ? `<p class="muted small">${t.note}</p>` : ''}
+      ${compact ? `<p class="muted small">Valores em × a aposta (com 🪙 ${fmt(bet)}, 1x = 🪙 ${fmt(bet)}).</p>` : ''}
       <table class="paytable si-table ${t.head.length > 2 ? 'si-wide' : ''}">
         <tr class="si-head"><td></td>${t.head.map(c => `<td>${c}</td>`).join('')}</tr>
         ${t.rows.map(r => `<tr>
           <td class="pt-sym">${ico(r.img)}<span>${r.name}${r.badge ? ` <span class="badge">${r.badge}</span>` : ''}</span></td>
-          ${r.pays.map(p => (p == null ? '<td class="muted">—</td>' : `<td><b>${this.coins(p, bet)}</b><small>${this.xs(p)}</small></td>`)).join('')}
+          ${r.pays.map(p => (p == null ? '<td class="muted">—</td>' : compact ? `<td><b>${this.xs(p)}</b></td>` : `<td><b>${this.coins(p, bet)}</b><small>${this.xs(p)}</small></td>`)).join('')}
         </tr>`).join('')}
-      </table>`;
+      </table>`; };
 
     const render = () => {
       let html = `<div class="seg si-tabs">${tabs.map(([id, t]) => `<button data-tab="${id}" class="${tab === id ? 'on' : ''}">${t}</button>`).join('')}</div>`;
