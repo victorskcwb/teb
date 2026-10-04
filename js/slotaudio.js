@@ -70,6 +70,8 @@ const SlotAudio = (() => {
     manicomio: 'horror', celaxways: 'dark', lapiderip: 'western', cidadefantasma: 'western', buracofogo: 'mine', submarino: 'ocean', blococelas: 'dark', sanguesombra: 'horror', gulaggelado: 'snow', detetiveserial: 'noir',
   };
 
+  // dest: saída temporária (efeitos como a vinheta de ganho vão para o canal de efeitos, não o da música)
+  let dest = null;
   let theme = null, tm = null, out = null, timer = null, step = 0, nextT = 0, hype = 1, chord = 0, lastNote = 0, playing = false;
   const ac = () => Sfx.ac;
   const hz = (semi, oct = 0) => theme.root * Math.pow(2, semi / 12 + oct);
@@ -90,7 +92,7 @@ const SlotAudio = (() => {
     let node = o;
     if (vib) { const l = c.createOscillator(), lg = c.createGain(); l.frequency.value = 5.5; lg.gain.value = f * vib; l.connect(lg).connect(o.frequency); l.start(t); l.stop(t + dur + 0.05); }
     if (cut) { const fl = c.createBiquadFilter(); fl.type = 'lowpass'; fl.frequency.value = cut; node.connect(fl); node = fl; }
-    node.connect(g).connect(out);
+    node.connect(g).connect(dest || out);
     env(g, t, a, vol, dur);
     o.start(t);
     o.stop(t + dur + 0.05);
@@ -102,7 +104,7 @@ const SlotAudio = (() => {
     s.buffer = b;
     f.type = bp ? 'bandpass' : 'highpass';
     f.frequency.value = bp || hp;
-    s.connect(f).connect(g).connect(out);
+    s.connect(f).connect(g).connect(dest || out);
     env(g, t, 0.002, vol, dur);
     s.start(t);
   }
@@ -110,7 +112,7 @@ const SlotAudio = (() => {
     const c = ac(), o = c.createOscillator(), g = c.createGain();
     o.frequency.setValueAtTime(f0, t);
     o.frequency.exponentialRampToValueAtTime(40, t + 0.18);
-    o.connect(g).connect(out);
+    o.connect(g).connect(dest || out);
     env(g, t, 0.002, vol, 0.25);
     o.start(t);
     o.stop(t + 0.3);
@@ -231,8 +233,12 @@ const SlotAudio = (() => {
     drop() { play(theme && theme.key === 'space' ? 'laser' : 'wood', 0.25, 1.2 + Math.random() * 0.2); },
     win(big) {
       if (!theme) return Sfx.win();
-      const s = SC[tm.sc];
-      [0, 2, 4, big ? 7 : 5].forEach((d, i) => LEAD[tm.lead] && ac() && LEAD[tm.lead](hz(s[d % s.length], d >= s.length ? 1 : 0), ac().currentTime + i * 0.09, 0.18));
+      // a vinheta toca no canal de efeitos: funciona com a música desligada e respeita o mudo
+      if (!Sfx.muted && ac() && Sfx.out && LEAD[tm.lead]) {
+        const s = SC[tm.sc];
+        dest = Sfx.out;
+        try { [0, 2, 4, big ? 7 : 5].forEach((d, i) => LEAD[tm.lead](hz(s[d % s.length], d >= s.length ? 1 : 0), ac().currentTime + i * 0.09, 0.18)); } finally { dest = null; }
+      }
       play('coin', 0.35);
     },
     mult() { play('rise', 0.45); },
@@ -245,5 +251,12 @@ const SlotAudio = (() => {
       return play(n, 0.65);
     },
   };
+  // o som nunca pode interromper uma rodada: qualquer erro de áudio é engolido aqui
+  Object.keys(api).forEach(k => {
+    const d = Object.getOwnPropertyDescriptor(api, k);
+    if (typeof d.value !== 'function') return;
+    const fn = d.value;
+    api[k] = function (...a) { try { return fn.apply(this, a); } catch (e) { console.warn('SlotAudio.' + k, e); return undefined; } };
+  });
   return api;
 })();

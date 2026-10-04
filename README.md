@@ -322,6 +322,7 @@ js/games/*.js       um arquivo por jogo, cada um chama App.register({ id, name, 
 
 Para adicionar um slot de estúdio: use `SlotKit.create({ ..., make(mode), spin(rt), bonus(rt, opts) })` num dos arquivos de estúdio (a lógica só fala com a tela pelo `rt`: `rt.spin(grade)`, `rt.win(x)`, `rt.fsLoop(n, corpo)`…) e rode `node tools/calibrate.js <id>`.
 Para adicionar um jogo: crie `js/games/novo.js` com `App.register({...})` (com `art` = nome de um sprite em `assets/img`) e inclua o `<script>` no `index.html`.
+Ao publicar uma versão nova, troque o `?v=...` dos `<script>`/`<link>` no `index.html` (ex.: `sed -i 's/?v=[0-9]*/?v=NOVO/g' index.html`), senão o navegador do celular pode misturar arquivos antigos do cache com os novos.
 Use `ctx.sleep()` / `ctx.interval()` nas animações: ao sair da tela, a rodada termina na hora e paga o que deve.
 Chame `ctx.round(aposta, pagamento)` quando a rodada terminar — é isso que alimenta missões, XP e "jogados recentemente".
 
