@@ -9,6 +9,17 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@600;700;800;900&display=swap">
   <link rel="stylesheet" href="css/style.css">
+  <script>
+    // modo leve só em celular/tablet (tela de toque sem mouse); no PC tudo fica como está.
+    // ?lite=1 / ?lite=0 força o modo para testes (fica salvo); ?lite=auto volta ao automático.
+    (function () {
+      var q = (location.search.match(/[?&]lite=(1|0|auto)/) || [])[1], k = 'fichabet_lite', v = null;
+      try { if (q === 'auto') localStorage.removeItem(k); else if (q) localStorage.setItem(k, q); v = localStorage.getItem(k); } catch (e) { /* sem storage */ }
+      var lite = v ? v === '1' : matchMedia('(hover: none) and (pointer: coarse)').matches;
+      window.LITE = lite;
+      if (lite) document.documentElement.classList.add('lite');
+    })();
+  </script>
 </head>
 <body>
   <header class="topbar">

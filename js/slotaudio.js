@@ -166,7 +166,7 @@ const SlotAudio = (() => {
     const c = ac();
     if (!c || !playing) return;
     const spb = 60 / (tm.bpm * hype) / 4; // semicolcheia
-    while (nextT < c.currentTime + 0.25) {
+    while (nextT < c.currentTime + (window.LITE ? 0.4 : 0.25)) {
       const t = nextT, s = step;
       if (s % 16 === 0) chord = PROG[(s / 16) % PROG.length];
       const f = deg(chord);
@@ -192,7 +192,8 @@ const SlotAudio = (() => {
     out.gain.exponentialRampToValueAtTime(0.5, c.currentTime + 0.8);
     playing = true;
     nextT = c.currentTime + 0.1;
-    timer = setInterval(tick, 60);
+    // no celular o sequenciador acorda menos vezes (agenda mais à frente, mesmo som)
+    timer = setInterval(tick, window.LITE ? 150 : 60);
   }
   function stop() {
     playing = false;

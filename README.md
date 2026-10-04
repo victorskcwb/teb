@@ -296,6 +296,7 @@ Os RTPs e preços de compra de bônus são calibrados por simulação: `node too
 - **Histórico de giros (slots):** botão 📜 no topo de todo slot mostra o resultado da sessão e abre os últimos 100 giros com vitórias/perdas, filtros, resumo (apostado, recebido, resultado, maior prêmio) e gráfico dos últimos giros. Qualquer slot novo entra sozinho (vem do `ctx.round`).
 - **Painel de prêmios (slots):** botão 🏆 "Prêmios" ao lado do ganho (e o "?") abre abas Resumo (prêmio máximo, RTP, volatilidade, chance de ganho), Pagamentos (em fichas para a aposta atual), Bônus e Linhas (desenho de cada linha). Cada slot descreve isso em `info` (ver `js/slotinfo.js`).
 - **Jogo responsável:** lembrete de pausa a cada 1h de sessão.
+- **Modo leve (celular):** em telas de toque o site liga `html.lite`, que troca os efeitos que mais aquecem o aparelho (desfoque animado no giro, fundo desfocado das barras, brilho pulsando nas rodadas grátis, animações decorativas sem fim) por versões leves, carrega os símbolos de cada jogo só quando ele é aberto e agenda a trilha sonora com menos interrupções. No PC fica tudo igual. Para testar: `?lite=1` força, `?lite=0` desliga e `?lite=auto` volta ao automático.
 
 ## Estrutura
 

@@ -389,6 +389,7 @@
     const page = Pages[id];
     document.body.classList.toggle('in-game', !!game);
     if (game) {
+      if (window.LITE) (game.sprites || []).forEach(s => { const i = new Image(); i.src = IMG(s); });
       const el = renderGame(game);
       app.append(el);
       ctx = new GameCtx(game);
@@ -429,7 +430,8 @@
   // pré-carrega sprites dos jogos (giros sem "piscar")
   window.addEventListener('load', () => {
     const slugs = new Set();
-    App.games.forEach(g => { slugs.add(g.art); (g.sprites || []).forEach(s => slugs.add(s)); });
+    // no celular (modo leve) só as capas: os símbolos de cada jogo carregam quando ele é aberto
+    App.games.forEach(g => { slugs.add(g.art); if (!window.LITE) (g.sprites || []).forEach(s => slugs.add(s)); });
     slugs.forEach(s => { const i = new Image(); i.src = IMG(s); });
   });
 

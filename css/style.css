@@ -1268,3 +1268,20 @@ select { padding: 9px 10px; border-radius: 12px; background: var(--bg2); border:
 .chest-panel.wide .m-body small { line-height: 1.35; }
 .quest-btn { position: relative; }
 .quest-btn .q-ring { position: absolute; inset: 1px; border-radius: 50%; pointer-events: none; background: conic-gradient(var(--gold) var(--qp, 0%), transparent 0); -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px)); mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px)); }
+
+/* ---------- modo leve (celular/tablet) ----------
+   html.lite é ligado só em telas de toque (ver index.html). Troca os efeitos que mais
+   aquecem o aparelho (desfoque animado, backdrop-filter, sombras pulsando) por versões
+   que a GPU compõe de graça. No PC nada disso se aplica. */
+@keyframes spinLite { 0% { transform: translateY(-30%); } 100% { transform: translateY(30%); } }
+.lite .cell.spinning span, .lite .cell.spinning img, .lite .pcell.spinning img,
+.lite .kcol.spinning .kc img, .lite .kcol.spinning .kc .ltx { animation-name: spinLite; filter: none; }
+.lite .topbar { backdrop-filter: none; background: rgba(11, 7, 24, .97); }
+.lite .bottom-nav, .lite .modal-backdrop { backdrop-filter: none; }
+.lite .modal-backdrop { background: rgba(5, 2, 15, .85); }
+.lite .slot.feature .slot-frame, .lite .scat.in-fs .scat-frame, .lite .pesca.in-fs .pesca-frame,
+.lite .kit.in-fs .kit-frame { animation: none; box-shadow: 0 0 28px rgba(251, 191, 36, .75); }
+.lite .sc-cell.win img, .lite .rc.win img, .lite .kc.win img, .lite .kc.win .ltx { animation-iteration-count: 4; }
+.lite .sc-cell.orb img { animation: none; filter: drop-shadow(0 0 8px #fde047); }
+.lite .logo img, .lite .slide-art, .lite .ph-img, .lite .slot-lights, .lite .si-max .si-trophy { animation: none; }
+.lite .bigwin-rays, .lite .ad-stage::before { animation: none; }
