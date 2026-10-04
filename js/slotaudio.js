@@ -209,7 +209,8 @@ const SlotAudio = (() => {
   const musicOn = () => typeof Music === 'undefined' || Music.on;
 
   /* ---------- efeitos ---------- */
-  const play = (n, v = 0.6, r = 1) => Sfx.play(n, v, r);
+  // sem narração: as vozes gravadas (v_final "final round", v_win, v_congrats...) não tocam
+  const play = (n, v = 0.6, r = 1) => (String(n).startsWith('v_') ? true : Sfx.play(n, v, r));
   let scatN = 0;
   const api = {
     get theme() { return theme; },
@@ -247,8 +248,9 @@ const SlotAudio = (() => {
     },
     mult() { play('rise', 0.45); },
     bonus() { play(theme ? theme.jingle : 'j_nes', 0.7); },
-    bigWin(x) { setTimeout(() => play(x >= 50 ? 'v_congrats' : 'v_win', 0.8), 700); },
-    finalSpin() { play('v_final', 0.7); },
+    // narração removida a pedido: sem "big win" / "final round" falados
+    bigWin() {},
+    finalSpin() {},
     /** Efeito nomeado do jogo (boom, zombie, v_fire...). */
     fx(n) {
       if (n === 'boom') return play(theme && ['epic', 'western'].includes(theme.key) ? 'impact' : 'explode', 0.55) || Sfx.boom();
