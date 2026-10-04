@@ -627,7 +627,7 @@
       // símbolos no último rolo valem x2
       g[4].forEach(x => { if (x.pays || x.wild) { x.n = 2; x.t = x.t || '×2'; } });
       await rt.drop(g);
-      const res = ways(g, SY);
+      const res = ways(g, SY, { wildMult: 'add' });
       // xRIP: no jogo base, ganhos menores que 1x a aposta não são pagos
       if (!st && res.total * 1 < 0.6) { if (res.total) rt.msg('💀 xRIP: ganho pequeno demais, não pago'); }
       else await pay(rt, res);
@@ -640,7 +640,7 @@
       intro: 'Inspirado no "Deadwood R.I.P" (Nolimit City).', hello: 'Ganhos pequenos? Aqui não...',
       symbols: [...SY, WILD, SC, SC2],
       tables: [table('Pagamento por caminho', heads(3, 3, ' rolos'), SY, 'Rolos 3-4-4-4-3 = 384 caminhos.')],
-      highlights: ['🤠 Rolos 3-4-4-4-3 com 384 caminhos', '✖️ Todo símbolo no <b>último rolo vale x2</b>', '⬇️ <b>Coringas xNudge</b> nos rolos do meio: +1 por empurrão; vários se multiplicam', '💀 <b>xRIP:</b> no jogo base, ganhos pequenos (abaixo de ~1x) não são pagos', '🐍 3 cascavéis = <b>8 Giros da Redenção</b>; com a moto junto = <b>10 Giros da Salvação</b> com coringas colantes', 'Prêmio máximo: <b>100.000x</b>'],
+      highlights: ['🤠 Rolos 3-4-4-4-3 com 384 caminhos', '✖️ Todo símbolo no <b>último rolo vale x2</b>', '⬇️ <b>Coringas xNudge</b> nos rolos do meio: +1 por empurrão; vários no mesmo caminho se somam', '💀 <b>xRIP:</b> no jogo base, ganhos pequenos (abaixo de ~1x) não são pagos', '🐍 3 cascavéis = <b>8 Giros da Redenção</b>; com a moto junto = <b>10 Giros da Salvação</b> com coringas colantes', 'Prêmio máximo: <b>100.000x</b>'],
       how: '<p>Rolos 3-4-4-4-3 que pagam por caminhos. Os coringas xNudge cobrem o rolo e somam +1 por empurrão. Os símbolos do último rolo contam em dobro. Em troca, os ganhos pequenos do jogo base não são pagos (xRIP).</p>',
       features: '<p>🐍 <b>3 cascavéis</b> dão <b>8 Giros da Redenção</b> (mais coringas, e cada um começa com +1). Se cair também a 🏍️ moto, vira <b>10 Giros da Salvação</b>, em que os rolos de coringa ficam presos até o fim.</p>',
       make: () => make('w'),
