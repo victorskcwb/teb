@@ -526,7 +526,8 @@ const SlotKit = (() => {
             if (n !== 'boom' && Sfx[n]) Sfx[n](); else SlotAudio.fx(n);
           },
           stat: () => {},
-          show: grid => render(grid),
+          // mostrar a grade de propósito (ex.: respins de moedas) conta como revelada: não gira os rolos depois
+          show(grid) { this.revealed = true; render(grid); },
           async drop(grid) {
             // jogos que revelam a grade com drop (paga em qualquer lugar, grupos...) também ganham o giro dos rolos
             if (!this.revealed) return this.spin(grid, { tease: true });
