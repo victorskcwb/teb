@@ -67,6 +67,10 @@ const SlotAudio = (() => {
     missaomasmorra: 'dark', yetigelo: 'snow', corujas: 'mystic', estrelato: 'party', magiamaia: 'jungle', thormartelo: 'epic', tribodragao: 'epic', evavenenosa: 'dark', arlequim: 'mystic', coelhosbonus: 'cartoon',
     geniodourado: 'arabia', viaslacteas: 'space', livrosombras: 'dark', cacabufalos: 'prairie', ouromacaco: 'jungle', cemiterioguerreiros: 'dark', buracofogo2: 'mine', sanguesombra2: 'horror', lapidesempiedade: 'western', celaxways2: 'noir',
     cobrinha2000: 'classic', novecinco: 'noir', bolasnatal: 'snow', terraliberdade: 'prairie', diad: 'epic', cidadefantasmarip: 'western', solitario: 'classic', pescariabizarra: 'ocean', encruzilhada: 'western', perturbado: 'horror',
+    superas: 'classic', fortunaneko: 'japan', fafafamaluco: 'china', barrasouro: 'classic', ganeshachegando: 'india', guerradragoes: 'china', rainhadourada: 'egypt', tesourosecreto: 'jungle', reiartur: 'epic', supertouro: 'china',
+    cacadorabonus: 'western', festagemas: 'gems', arvorefortuna: 'china', porquinhosorte: 'china', deusmarcial: 'china', tigelatesouro: 'china', pandagigante: 'china', wukong: 'china', roma2: 'epic', tres_moedas: 'china',
+    sacerdotisaasteca: 'jungle', asselvagem: 'classic', tigremestre: 'china', cidadepecado: 'noir', bancodourado: 'classic', terradoce: 'candy', coringadourado: 'classic', provacaofenix: 'epic', jackpirata: 'pirate', aguarda: 'china',
+    gemeosfortuna: 'china', perolamagica: 'ocean', festadiamante: 'party', noitedisco: 'party', maniafrutas: 'classic', jixiangruyi: 'china', belezahavaiana: 'tropical', festivallua: 'china', fengshen: 'china', dragaosorte: 'china',
     manicomio: 'horror', celaxways: 'dark', lapiderip: 'western', cidadefantasma: 'western', buracofogo: 'mine', submarino: 'ocean', blococelas: 'dark', sanguesombra: 'horror', gulaggelado: 'snow', detetiveserial: 'noir',
   };
 
@@ -205,7 +209,8 @@ const SlotAudio = (() => {
   const musicOn = () => typeof Music === 'undefined' || Music.on;
 
   /* ---------- efeitos ---------- */
-  const play = (n, v = 0.6, r = 1) => Sfx.play(n, v, r);
+  // sem narração: as vozes gravadas (v_final "final round", v_win, v_congrats...) não tocam
+  const play = (n, v = 0.6, r = 1) => (String(n).startsWith('v_') ? true : Sfx.play(n, v, r));
   let scatN = 0;
   const api = {
     get theme() { return theme; },
@@ -243,8 +248,9 @@ const SlotAudio = (() => {
     },
     mult() { play('rise', 0.45); },
     bonus() { play(theme ? theme.jingle : 'j_nes', 0.7); },
-    bigWin(x) { setTimeout(() => play(x >= 50 ? 'v_congrats' : 'v_win', 0.8), 700); },
-    finalSpin() { play('v_final', 0.7); },
+    // narração removida a pedido: sem "big win" / "final round" falados
+    bigWin() {},
+    finalSpin() {},
     /** Efeito nomeado do jogo (boom, zombie, v_fire...). */
     fx(n) {
       if (n === 'boom') return play(theme && ['epic', 'western'].includes(theme.key) ? 'impact' : 'explode', 0.55) || Sfx.boom();

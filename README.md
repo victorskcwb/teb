@@ -218,6 +218,46 @@ Recriações com nomes e artes próprios dos slots mais jogados de cada estúdio
 | Búfalo Furioso | Charge Buffalo | 4.096 caminhos · até 100 giros | ~97% | 4.000x |
 | Rei da Selva | Jungle King | Gorila coringa · aviões multiplicam | ~97% | 2.500x |
 | Noite de Festa | Party Night | Cascata até x10 · grátis em dobro | ~96,8% | 1.000x |
+| Super Ás | Super Ace | Cartas douradas · combo até x10 | ~97,9% | 1.500x |
+| Fortuna Neko | Neko Fortune | Mistérios que viram coringa · 4.096 caminhos | ~97% | 1.000x |
+| FaFaFa Maluco | Crazy FaFaFa | 1 linha · coringa até x8 · 1.688x | ~97% | 1.688x |
+| Barras de Ouro da Sorte | Lucky Goldbricks | 30 linhas · coringas colantes nas grátis | ~97% | 1.250x |
+| Ganesha Chegando | Lucky Coming | 1 linha · coringa x3/x5/x9 · 1.111x | ~97% | 1.111x |
+| Guerra dos Dragões | War of Dragons | 243 caminhos · 5 dragões nas grátis | ~97% | 2.000x |
+| Rainha Dourada | Golden Queen | 40 linhas · coringas expansivos x2–x5 | ~97% | 1.500x |
+| Tesouro Secreto | Secret Treasure | Baús · caça ao tesouro · grátis | ~97% | 2.000x |
+| Rei Artur | King Arthur | Duelos de cavaleiros até x100 | ~97% | 10.000x |
+| Super Touro | Super Niubi | Clássico de 1 linha · até 888x | ~96,5% | 888x |
+| Caçadora de Bônus | Bonus Hunter | 1.024 caminhos · +1 a cada ganho | ~97% | 2.000x |
+| Festa das Gemas | Gem Party | Grupos · grade cresce até 7×7 | ~97% | 1.500x |
+| Árvore da Fortuna | Fortune Tree | 30 linhas · moedas caem da árvore | ~97% | 1.000x |
+| Porquinho da Sorte | Fortune Pig | 8 linhas · respins com porcos travados | ~97% | 1.000x |
+| Deus Marcial | God of Martial | 25 linhas · mult. até x20 nas grátis | ~97% | 2.500x |
+| Tigela do Tesouro | Treasure Bowl | 3×3 · tigelas coringa · +1 giro | ~97% | 1.000x |
+| Panda Gigante Selvagem | Wild Giant Panda | 243 caminhos · pandas colantes | ~97% | 2.000x |
+| Wukong | Wukong | Bastão coringa que expande | ~97% | 2.000x |
+| Roma II | Roma II | 32.400 caminhos · multiplicador sem teto | ~97% | 3.000x |
+| Tesouros das 3 Moedas | 3 Coin Treasures | 243 caminhos · Hold & Win com jackpots | ~97% | 5.200x |
+| Sacerdotisa Asteca | Aztec Priestess | 32.400 caminhos · mult. que sobe nas grátis | ~97% | 3.000x |
+| Ás Selvagem | Wild Ace | 1.024 caminhos · Duelo do Ás | ~96,5% | 10.000x |
+| Tigre Mestre | Master Tiger | 243 caminhos · grátis a partir de x3 | ~97% | 1.500x |
+| Cidade do Pecado | Sin City | 40 linhas · 5 modificadores do Chefe | ~97% | 2.500x |
+| Banco Dourado | Golden Bank | 1 linha · coringas x2/x3/x5 que se multiplicam | ~97% | 2.000x |
+| Terra Doce | Sweet Land | 7×7 · posições até x128 | ~97% | 3.000x |
+| Coringa Dourado | Golden Joker | 5 linhas · respin de pilhas · roda x10 | ~97% | 800x |
+| Provação da Fênix | Trial of Phoenix | Vencedores ficam · até 15.625 caminhos | ~97% | 10.000x |
+| Jack, o Pirata | Jack the Pirate | 20 linhas · canhões coringa | ~97% | 2.500x |
+| A Guarda | The Guard | 243 caminhos · escudos do palácio | ~97% | 2.000x |
+| Gêmeos da Fortuna | Fortune Twins | 243 caminhos · rolos gêmeos | ~97% | 2.500x |
+| Pérola Mágica | Magic Pearl | 243 caminhos · pérolas até x50 | ~97% | 5.000x |
+| Festa do Diamante | Diamond Party | 3 linhas · Lock Respin em todo ganho | ~96,2% | 1.200x |
+| Noite Disco | Disco Night | 25 linhas · globos x2–x5 colantes | ~97% | 2.500x |
+| Mania de Frutas | Fruits Mania | Cascata · multiplicador que dobra | ~96,5% | 2.500x |
+| Ji Xiang Ru Yi | Ji Xiang Ru Yi | 5 linhas · cetro x2 · respin da nuvem | ~97% | 1.000x |
+| Beleza Havaiana | Hawaii Beauty | 50 linhas · grátis x2 · flores | ~97% | 1.250x |
+| Festival da Lua | Moon Festival | 243 caminhos · luas colantes | ~97% | 2.000x |
+| Feng Shen | Feng Shen | 4.096 caminhos · coringas somam no multiplicador | ~96% | 1.000x |
+| Dragão da Sorte | Lucky Dragon | 243 caminhos · grátis x3 que se renovam | ~97% | 3.000x |
 
 **Estilo Nolimit City**
 
@@ -280,8 +320,8 @@ Os RTPs e preços de compra de bônus são calibrados por simulação: `node too
 
 - **Bônus diário (check-in):** calendário de 7 dias com sequência; perdeu um dia, volta ao Dia 1. Abre sozinho na primeira visita do dia.
 - **Roda de prêmios grátis:** a cada 4 horas (fichas até 🪙 2.000, XP ou rodadas grátis).
-- **Missões diárias:** 5 por dia (sorteadas pela data), com fichas + XP (as missões pagam 60% das fichas do catálogo — `MISSION_COINS` — e o XP inteiro); completar todas abre um baú com rodadas grátis.
-- **Missões gerais ∞:** 10 trilhas sem fim (giros, vitórias, ganhos de 10x/50x/100x, bônus ativados, total apostado/recebido, jogos diferentes). Ao coletar, o próximo nível aparece na hora com objetivo e prêmio maiores; a cada 5 níveis vêm rodadas grátis.
+- **Missões diárias:** 5 por dia (sorteadas pela data), com fichas + XP (as fichas das missões são proporcionais à **aposta média** do jogador — média móvel das últimas ~50 rodadas, `Progress.betUnit()` — e o XP é fixo); completar todas abre um baú com rodadas grátis.
+- **Missões gerais ∞:** 10 trilhas sem fim (giros, vitórias, ganhos de 10x/50x/100x, bônus ativados, total apostado/recebido, jogos diferentes). Ao coletar, o próximo nível aparece na hora com objetivo maior. O prêmio é de 5 a 12 apostas médias e cresce 10% por nível; a cada 5 níveis vêm rodadas grátis. As metas de apostar/receber também são contadas em apostas médias. Calibrado para as missões devolverem ~1,5x a vantagem da casa (cerca de 5–6% do apostado), com ~1 a 2 missões a cada 100 giros.
 - **Missões de cada slot ∞:** todo slot tem a sua sequência infinita (giros, vitórias, bônus, ganho de 10x, valor apostado, ganho de Nx), que fica mais difícil a cada volta. O botão 🎯 no topo do slot mostra a missão dele; a página Missões tem as abas Diárias / Gerais / Slots.
 - **Passe da temporada:** 50 níveis com custo crescente (500 XP no nível 2 até ~3.400 XP no 50; ~95 mil XP no total) e, depois, **níveis infinitos** de 4.000 XP com recompensa fixa (grátis 🪙 100; premium 🪙 300 + 3 giros). Trilha grátis: `40 + 5·nível` fichas e giros grátis a cada 5 níveis (~7 mil fichas na temporada). Premium (🪙 5.000, +25% de XP): `80 + 15·nível`, a cada 5 níveis `150·(nível/5)` + 10 giros e 🪙 5.000 + 50 giros no 50 (~30 mil fichas). Temporadas de 28 dias.
 - **Nível do jogador:** infinito e nunca zera (cada nível custa `1000 + 400·(n−1)` XP, mais `15·(n−30)²` depois do 30). Patente a cada 10 níveis — Novato, Aprendiz, Apostador, Veterano, Profissional, Especialista, Mestre, Grão-Mestre, Lenda, Ídolo — e Mito ★N depois do 100. Cada patente tem 5 divisões (uma a cada 2 níveis). Aparece no topo (anel com medalha) e abre o perfil; a página **Nível** (`#/nivel`) mostra as medalhas e os marcos.
@@ -312,7 +352,7 @@ js/progress.js      XP/passe, missões, check-in, roda, anúncios fictícios, ro
 js/history.js       histórico de giros dos slots (localStorage) e o modal de histórico
 js/games/kit.js     SlotKit: motor dos slots de estúdio (tela, giro, cascata, ways/linhas/grupos, hold & spin, rodadas grátis)
 js/games/calib.js   calibração gerada (escala de prêmios, preço do bônus, chance de ganho, frequência do bônus)
-js/games/pragmatic*.js, pgsoft*.js, hacksaw*.js, tada.js, nolimit*.js   os 208 slots de estúdio
+js/games/pragmatic*.js, pgsoft*.js, hacksaw*.js, tada*.js, nolimit*.js   os 248 slots de estúdio
 js/games/templates.js  modelos reaproveitados (paga em qualquer lugar, grupos, PG Soft)
 tools/calibrate.js  simulador que calibra o RTP dos slots de estúdio
 js/slotinfo.js      painel "Prêmios" dos slots (prêmio máximo, tabela, bônus, linhas)

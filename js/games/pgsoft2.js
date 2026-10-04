@@ -81,7 +81,7 @@
     }
     const scMin = o.scMin || 3;
     return K.create({
-      id: o.id, name: o.name, studio: STUDIO, art: o.art, mascot: o.mascot, tag: o.tag, colors: o.colors, bg: o.bg,
+      id: o.id, name: o.name, studio: o.studio || STUDIO, art: o.art, mascot: o.mascot, tag: o.tag, colors: o.colors, bg: o.bg,
       cols: o.cols || 6, rows: o.rows || 6, cellH: o.cellH || 1.15, maxWin: o.maxWin, vol: o.vol || 3, rtp: o.rtp || '~96,7%', target: o.target || 0.967,
       intro: o.intro, hello: o.hello, symbols: [...SY, WILD, SC, ...(o.extra || [])], extraSprites: o.sprites,
       tables: [table(o.both ? 'Pagamento por caminho (dos dois lados)' : 'Pagamento por caminho', heads(3, SY[0].pays.length, ' rolos'), SY, o.waysNote || 'Iguais em rolos seguidos a partir da esquerda, com cascata.')],
