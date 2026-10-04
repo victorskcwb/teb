@@ -188,6 +188,7 @@
           <div class="row-scroll popular"></div>
         </div>
         <div class="filters"></div>
+        <div class="studio-chips hidden"></div>
         <div class="all-games"></div>
       </section>`);
 
@@ -256,7 +257,7 @@
     $('.popular', el).innerHTML = POPULAR.map(gameById).filter(Boolean).map(g => card(g, true)).join('');
 
     /* todos os jogos com filtro por categoria */
-    const filters = $('.filters', el), all = $('.all-games', el);
+    const filters = $('.filters', el), studioEl = $('.studio-chips', el), all = $('.all-games', el);
     let filter = 'all';
     try { filter = sessionStorage.getItem('fichabet_filter') || 'all'; } catch { /* ignore */ }
     const section = (art, title, desc, games) => h(`<div class="cat"><div class="cat-head"><h2>${ico(art)} ${title}</h2><span>${desc}</span></div><div class="cards">${games.map(g => card(g)).join('')}</div></div>`);
@@ -264,9 +265,10 @@
       const studio = filter.startsWith('studio:') ? filter.slice(7) : null;
       const cat = studio ? 'slots' : filter;
       filters.innerHTML = [{ id: 'all', title: 'Todos', art: 'star' }, ...CATEGORIES].map(c =>
-        `<button class="fchip ${cat === c.id ? 'on' : ''}" data-f="${c.id}">${ico(c.art)}${c.title}</button>`).join('')
-        + (cat === 'slots' ? `<div class="studio-chips">${[{ id: 'slots', short: 'Todos os slots', art: 'slot' }, ...STUDIOS.map(s => ({ ...s, id: 'studio:' + s.id }))].map(s =>
-          `<button class="fchip ${filter === s.id ? 'on' : ''}" data-f="${s.id}">${ico(s.art)}${s.short}</button>`).join('')}</div>` : '');
+        `<button class="fchip ${cat === c.id ? 'on' : ''}" data-f="${c.id}">${ico(c.art)}${c.title}</button>`).join('');
+      studioEl.classList.toggle('hidden', cat !== 'slots');
+      studioEl.innerHTML = cat !== 'slots' ? '' : [{ id: 'slots', short: 'Todos os slots', art: 'slot' }, ...STUDIOS.map(s => ({ ...s, id: 'studio:' + s.id }))].map(s =>
+        `<button class="fchip ${filter === s.id ? 'on' : ''}" data-f="${s.id}">${ico(s.art)}${s.short}</button>`).join('');
       all.innerHTML = '';
       CATEGORIES.filter(c => cat === 'all' || cat === c.id).forEach(c => {
         const games = App.games.filter(g => g.category === c.id);
@@ -280,14 +282,16 @@
         });
       });
     }
-    filters.addEventListener('click', e => {
+    const onFilter = e => {
       const f = e.target.closest('[data-f]')?.dataset.f;
       if (!f) return;
       Sfx.click();
       filter = f;
       try { sessionStorage.setItem('fichabet_filter', f); } catch { /* ignore */ }
       renderAll();
-    });
+    };
+    filters.addEventListener('click', onFilter);
+    studioEl.addEventListener('click', onFilter);
     renderAll();
     return el;
   }

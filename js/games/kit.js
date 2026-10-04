@@ -387,7 +387,23 @@ const SlotKit = (() => {
         stepper.el.addEventListener('click', renderBuy);
         renderBuy();
         el.style.setProperty('--cols', cfg.cols);
+        const ar = cfg.cols / (cfg.rows * (cfg.cellH || 1));
         gridEl.style.aspectRatio = `${cfg.cols} / ${cfg.rows * (cfg.cellH || 1)}`;
+        /** Ajusta a largura da grade para o jogo inteiro (até o botão de girar) caber acima da barra de navegação. */
+        const frameEl = $('.kit-frame', el);
+        const fit = () => {
+          if (!el.isConnected) return;
+          const nav = $('.bottom-nav');
+          const navH = nav ? Math.max(0, innerHeight - nav.getBoundingClientRect().top) : 0;
+          const top = frameEl.getBoundingClientRect().top + scrollY;
+          const below = ['.slot-winbar', '.fs-slot', '.slot-controls'].reduce((sum, q) => sum + ($(q, el).offsetHeight || 0), 0) + 3 * 10 + 10;
+          const head = headEl.classList.contains('hidden') ? 0 : headEl.offsetHeight;
+          const avail = innerHeight - navH - top - below - 16 - head;
+          frameEl.style.width = Math.round(Math.max(230, Math.min(el.clientWidth, avail * ar + 16))) + 'px';
+        };
+        requestAnimationFrame(fit);
+        addEventListener('resize', fit);
+        ctx.onUnmount(() => removeEventListener('resize', fit));
 
         let busy = false, turbo = false, auto = false, bet = stepper.value;
         const blur = cfg.symbols.filter(s => !s.noBlur).map(s => s.img);
@@ -472,7 +488,9 @@ const SlotKit = (() => {
           clear() { $$('.kc', gridEl).forEach(x => x.classList.remove('win', 'dim', 'hl')); },
           /** Faixa acima das colunas (valores por coluna) ou null. */
           head(vals) {
+            const was = headEl.classList.contains('hidden');
             headEl.classList.toggle('hidden', !vals);
+            if (was === !!vals) requestAnimationFrame(fit);
             if (vals) headEl.innerHTML = vals.map(v => `<span>${v == null ? '' : v}</span>`).join('');
           },
           /** Contador no topo (GRÁTIS, MULT...). val null remove. */

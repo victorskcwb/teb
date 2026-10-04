@@ -1135,7 +1135,7 @@ select { padding: 9px 10px; border-radius: 12px; background: var(--bg2); border:
 .kit-chips .scat-fs { min-width: 52px; }
 .kit-chips .scat-fs b { white-space: nowrap; font-size: 1.15rem; }
 .kit-chips .scat-fs.bump { animation: pop .35s cubic-bezier(.2, 1.6, .4, 1); }
-.kit-frame { position: relative; padding: 8px; border-radius: 22px; width: min(100%, max(260px, calc((100svh - 430px) * 1.2))); align-self: center;
+.kit-frame { position: relative; padding: 8px; border-radius: 22px; width: 100%; max-width: 100%; align-self: center;
   background: linear-gradient(160deg, color-mix(in srgb, var(--k1) 40%, #fff), var(--k1) 35%, var(--k2) 70%, color-mix(in srgb, var(--k2) 50%, #fff));
   box-shadow: var(--shadow), 0 0 26px color-mix(in srgb, var(--k1) 50%, transparent); }
 .kit.in-fs .kit-frame { animation: glow 1s infinite alternate; }
@@ -1205,5 +1205,9 @@ select { padding: 9px 10px; border-radius: 12px; background: var(--bg2); border:
 }
 
 /* Lobby: estúdios */
-.studio-chips { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; margin: -4px 0 10px; scrollbar-width: none; }
-.studio-chips .fchip { font-size: .85rem; padding: 6px 12px; }
+.studio-chips { display: flex; gap: 8px; overflow-x: auto; padding: 2px; margin-top: 10px; scrollbar-width: none; }
+.studio-chips::-webkit-scrollbar { display: none; }
+.studio-chips.hidden { display: none; }
+.studio-chips .fchip { font-size: .82rem; padding: 6px 12px; white-space: nowrap; }
+.studio-chips .fchip .ico { width: 20px; height: 20px; }
+.filters .fchip { white-space: nowrap; }
