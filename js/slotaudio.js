@@ -67,6 +67,10 @@ const SlotAudio = (() => {
     missaomasmorra: 'dark', yetigelo: 'snow', corujas: 'mystic', estrelato: 'party', magiamaia: 'jungle', thormartelo: 'epic', tribodragao: 'epic', evavenenosa: 'dark', arlequim: 'mystic', coelhosbonus: 'cartoon',
     geniodourado: 'arabia', viaslacteas: 'space', livrosombras: 'dark', cacabufalos: 'prairie', ouromacaco: 'jungle', cemiterioguerreiros: 'dark', buracofogo2: 'mine', sanguesombra2: 'horror', lapidesempiedade: 'western', celaxways2: 'noir',
     cobrinha2000: 'classic', novecinco: 'noir', bolasnatal: 'snow', terraliberdade: 'prairie', diad: 'epic', cidadefantasmarip: 'western', solitario: 'classic', pescariabizarra: 'ocean', encruzilhada: 'western', perturbado: 'horror',
+    superas: 'classic', fortunaneko: 'japan', fafafamaluco: 'china', barrasouro: 'classic', ganeshachegando: 'india', guerradragoes: 'china', rainhadourada: 'egypt', tesourosecreto: 'jungle', reiartur: 'epic', supertouro: 'china',
+    cacadorabonus: 'western', festagemas: 'gems', arvorefortuna: 'china', porquinhosorte: 'china', deusmarcial: 'china', tigelatesouro: 'china', pandagigante: 'china', wukong: 'china', roma2: 'epic', tres_moedas: 'china',
+    sacerdotisaasteca: 'jungle', asselvagem: 'classic', tigremestre: 'china', cidadepecado: 'noir', bancodourado: 'classic', terradoce: 'candy', coringadourado: 'classic', provacaofenix: 'epic', jackpirata: 'pirate', aguarda: 'china',
+    gemeosfortuna: 'china', perolamagica: 'ocean', festadiamante: 'party', noitedisco: 'party', maniafrutas: 'classic', jixiangruyi: 'china', belezahavaiana: 'tropical', festivallua: 'china', fengshen: 'china', dragaosorte: 'china',
     manicomio: 'horror', celaxways: 'dark', lapiderip: 'western', cidadefantasma: 'western', buracofogo: 'mine', submarino: 'ocean', blococelas: 'dark', sanguesombra: 'horror', gulaggelado: 'snow', detetiveserial: 'noir',
   };
 

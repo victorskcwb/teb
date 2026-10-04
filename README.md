@@ -218,6 +218,46 @@ Recriações com nomes e artes próprios dos slots mais jogados de cada estúdio
 | Búfalo Furioso | Charge Buffalo | 4.096 caminhos · até 100 giros | ~97% | 4.000x |
 | Rei da Selva | Jungle King | Gorila coringa · aviões multiplicam | ~97% | 2.500x |
 | Noite de Festa | Party Night | Cascata até x10 · grátis em dobro | ~96,8% | 1.000x |
+| Super Ás | Super Ace | Cartas douradas · combo até x10 | ~97,9% | 1.500x |
+| Fortuna Neko | Neko Fortune | Mistérios que viram coringa · 4.096 caminhos | ~97% | 1.000x |
+| FaFaFa Maluco | Crazy FaFaFa | 1 linha · coringa até x8 · 1.688x | ~97% | 1.688x |
+| Barras de Ouro da Sorte | Lucky Goldbricks | 30 linhas · coringas colantes nas grátis | ~97% | 1.250x |
+| Ganesha Chegando | Lucky Coming | 1 linha · coringa x3/x5/x9 · 1.111x | ~97% | 1.111x |
+| Guerra dos Dragões | War of Dragons | 243 caminhos · 5 dragões nas grátis | ~97% | 2.000x |
+| Rainha Dourada | Golden Queen | 40 linhas · coringas expansivos x2–x5 | ~97% | 1.500x |
+| Tesouro Secreto | Secret Treasure | Baús · caça ao tesouro · grátis | ~97% | 2.000x |
+| Rei Artur | King Arthur | Duelos de cavaleiros até x100 | ~97% | 10.000x |
+| Super Touro | Super Niubi | Clássico de 1 linha · até 888x | ~96,5% | 888x |
+| Caçadora de Bônus | Bonus Hunter | 1.024 caminhos · +1 a cada ganho | ~97% | 2.000x |
+| Festa das Gemas | Gem Party | Grupos · grade cresce até 7×7 | ~97% | 1.500x |
+| Árvore da Fortuna | Fortune Tree | 30 linhas · moedas caem da árvore | ~97% | 1.000x |
+| Porquinho da Sorte | Fortune Pig | 8 linhas · respins com porcos travados | ~97% | 1.000x |
+| Deus Marcial | God of Martial | 25 linhas · mult. até x20 nas grátis | ~97% | 2.500x |
+| Tigela do Tesouro | Treasure Bowl | 3×3 · tigelas coringa · +1 giro | ~97% | 1.000x |
+| Panda Gigante Selvagem | Wild Giant Panda | 243 caminhos · pandas colantes | ~97% | 2.000x |
+| Wukong | Wukong | Bastão coringa que expande | ~97% | 2.000x |
+| Roma II | Roma II | 32.400 caminhos · multiplicador sem teto | ~97% | 3.000x |
+| Tesouros das 3 Moedas | 3 Coin Treasures | 243 caminhos · Hold & Win com jackpots | ~97% | 5.200x |
+| Sacerdotisa Asteca | Aztec Priestess | 32.400 caminhos · mult. que sobe nas grátis | ~97% | 3.000x |
+| Ás Selvagem | Wild Ace | 1.024 caminhos · Duelo do Ás | ~96,5% | 10.000x |
+| Tigre Mestre | Master Tiger | 243 caminhos · grátis a partir de x3 | ~97% | 1.500x |
+| Cidade do Pecado | Sin City | 40 linhas · 5 modificadores do Chefe | ~97% | 2.500x |
+| Banco Dourado | Golden Bank | 1 linha · coringas x2/x3/x5 que se multiplicam | ~97% | 2.000x |
+| Terra Doce | Sweet Land | 7×7 · posições até x128 | ~97% | 3.000x |
+| Coringa Dourado | Golden Joker | 5 linhas · respin de pilhas · roda x10 | ~97% | 800x |
+| Provação da Fênix | Trial of Phoenix | Vencedores ficam · até 15.625 caminhos | ~97% | 10.000x |
+| Jack, o Pirata | Jack the Pirate | 20 linhas · canhões coringa | ~97% | 2.500x |
+| A Guarda | The Guard | 243 caminhos · escudos do palácio | ~97% | 2.000x |
+| Gêmeos da Fortuna | Fortune Twins | 243 caminhos · rolos gêmeos | ~97% | 2.500x |
+| Pérola Mágica | Magic Pearl | 243 caminhos · pérolas até x50 | ~97% | 5.000x |
+| Festa do Diamante | Diamond Party | 3 linhas · Lock Respin em todo ganho | ~96,2% | 1.200x |
+| Noite Disco | Disco Night | 25 linhas · globos x2–x5 colantes | ~97% | 2.500x |
+| Mania de Frutas | Fruits Mania | Cascata · multiplicador que dobra | ~96,5% | 2.500x |
+| Ji Xiang Ru Yi | Ji Xiang Ru Yi | 5 linhas · cetro x2 · respin da nuvem | ~97% | 1.000x |
+| Beleza Havaiana | Hawaii Beauty | 50 linhas · grátis x2 · flores | ~97% | 1.250x |
+| Festival da Lua | Moon Festival | 243 caminhos · luas colantes | ~97% | 2.000x |
+| Feng Shen | Feng Shen | 4.096 caminhos · coringas somam no multiplicador | ~96% | 1.000x |
+| Dragão da Sorte | Lucky Dragon | 243 caminhos · grátis x3 que se renovam | ~97% | 3.000x |
 
 **Estilo Nolimit City**
 
@@ -312,7 +352,7 @@ js/progress.js      XP/passe, missões, check-in, roda, anúncios fictícios, ro
 js/history.js       histórico de giros dos slots (localStorage) e o modal de histórico
 js/games/kit.js     SlotKit: motor dos slots de estúdio (tela, giro, cascata, ways/linhas/grupos, hold & spin, rodadas grátis)
 js/games/calib.js   calibração gerada (escala de prêmios, preço do bônus, chance de ganho, frequência do bônus)
-js/games/pragmatic*.js, pgsoft*.js, hacksaw*.js, tada.js, nolimit*.js   os 208 slots de estúdio
+js/games/pragmatic*.js, pgsoft*.js, hacksaw*.js, tada*.js, nolimit*.js   os 248 slots de estúdio
 js/games/templates.js  modelos reaproveitados (paga em qualquer lugar, grupos, PG Soft)
 tools/calibrate.js  simulador que calibra o RTP dos slots de estúdio
 js/slotinfo.js      painel "Prêmios" dos slots (prêmio máximo, tabela, bônus, linhas)
