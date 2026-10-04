@@ -80,7 +80,7 @@
       rules: `<p>${cfg.intro}</p>${cfg.how}${cfg.features}<p class="muted small">RTP teórico aproximado: ${cfg.rtp}. Atalho: barra de espaço gira.</p>`,
       info: {
         maxWin: cfg.maxWin, vol: cfg.vol, rtp: cfg.rtp, hit: cfg.hit, highlights: cfg.highlights,
-        how: cfg.how, features: cfg.features + `<p>💰 <b>Comprar bônus:</b> ${cfg.fsCount} rodadas grátis por <b>${cfg.buyX}x</b> a aposta.</p>
+        how: cfg.how, features: cfg.features + `<p>💰 <b>Comprar bônus:</b> ${cfg.fsCount} rodadas grátis por <b>${cfg.buyX}x</b> a aposta (retorno médio da compra ~94%).</p>
           <p class="muted small">Prêmio máximo: ${fmt(cfg.maxWin).replace(',00', '')}x a aposta — ao atingir, a rodada termina.</p>`,
         tables: [paysTable, scatterTable, ...(cfg.extraTables ? cfg.extraTables(symbols) : [])],
         lines: { cols: 5, rows: 3, list: LINES.map(L => L.map((row, r) => `${r}:${row}`)), text: 'As 10 linhas ficam ativas em todo giro. O ganho conta a partir do rolo da esquerda.' },
@@ -394,7 +394,7 @@
   const TRIDENT = { id: 'tridente', img: 'trident', name: 'Tridente', scatter: true };
   // calibrado: ~96,5% com Zeus ou Hades (rodadas grátis ≈ 78x a aposta, 1 a cada ~170 giros)
   const ZH = {
-    payK: 1.5, buyX: 82,
+    payK: 1.5, buyX: 84,
     base: { wildW: 1.2, scatterW: 1.2, mults: [{ m: 1, w: 70 }, { m: 2, w: 20 }, { m: 3, w: 7 }, { m: 5, w: 3 }] },
     zeus: { wildW: 9, scatterW: 0.9, mults: [{ m: 2, w: 50 }, { m: 3, w: 30 }, { m: 5, w: 20 }] },
     hades: { wildW: 3.5, scatterW: 0.9, mults: [{ m: 5, w: 50 }, { m: 10, w: 30 }, { m: 25, w: 15 }, { m: 50, w: 5 }] },
@@ -447,7 +447,7 @@
   /* ---------------- Livro de Anúbis ---------------- */
   const BOOK = { id: 'livro', img: 'book', name: 'Livro', wild: true, scatter: true };
   // calibrado: ~96% (rodadas grátis ≈ 51x a aposta, 1 a cada ~150 giros)
-  const AN = { payK: 1.84, buyX: 53, base: { wildW: 1.3 }, fs: { wildW: 1.3 } };
+  const AN = { payK: 1.84, buyX: 57, base: { wildW: 1.3 }, fs: { wildW: 1.3 } };
   App.register(createLineSlot({
     id: 'anubis', name: 'Livro de Anúbis', art: 'book', mascot: 'wolf',
     tag: 'Símbolo especial expande · até 5.000x', colors: ['#ca8a04', '#1e3a8a'],

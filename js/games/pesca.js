@@ -70,7 +70,7 @@
       <p>${ico('buoy')} <b>Boia (scatter):</b> 3, 4 ou 5 em qualquer lugar pagam 2x, 20x ou 200x a aposta e dão <b>10, 15 ou 20 rodadas grátis</b>.</p>
       <p>${ico('fish')} <b>Peixes de prêmio</b> mostram um valor em fichas (2x a 1.000x a aposta).</p>
       <p>${ico('fishingpole')} <b>Pescador:</b> só aparece nas rodadas grátis. É coringa e <b>fisga o valor de todos os peixes</b> da tela. A cada <b>4 pescadores</b> coletados: <b>+10 rodadas</b> e o multiplicador da coleta sobe para <b>x2, x3 e x10</b>.</p>
-      <p>💰 <b>Comprar bônus:</b> 10 rodadas grátis por ${BUY_X}x a aposta.</p>
+      <p>💰 <b>Comprar bônus:</b> 10 rodadas grátis por ${BUY_X}x a aposta (retorno médio da compra ~94%).</p>
       <h4>Tabela (× aposta total)</h4>
       <table class="paytable"><tr><td></td><td>3</td><td>4</td><td>5</td></tr>
       ${SYMBOLS.filter(s => s.pays).map(s => `<tr><td class="pt-sym">${ico(s.img)} ${s.name}</td>${s.pays.map(p => `<td><b>${fmt(p)}x</b></td>`).join('')}</tr>`).join('')}</table>
@@ -108,7 +108,7 @@
         <p>${ico('fishingpole')} <b>Pescador:</b> em cada giro grátis, cada Pescador na tela coleta a <b>soma de todos os peixes</b>. Dois pescadores = coleta dupla.</p>
         <table class="paytable"><tr class="si-head"><td>Pescadores coletados</td><td>Bônus</td></tr>
           ${STEPS.map(st => `<tr><td><b>${st.at}</b></td><td>+10 rodadas · coleta <b>x${st.m}</b></td></tr>`).join('')}</table>
-        <p>💰 <b>Comprar bônus:</b> 10 rodadas grátis por <b>${BUY_X}x</b> a aposta.</p>
+        <p>💰 <b>Comprar bônus:</b> 10 rodadas grátis por <b>${BUY_X}x</b> a aposta (retorno médio da compra ~94%).</p>
         <p class="muted small">Prêmio máximo: ${fmt(MAX_WIN).replace(',00', '')}x a aposta — ao atingir, a pescaria termina.</p>`,
       lines: {
         cols: 5, rows: 3, list: LINES.map(L => L.map((row, r) => `${r}:${row}`)),

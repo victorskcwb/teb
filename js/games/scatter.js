@@ -26,7 +26,7 @@
         <p>Grade <b>6×5</b> sem linhas: <b>8 ou mais</b> símbolos iguais em qualquer posição pagam. Os símbolos vencedores explodem e novos caem no lugar (<b>cascata</b>), podendo gerar novos ganhos na mesma rodada.</p>
         <p>${ico(cfg.scatter.img)} <b>Scatter:</b> 4, 5 ou 6 pagam 3x, 5x ou 100x a aposta e dão <b>${cfg.fsCount} rodadas grátis</b>. Durante as rodadas grátis, 3+ scatters dão <b>+5 rodadas</b>.</p>
         ${cfg.orbRules}
-        <p>💰 <b>Comprar bônus:</b> entra direto nas rodadas grátis por ${cfg.buyX}x a aposta.</p>
+        <p>💰 <b>Comprar bônus:</b> entra direto nas rodadas grátis por ${cfg.buyX}x a aposta (retorno médio da compra ~94%).</p>
         <h4>Tabela (× aposta total)</h4>
         <table class="paytable"><tr><td></td><td>8–9</td><td>10–11</td><td>12+</td></tr>
         ${cfg.symbols.map(s => `<tr><td class="pt-sym">${ico(s.img)} ${s.name}</td>${s.pays.map(p => `<td><b>${fmt(p)}x</b></td>`).join('')}</tr>`).join('')}</table>
@@ -52,7 +52,7 @@
           <p>${ico(cfg.scatter.img)} <b>Rodadas grátis:</b> 4 ou mais ${cfg.scatter.name.toLowerCase()}s dão <b>${cfg.fsCount} rodadas grátis</b> com a mesma aposta. Durante elas, 3+ dão <b>+5 rodadas</b>.</p>
           ${cfg.orbRules}
           ${cfg.orbs ? `<table class="paytable"><tr class="si-head"><td>Multiplicador</td><td>Chance (entre os multiplicadores)</td></tr>${cfg.orbs.map(o => `<tr><td><b>x${o.m}</b></td><td>${Math.round((o.w / cfg.orbs.reduce((s, x) => s + x.w, 0)) * 100)}%</td></tr>`).join('')}</table>` : ''}
-          <p>💰 <b>Comprar bônus:</b> entra direto nas rodadas grátis por <b>${cfg.buyX}x</b> a aposta.</p>
+          <p>💰 <b>Comprar bônus:</b> entra direto nas rodadas grátis por <b>${cfg.buyX}x</b> a aposta (retorno médio da compra ~94%).</p>
           <p class="muted small">As rodadas grátis aparecem em média 1 a cada ~${cfg.fsEvery} giros. Prêmio máximo: ${fmt(cfg.maxWin).replace(',00', '')}x a aposta — ao atingir, a rodada termina.</p>`,
       },
 
@@ -375,7 +375,7 @@
     ]), 2.3),
     scatter: { id: 'sc', img: 'lollipop', name: 'Pirulito', w: 1.25 },
     orbImg: 'rainbow', orbs: ORBS, orbBase: 0, orbFS: 0.048,
-    fsCount: 10, buyX: 87, accumulate: false,
+    fsCount: 10, buyX: 93, accumulate: false,
     maxWin: 21100, vol: 3, hit: '~1 em 3 giros (33%)', fsEvery: 300,
     highlights: ['🍭 4+ pirulitos = <b>10 rodadas grátis</b>', '🌈 Nas rodadas grátis caem <b>bombas de 2x a 100x</b> que se somam', 'Cascatas: um giro pode pagar várias vezes', 'Prêmio máximo: <b>21.100x</b>'],
   }));
@@ -407,7 +407,7 @@
     ]), 1.05),
     scatter: { id: 'sc', img: 'shootingstar', name: 'Estrela cadente', w: 1.25 },
     orbImg: 'glowstar', orbs: ORBS, orbBase: 0.0048, orbFS: 0.03,
-    fsCount: 10, buyX: 60, accumulate: true,
+    fsCount: 10, buyX: 65, accumulate: true,
     maxWin: 5000, vol: 4, hit: '~1 em 3 giros (32%)', fsEvery: 295,
     highlights: ['🌟 Estrelas de <b>2x a 100x</b> podem cair em qualquer giro', 'Nas rodadas grátis as estrelas <b>acumulam</b> e valem para todos os ganhos seguintes', '4+ estrelas cadentes = <b>10 rodadas grátis</b>', 'Prêmio máximo: <b>5.000x</b>'],
   }));
@@ -425,7 +425,7 @@
     scatter: { id: 'sc', img: 'volcano', name: 'Vulcão', w: 1.25 },
     portal: { img: 'cyclone', pBase: 0.004, pFS: 0.0205, min: 2, max: 5 },
     orbBase: 0, orbFS: 0,
-    fsCount: 10, buyX: 104, accumulate: false,
+    fsCount: 10, buyX: 107, accumulate: false,
     maxWin: 5000, vol: 4, hit: '~1 em 3 giros (35%)', fsEvery: 285,
     highlights: ['🌀 Portais transformam de <b>2 a 5 casas</b> num mesmo símbolo', '🔥 Nas rodadas grátis cada portal soma <b>+1 no multiplicador</b>, que nunca zera', '🌋 4+ vulcões (≈1 em 285 giros) = <b>10 rodadas grátis</b>', 'Prêmio máximo: <b>5.000x</b>'],
   }));
