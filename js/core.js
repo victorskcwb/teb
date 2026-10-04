@@ -270,10 +270,20 @@ const Music = {
    Componentes de UI
    ========================================================= */
 const UI = {
-  toast(msg, type = 'info', ms = 2200) {
+  /**
+   * Aviso rápido. key: substitui o aviso anterior com a mesma chave (ex.: nível do passe).
+   * No máximo TOAST_MAX na tela: os mais antigos saem quando chegam novos.
+   */
+  TOAST_MAX: 3,
+  toast(msg, type = 'info', ms = 2200, key = '') {
+    const box = $('#toasts');
+    if (key) $$('.toast', box).forEach(t => { if (t.dataset.key === key) t.remove(); });
     const el = h(`<div class="toast ${type}"></div>`);
     el.textContent = msg;
-    $('#toasts').append(el);
+    if (key) el.dataset.key = key;
+    box.append(el);
+    const live = $$('.toast:not(.out)', box);
+    live.slice(0, Math.max(0, live.length - this.TOAST_MAX)).forEach(t => { t.classList.add('out'); setTimeout(() => t.remove(), 300); });
     setTimeout(() => el.classList.add('out'), ms);
     setTimeout(() => el.remove(), ms + 400);
   },
@@ -317,6 +327,9 @@ const UI = {
 
   /** Chuva de moedas/estrelas por cima da tela. */
   confetti(n = 40, sprites = ['coin', 'coin', 'star', 'gem']) {
+    // no máximo 2 chuvas ao mesmo tempo (coletar várias coisas seguidas não enche a tela)
+    const old = $$('.confetti');
+    old.slice(0, Math.max(0, old.length - 1)).forEach(l => l.remove());
     const layer = h('<div class="confetti"></div>');
     for (let i = 0; i < n; i++) {
       const img = h(`<img src="${IMG(RNG.pick(sprites))}" alt="">`);

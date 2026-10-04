@@ -1344,3 +1344,5 @@ select { padding: 9px 10px; border-radius: 12px; background: var(--bg2); border:
 .lite .kc.wild::after, .lite .kc.hi::after { animation: none; display: none; }
 .lite .kc.sc::before { animation: none; }
 .lite .kit-frame.shake { animation-duration: .3s; }
+.claim-all-m { width: 100%; margin: 4px 0 10px; animation: pulse 1.6s infinite; }
+.lite .claim-all-m { animation: none; }

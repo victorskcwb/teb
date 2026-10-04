@@ -312,10 +312,10 @@ const Progress = {
     const parts = [];
     if (r.coins) parts.push(`🪙 ${fmt(r.coins)}`);
     if (r.fs) parts.push(`${r.fs} rodadas grátis`);
-    if (r.xp) parts.push(`${r.xp} XP`);
+    if (r.xp) parts.push(`${fmt0(r.xp)} XP`);
     Sfx.claim();
     Sfx.coin();
-    UI.toast(`${why ? why + ': ' : ''}+${parts.join(' + ')}`, 'win', 2800);
+    UI.toast(`${why ? why + ': ' : ''}+${parts.join(' + ')}`, 'win', 2800, 'grant');
   },
 
   /* ---------- check-in diário ---------- */
@@ -367,8 +367,44 @@ const Progress = {
     const def = this.missionDef(id);
     if (!m || m.claimed || m.p < def.goal) return false;
     m.claimed = true;
-    this.grant({ coins: Math.round((def.coins * this.MISSION_COINS) / 10) * 10, xp: def.xp }, 'Missão');
+    this.grant(this.missionReward(def), 'Missão');
     return true;
+  },
+  /** Recompensa de uma missão diária (fichas reduzidas por MISSION_COINS, XP inteiro). */
+  missionReward(def) { return { coins: Math.round((def.coins * this.MISSION_COINS) / 10) * 10, xp: def.xp }; },
+  /** Quantas recompensas de missão (diárias, baú, gerais e de slots) estão prontas. */
+  missionsReady() {
+    return this.missions().filter(m => m.done && !m.claimed).length + (this.allMissionsClaimed() && !this.s.missions.bonus ? 1 : 0)
+      + this.tracks().filter(t => t.done).length + this.slotQuestsReady().length;
+  },
+  /** Coleta tudo de uma vez e entrega numa só recompensa (um aviso só). */
+  claimAllMissions() {
+    const acc = { coins: 0, fs: 0, xp: 0 };
+    let n = 0;
+    const add = r => { acc.coins += r.coins || 0; acc.fs += r.fs || 0; acc.xp += r.xp || 0; n++; };
+    this.ensureMissions();
+    for (const m of this.s.missions.list) {
+      const def = this.missionDef(m.id);
+      if (!m.claimed && m.p >= def.goal) { m.claimed = true; add(this.missionReward(def)); }
+    }
+    if (!this.s.missions.bonus && this.allMissionsClaimed()) { this.s.missions.bonus = true; add(ALL_MISSIONS_BONUS); }
+    // uma trilha pode ter vários níveis prontos (o progresso que sobra passa para o próximo)
+    for (let guard = 0; guard < 500; guard++) {
+      const t = this.tracks().find(x => x.done);
+      if (!t) break;
+      const st = this.trackState(t.id);
+      if (!t.abs) st.p = round2(st.p - t.goal);
+      st.lv++;
+      add(t.reward);
+    }
+    for (let guard = 0; guard < 500; guard++) {
+      const q = this.slotQuestsReady()[0];
+      if (!q) break;
+      this.s.slotq[q.gid] = { lv: q.lv + 1, p: 0 };
+      add(q.reward);
+    }
+    if (n) this.grant(acc, `${n} ${n > 1 ? 'missões' : 'missão'}`);
+    return { n, ...acc };
   },
   allMissionsClaimed() { return this.s.missions.list.every(m => m.claimed); },
   claimMissionsBonus() {
@@ -587,8 +623,7 @@ const Progress = {
   pending() {
     const ck = this.checkinStatus().canClaim ? 1 : 0;
     const wh = (this.wheelIn() === 0 ? 1 : 0) + (this.freeScratch() ? 1 : 0) + (this.s.vip.pending > 0 ? 1 : 0) + this.milestonesReady().length;
-    const ms = this.missions().filter(m => m.done && !m.claimed).length + (this.allMissionsClaimed() && !this.s.missions.bonus ? 1 : 0)
-      + this.tracks().filter(t => t.done).length + this.slotQuestsReady().length;
+    const ms = this.missionsReady();
     let ps = 0;
     for (let l = 1; l <= this.level; l++) ps += (this.canClaimPass(l, 'free') ? 1 : 0) + (this.canClaimPass(l, 'prem') ? 1 : 0);
     return { bonus: ck + wh, missions: ms, pass: ps };
@@ -690,7 +725,7 @@ Bus.on('round', e => Progress.onRound(e));
 Bus.on('levelup', lvl => {
   Sfx.levelUp();
   UI.confetti(35, ['star', 'sparkles', 'coin']);
-  UI.toast(`⭐ Nível ${lvl} do passe! Recompensas liberadas`, 'level', 3200);
+  UI.toast(`⭐ Nível ${lvl} do passe! Recompensas liberadas`, 'level', 3200, 'pass-lvl');
 });
 Bus.on('vipup', t => {
   Sfx.jackpot();
@@ -705,4 +740,4 @@ Bus.on('playerup', pl => {
   const m = Progress.milestonesReady().find(x => x.at === pl.level);
   if (m) setTimeout(() => UI.toast(`🏁 Marco do nível ${m.at} alcançado! Resgate 🪙 ${fmt(m.reward.coins)} + ${m.reward.fs} rodadas no seu perfil`, 'win', 4200), 2200);
 });
-Bus.on('missionDone', def => { Sfx.claim(); UI.toast(`🎯 Missão concluída: ${def.text}`, 'win', 3000); });
+Bus.on('missionDone', def => { Sfx.claim(); UI.toast(`🎯 Missão concluída: ${def.text}`, 'win', 3000, 'mission-done'); });

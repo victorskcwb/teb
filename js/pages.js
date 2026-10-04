@@ -258,6 +258,7 @@ Pages.missoes = {
           <button data-tab="geral">Gerais ∞<i class="tdot hidden"></i></button>
           <button data-tab="slots">Slots ∞<i class="tdot hidden"></i></button>
         </div>
+        <button class="btn btn-gold btn-big claim-all-m hidden"></button>
         <div class="missions"></div>
         <div class="panel chest-panel"></div>
       </section>`);
@@ -271,7 +272,7 @@ Pages.missoes = {
           ${ico(m.art, 'm-img')}
           <div class="m-body"><b>${m.text}</b>
             <div class="xpbar"><i style="width:${pct}%"></i><span>${prog}</span></div>
-            <small>Recompensa: 🪙 ${fmt(m.coins)} + ${m.xp} XP</small></div>
+            <small>Recompensa: ${rewardText(Progress.missionReward(m))}</small></div>
           ${m.claimed ? '<button class="btn btn-ghost" disabled>✔</button>'
             : m.done ? `<button class="btn btn-gold" data-id="${m.id}">Coletar</button>`
               : `<a class="btn btn-primary" href="#/${MISSION_GO[m.id] || ''}">Jogar</a>`}
@@ -306,6 +307,9 @@ Pages.missoes = {
       const dots = { dia: Progress.missions().filter(m => m.done && !m.claimed).length, geral: Progress.tracks().filter(t => t.done).length, slots: Progress.slotQuestsReady().length };
       $$('.m-tabs button', el).forEach(b => $('.tdot', b).classList.toggle('hidden', !dots[b.dataset.tab]));
       timer.classList.toggle('hidden', tab !== 'dia');
+      const ready = Progress.missionsReady(), ca = $('.claim-all-m', el);
+      ca.classList.toggle('hidden', !ready);
+      ca.textContent = `🎁 Coletar tudo (${ready})`;
       chest.classList.toggle('wide', tab !== 'dia');
       ({ dia: daily, geral: general, slots })[tab]();
     };
@@ -319,6 +323,7 @@ Pages.missoes = {
       const sq = e.target.closest('[data-slot]');
       if (sq && Progress.claimSlotQuest(sq.dataset.slot)) { UI.confetti(25); render(); }
       if (e.target.closest('.chest-claim') && Progress.claimMissionsBonus()) { UI.confetti(60, ['gift', 'coin', 'star']); render(); }
+      if (e.target.closest('.claim-all-m') && Progress.claimAllMissions().n) { Sfx.big(); UI.confetti(70, ['gift', 'coin', 'star']); render(); }
     });
     const tick = () => {
       const now = new Date(), mid = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
