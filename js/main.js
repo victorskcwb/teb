@@ -273,7 +273,7 @@
       <section class="game-page" style="--c1:${g.colors[0]};--c2:${g.colors[1]}">
         <div class="game-head">
           <a href="#/" class="back">←<span> Lobby</span></a>
-          <h2><img src="${IMG(g.art)}" alt="">${g.name}</h2>
+          <h2><img src="${IMG(g.art)}" alt=""><span>${g.name}</span></h2>
           <button class="icon-btn help" aria-label="Como jogar">?</button>
         </div>
         <div class="game-body"></div>

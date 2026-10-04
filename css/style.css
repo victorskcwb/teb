@@ -990,7 +990,7 @@ select { padding: 9px 10px; border-radius: 12px; background: var(--bg2); border:
 .hist-net.neg { background: var(--red); color: #fff; }
 .hist { display: flex; flex-direction: column; gap: 10px; }
 .seg { display: flex; gap: 4px; padding: 4px; border-radius: 12px; background: var(--bg2); }
-.seg button { flex: 1; padding: 7px 6px; border-radius: 9px; font-size: .82rem; font-weight: 800; color: var(--muted); }
+.seg button { flex: 1; padding: 7px 6px; border: 0; border-radius: 9px; background: transparent; font-size: .82rem; font-weight: 800; color: var(--muted); }
 .seg button.on { background: var(--accent); color: #fff; }
 .hist-stats { grid-template-columns: repeat(3, 1fr); }
 .hist-stats b { font-variant-numeric: tabular-nums; }
@@ -1012,4 +1012,25 @@ select { padding: 9px 10px; border-radius: 12px; background: var(--bg2); border:
   .hist-stats { grid-template-columns: repeat(2, 1fr); }
   .hist-row { gap: 6px; padding: 6px 8px; font-size: .8rem; }
   .hr-time { font-size: .68rem; }
+}
+
+/* =========================================================
+   Celular: título do jogo numa linha e slot inteiro na tela
+   (botão de girar acima da barra de navegação)
+   ========================================================= */
+.game-head h2 { min-width: 0; }
+.game-head h2 span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.slot-frame { width: min(100%, max(250px, calc(100svh - 400px))); align-self: center; }
+.scat-frame { width: min(100%, max(260px, calc((100svh - 420px) * 1.25))); align-self: center; }
+@media (max-width: 520px) {
+  .game-head { gap: 8px; margin-bottom: 8px; }
+  .game-head h2 { font-size: clamp(1rem, 5.2vw, 1.25rem); gap: 6px; }
+  .slot, .scat, .pesca { gap: 8px; }
+  .slot-banner, .scat-top { min-height: 56px; padding: 6px 10px; }
+  .slot-mascot { width: 44px; height: 44px; }
+  .scat-mascot { width: 40px; height: 40px; }
+  .slot-msg, .scat-msg { font-size: .88rem; }
+  .slot-frame { padding: 8px; border-radius: 20px; }
+  .slot-grid { gap: 6px; padding: 6px; }
+  .slot-winbar b { font-size: 1.35rem; }
 }
