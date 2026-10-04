@@ -99,7 +99,7 @@
     setTimeout(() => {
       Sfx.levelUp();
       UI.confetti(40, [pl.rank.art, 'star', 'coin']);
-      UI.toast(`🏅 Você subiu para o nível ${pl.level} do jogador! ${pl.level % 10 === 1 ? `Nova patente: ${pl.rank.label}` : ''}`, 'level', 3600);
+      UI.toast(`🏅 Você subiu para o nível ${pl.level} do jogador! ${pl.level % 10 === 1 ? `Nova patente: ${pl.rank.label}` : ''}`, 'level', 3600, 'player-lvl');
     }, 900);
   });
 
