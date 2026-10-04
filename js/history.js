@@ -98,8 +98,8 @@ const History = {
       if (b.dataset.f) filter = b.dataset.f;
       if (b.dataset.scope) scope = b.dataset.scope;
       if (b.classList.contains('hist-clear')) {
-        if (!confirm('Apagar o histórico deste jogo?')) return;
-        this.clear(game.id);
+        UI.ask('Apagar histórico', 'Apagar o histórico deste jogo?', 'Apagar', 'btn-danger').then(ok => { if (ok) { this.clear(game.id); render(); } });
+        return;
       }
       Sfx.click();
       render();

@@ -273,7 +273,9 @@
       async function buy() {
         if (busy) return;
         const bet = stepper.value, price = round2(bet * BUY_X);
-        if (!confirm(`Comprar 10 rodadas grátis por 🪙 ${fmt(price)}?`)) return;
+        // confirmação dentro do jogo; o giro automático para antes de perguntar
+        setAuto(false);
+        if (!(await UI.ask('Comprar bônus', `Comprar 10 rodadas grátis por 🪙 ${fmt(price)}?`, '💰 Comprar')) || busy) return;
         if (!Wallet.bet(price)) return;
         setAuto(false);
         setBusy(true);

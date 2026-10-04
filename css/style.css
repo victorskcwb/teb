@@ -1299,3 +1299,6 @@ select { padding: 9px 10px; border-radius: 12px; background: var(--bg2); border:
 .mdivs i.on { background: var(--rc); box-shadow: 0 0 6px var(--rc); }
 .mdivs em { font-style: normal; color: var(--rc); font-size: .8rem; }
 .profile h4 { margin: 4px 0 0; }
+.ask-body { font-size: 1rem; line-height: 1.4; margin-bottom: 14px; }
+.ask-btns { display: flex; gap: 8px; justify-content: flex-end; }
+.ask-btns .btn { min-width: 110px; }

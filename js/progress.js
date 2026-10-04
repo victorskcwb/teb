@@ -628,12 +628,12 @@ const Ads = {
       document.body.append(el);
       const bar = $('.ad-bar i', el), cnt = $('.ad-count', el), claim = $('.ad-claim', el);
       const t0 = performance.now(), dur = this.DURATION * 1000;
-      let done = false;
+      let done = false, askedClose = false;
       const tick = () => {
         if (!el.isConnected) return;
         const p = Math.min(1, (performance.now() - t0) / dur);
         bar.style.width = p * 100 + '%';
-        cnt.textContent = p < 1 ? `Recompensa em ${Math.ceil((dur - (performance.now() - t0)) / 1000)}s` : 'Anúncio concluído ✅';
+        if (!askedClose) cnt.textContent = p < 1 ? `Recompensa em ${Math.ceil((dur - (performance.now() - t0)) / 1000)}s` : 'Anúncio concluído ✅';
         if (p >= 1 && !done) { done = true; claim.disabled = false; Sfx.chip(); }
         if (p < 1) requestAnimationFrame(tick);
       };
@@ -647,7 +647,11 @@ const Ads = {
       claim.addEventListener('click', () => finish(true));
       $('.ad-close', el).addEventListener('click', () => {
         if (done) { finish(true); return; }
-        if (confirm('Se fechar agora, você perde a recompensa. Fechar mesmo assim?')) finish(false);
+        // sem confirm() do navegador: o 1º toque avisa, o 2º fecha sem recompensa
+        if (askedClose) { finish(false); return; }
+        askedClose = true;
+        cnt.textContent = '⚠️ Toque no ✕ de novo para fechar sem a recompensa';
+        setTimeout(() => { askedClose = false; }, 3000);
       });
     });
   },

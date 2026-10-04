@@ -295,6 +295,26 @@ const UI = {
     return { el, close };
   },
 
+  /**
+   * Confirmação dentro do jogo (substitui o confirm() do navegador, que o Safari pode
+   * bloquear depois de várias janelas e só volta ao recarregar a página).
+   * Resolve true no botão de confirmar; false ao cancelar/fechar.
+   */
+  ask(title, html, okLabel = 'Confirmar', okClass = 'btn-gold') {
+    if ($('.modal-backdrop.ask')) return Promise.resolve(false);
+    return new Promise(res => {
+      const m = this.modal(title, `<div class="ask-body">${html}</div><div class="ask-btns"><button class="btn btn-ghost ask-no">Cancelar</button><button class="btn ${okClass} ask-yes">${okLabel}</button></div>`);
+      m.el.classList.add('ask');
+      let done = false;
+      const end = v => { if (done) return; done = true; m.close(); res(v); };
+      m.el.addEventListener('click', e => {
+        if (e.target.closest('.ask-yes')) { Sfx.click(); end(true); }
+        else if (e.target.closest('.ask-no') || e.target === m.el || e.target.closest('.close')) end(false);
+      });
+      setTimeout(() => { const b = $('.ask-yes', m.el); if (b) b.focus(); }, 30);
+    });
+  },
+
   /** Chuva de moedas/estrelas por cima da tela. */
   confetti(n = 40, sprites = ['coin', 'coin', 'star', 'gem']) {
     const layer = h('<div class="confetti"></div>');
