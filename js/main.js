@@ -6,11 +6,20 @@
     { id: 'originais', title: 'Originais', art: 'rocket', desc: 'Crash, Mines, Plinko, Dice e mais' },
     { id: 'mesa', title: 'Mesa & Ao vivo', art: 'cards', desc: 'Roleta, Blackjack, Futebol Studio' },
   ];
+  // slots "de estúdio" (SlotKit) agrupados no lobby
+  const STUDIOS = [
+    { id: 'pragmatic', title: 'Estilo Pragmatic Play', short: 'Pragmatic', art: 'house', desc: 'Megaways, grupos e respins de moedas' },
+    { id: 'pgsoft', title: 'Estilo PG Soft', short: 'PG Soft', art: 'mahjong', desc: 'Mahjong, molduras douradas e multiplicadores' },
+    { id: 'hacksaw', title: 'Estilo Hacksaw', short: 'Hacksaw', art: 'cowboy', desc: 'DuelReels, coringas que andam e bônus malucos' },
+    { id: 'tada', title: 'Estilo TaDa / JILI', short: 'TaDa', art: 'gem', desc: 'Joias, clássicos asiáticos e cascatas' },
+    { id: 'nolimit', title: 'Estilo Nolimit City', short: 'Nolimit', art: 'headstone', desc: 'xWays, xNudge, xBomb — volatilidade extrema' },
+  ];
   // ranking aproximado dos jogos mais jogados em cassinos online no Brasil
-  const POPULAR = ['tigrinho', 'touro', 'docerush', 'raspadinha', 'crash', 'doce', 'zeushades', 'coelho', 'mines', 'olimpo', 'anubis', 'pescaria', 'portais', 'ratinho', 'princesa', 'double', 'futebol', 'roleta', 'plinko', 'dragaozinho', 'blackjack'];
+  const POPULAR = ['tigrinho', 'mahjong1', 'touro', 'docerush', 'procurado', 'joiasfortuna', 'raspadinha', 'crash', 'doce', 'zeushades', 'coelho', 'mines', 'olimpo', 'anubis', 'pescaria', 'portais', 'ratinho', 'princesa', 'double', 'futebol', 'roleta', 'plinko', 'dragaozinho', 'blackjack'];
   const BADGE = {
     tigrinho: 'hot', crash: 'hot', mines: 'hot', touro: 'new', coelho: 'new', pescaria: 'new', princesa: 'new', docerush: 'new', portais: 'new', zeushades: 'new', anubis: 'new', doce: 'top', olimpo: 'top', ratinho: 'new',
     futebol: 'new', raspadinha: 'new', limbo: 'new', dice: 'new', hilo: 'new', keno: 'new', torre: 'new', double: 'top',
+    mahjong1: 'hot', procurado: 'hot', casacaes: 'top', joiasfortuna: 'hot', lobodeouro: 'top', mahjong2: 'top', banditoguaxinim: 'hot', bandidoselvagem: 'top',
   };
   const BADGE_TXT = { hot: '🔥 HOT', new: 'NOVO', top: 'TOP' };
 
@@ -154,6 +163,7 @@
     const ck = Progress.checkinStatus();
     const slides = [];
     if (ck.canClaim) slides.push({ art: 'gift', c: ['#10b981', '#0e7490'], t: `Bônus diário: Dia ${ck.nextIdx + 1}`, s: `Colete ${rewardText(CHECKIN[ck.nextIdx])} agora!`, cta: 'Coletar', go: 'checkin' });
+    slides.push({ art: 'mahjong', c: ['#15803d', '#b91c1c'], t: 'NOVOS: 50 slots de estúdio', s: 'Mahjong, Megaways, DuelReels, xWays e muito mais — no estilo Pragmatic, PG, Hacksaw, TaDa e Nolimit.', cta: 'Ver todos', go: 'studios' });
     slides.push({ art: 'teddy', c: ['#db2777', '#7c3aed'], t: 'NOVO: Doce Rush', s: 'Multiplicadores de até x128 que ficam na grade nas rodadas grátis.', cta: 'Jogar', go: '#/docerush' });
     slides.push({ art: 'zeus', c: ['#2563eb', '#b91c1c'], t: 'NOVO: Zeus x Hades', s: 'Escolha seu deus nas rodadas grátis: coringas de até x50.', cta: 'Jogar', go: '#/zeushades' });
     slides.push({ art: 'fish', c: ['#0284c7', '#0f766e'], t: 'Pescaria Bonança', s: 'O pescador fisga peixes de até 1.000x nas rodadas grátis.', cta: 'Jogar', go: '#/pescaria' });
@@ -211,7 +221,9 @@
     trackEl.addEventListener('click', e => {
       const go = e.target.closest('[data-go]')?.dataset.go;
       if (!go) return;
-      if (go === 'checkin') openCheckin(); else location.hash = go;
+      if (go === 'checkin') openCheckin();
+      else if (go === 'studios') { filter = 'slots'; try { sessionStorage.setItem('fichabet_filter', filter); } catch { /* ignore */ } renderAll(); $('.filters', el).scrollIntoView({ behavior: 'smooth' }); }
+      else location.hash = go;
     });
 
     /* atalhos de recompensas */
@@ -247,16 +259,27 @@
     const filters = $('.filters', el), all = $('.all-games', el);
     let filter = 'all';
     try { filter = sessionStorage.getItem('fichabet_filter') || 'all'; } catch { /* ignore */ }
-    const renderAll = () => {
+    const section = (art, title, desc, games) => h(`<div class="cat"><div class="cat-head"><h2>${ico(art)} ${title}</h2><span>${desc}</span></div><div class="cards">${games.map(g => card(g)).join('')}</div></div>`);
+    function renderAll() {
+      const studio = filter.startsWith('studio:') ? filter.slice(7) : null;
+      const cat = studio ? 'slots' : filter;
       filters.innerHTML = [{ id: 'all', title: 'Todos', art: 'star' }, ...CATEGORIES].map(c =>
-        `<button class="fchip ${filter === c.id ? 'on' : ''}" data-f="${c.id}">${ico(c.art)}${c.title}</button>`).join('');
+        `<button class="fchip ${cat === c.id ? 'on' : ''}" data-f="${c.id}">${ico(c.art)}${c.title}</button>`).join('')
+        + (cat === 'slots' ? `<div class="studio-chips">${[{ id: 'slots', short: 'Todos os slots', art: 'slot' }, ...STUDIOS.map(s => ({ ...s, id: 'studio:' + s.id }))].map(s =>
+          `<button class="fchip ${filter === s.id ? 'on' : ''}" data-f="${s.id}">${ico(s.art)}${s.short}</button>`).join('')}</div>` : '');
       all.innerHTML = '';
-      CATEGORIES.filter(c => filter === 'all' || filter === c.id).forEach(cat => {
-        const games = App.games.filter(g => g.category === cat.id);
+      CATEGORIES.filter(c => cat === 'all' || cat === c.id).forEach(c => {
+        const games = App.games.filter(g => g.category === c.id);
         if (!games.length) return;
-        all.append(h(`<div class="cat"><div class="cat-head"><h2>${ico(cat.art)} ${cat.title}</h2><span>${cat.desc}</span></div><div class="cards">${games.map(g => card(g)).join('')}</div></div>`));
+        if (c.id !== 'slots') { all.append(section(c.art, c.title, c.desc, games)); return; }
+        const classic = games.filter(g => !g.studio);
+        if (!studio && classic.length) all.append(section(c.art, 'Slots FichaBet', c.desc, classic));
+        STUDIOS.filter(s => !studio || s.id === studio).forEach(s => {
+          const list = games.filter(g => g.studio === s.id);
+          if (list.length) all.append(section(s.art, s.title, s.desc, list));
+        });
       });
-    };
+    }
     filters.addEventListener('click', e => {
       const f = e.target.closest('[data-f]')?.dataset.f;
       if (!f) return;

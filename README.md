@@ -37,6 +37,87 @@ Para testar no celular na mesma rede: `python -m http.server 8000` e acesse `htt
 
 Os RTPs dos slots foram calibrados por simulação; o do Keno é exato (hipergeométrica).
 
+### Slots de estúdio (50 jogos)
+
+Recriações com nomes e artes próprios dos slots mais jogados de cada estúdio, seguindo as regras públicas dos originais (grade, linhas/caminhos, recursos, rodadas grátis e prêmio máximo). Todos rodam no mesmo motor (`js/games/kit.js`) e aparecem no lobby agrupados por estúdio. O "Starlight Princess" já existia como **Princesa Estelar**.
+
+**Estilo Pragmatic Play**
+
+| Jogo | Inspirado em | Destaque | RTP | Prêmio máx. |
+|---|---|---|---|---|
+| Casa dos Cães Megaways | The Dog House Megaways | Megaways · casinhas colantes | ~96,5% | 12.305x |
+| Lobo de Ouro | Wolf Gold | Respin das luas · jackpot 1.000x | ~96% | 2.500x |
+| Festa das Frutas | Fruit Party | 7×7 · multiplicadores até 256x | ~96,5% | 5.000x |
+| Joias Bonança | Gems Bonanza | 8×8 · 5 modificadores · Febre do Ouro | ~96,5% | 10.000x |
+| Madame Destino Megaways | Madame Destiny Megaways | Roda do destino · até x25 | ~96,5% | 5.000x |
+| Cleogata | Cleocatra | Gatos coringa colantes x2/x3 | ~96,2% | 5.000x |
+| Caçador João e a Rainha Escaravelho | John Hunter and the Tomb of the Scarab Queen | Coleta de escaravelhos · pote final | ~96,5% | 10.500x |
+| Frutas Suculentas | Juicy Fruits | Coringa gigante que cresce | ~96,5% | 5.000x |
+| Rei Búfalo Megaways | Buffalo King Megaways | Megaways · coringas x2/x3/x5 | ~96,5% | 5.000x |
+
+**Estilo PG Soft**
+
+| Jogo | Inspirado em | Destaque | RTP | Prêmio máx. |
+|---|---|---|---|---|
+| Caminhos do Mahjong | Mahjong Ways | Peças douradas · x10 nas grátis | ~96,9% | 25.000x |
+| Caminhos do Mahjong 2 | Mahjong Ways 2 | 2.000 caminhos · até 100.000x | ~96,9% | 100.000x |
+| Ninho do Dragão | Dragon Hatch | Grupos · 4 dragões na barra | ~96,8% | 15.000x |
+| Bandido Selvagem | Wild Bandito | Multiplicador infinito +1 | ~96,7% | 25.000x |
+| Tesouros Astecas | Treasures of Aztec | Até 32.400 caminhos · mult. sem limite | ~96,7% | 9.071x |
+| Riquezas do Duende | Leprechaun Riches | 46.656 caminhos · mult. +1 sem fim | ~97,3% | 10.000x |
+| Ouro de Ganesha | Ganesha Gold | Colete coringas · até x20 | ~96,1% | 100.000x |
+| Recompensa do Capitão | Captain's Bounty | Cascata · até x15 nas grátis | ~96,2% | 30.000x |
+| Ninja x Samurai | Ninja vs Samurai | Ninja multiplica · Samurai enche de coringas | ~97,4% | 2.610x |
+| Vitórias de Caishen | Caishen Wins | Arrisque na roda: até 20 giros x20 | ~96,9% | 100.000x |
+
+**Estilo Hacksaw Gaming**
+
+| Jogo | Inspirado em | Destaque | RTP | Prêmio máx. |
+|---|---|---|---|---|
+| Procurado Vivo ou Selvagem | Wanted Dead or a Wild | DuelReels até x100 · 3 bônus | ~96,4% | 12.500x |
+| Cidade RIP | RIP City | Gato expande · rato multiplica até 200x | ~96,2% | 12.500x |
+| O Bandido Guaxinim | Le Bandit | Quadrados dourados · moedas até 500x | ~96,3% | 10.000x |
+| Gangue do Caos 2 | Chaos Crew 2 | Bônus só de multiplicadores · até 20.000x | ~96,3% | 20.000x |
+| Mão de Anúbis | Hand of Anubis | Orbes absorvem e multiplicam | ~96,2% | 10.000x |
+| Lendas Gladiadoras | Gladiator Legends | DuelReels · arena até x1.000 | ~96,3% | 10.000x |
+| Unidade Dork | Dork Unit | Presentes até x200 nas grátis | ~96,3% | 10.000x |
+| Empilha Aí | Stack 'Em | Pilhas multiplicam · 5 vidas | ~96,2% | 10.000x |
+| Fortuna dos Mortos-Vivos | Undead Fortune | Coringas que andam até x200 | ~96,3% | 10.000x |
+| Despencou | Drop 'Em | Drop preenche com um só símbolo | ~96,3% | 10.000x |
+
+**Estilo TaDa / JILI**
+
+| Jogo | Inspirado em | Destaque | RTP | Prêmio máx. |
+|---|---|---|---|---|
+| Império Dourado | Golden Empire | 32.400 caminhos · molduras douradas | ~96,8% | 2.000x |
+| Joias da Fortuna | Fortune Gems | 3×3 + rolo até x15 | ~97% | 375x |
+| Joias da Fortuna 2 | Fortune Gems 2 | Rolo multiplicador + Roda da Sorte | ~97% | 10.000x |
+| Lâmpada Mágica | Magic Lamp | Gênios com prêmio · coringas expandem | ~96,3% | 2.000x |
+| Roma X | Roma X | Duelo com o leão · cascatas dão giros | ~97% | 500x |
+| Super Rico | Super Rich | Clássico de 1 linha · até 888x | ~96% | 888x |
+| Fortuna dos Ossos | Bone Fortune | Respins de coringa · multiplicador sobe | ~96,2% | 2.000x |
+| Ali Babá | Ali Baba | Baús multiplicadores · 32.400 caminhos | ~97% | 5.000x |
+| Búfalo Furioso | Charge Buffalo | 4.096 caminhos · até 100 giros | ~97% | 4.000x |
+| Rei da Selva | Jungle King | Gorila coringa · aviões multiplicam | ~97% | 2.500x |
+| Noite de Festa | Party Night | Cascata até x10 · grátis em dobro | ~96,8% | 1.000x |
+
+**Estilo Nolimit City**
+
+| Jogo | Inspirado em | Destaque | RTP | Prêmio máx. |
+|---|---|---|---|---|
+| Manicômio | Mental | xWays · Fire Frames · até 66.666x | ~96% | 66.666x |
+| Cela xWays | San Quentin xWays | Coringas que pulam até x512 · 150.000x | ~96% | 150.000x |
+| Lápide RIP | Tombstone R.I.P. | Volatilidade insana · até 300.000x | ~96% | 300.000x |
+| Cidade Fantasma | Deadwood | xNudge somam · caçador ou pistoleiro | ~96% | 13.950x |
+| Buraco de Fogo xBomb | Fire in the Hole xBomb | Mina que cresce até 46.656 caminhos | ~96% | 60.000x |
+| Das Submarino | Das xBoot | Torpedos sobem e multiplicam | ~96% | 55.200x |
+| Bloco de Celas | Folsom Prison | Baratas abrem celas · até 75.000x | ~96% | 75.000x |
+| Sangue e Sombra | Blood & Shadow | Barra do Ritual · giros amaldiçoados | ~96% | 6.666x |
+| Gulag Gelado | Remember Gulag | Scatters destrancam rolos | ~96% | 30.000x |
+| Detetive Serial | Serial | Enhancer Cells · até 74.800x | ~96% | 74.800x |
+
+Os RTPs e preços de compra de bônus são calibrados por simulação: `node tools/calibrate.js` roda a lógica de cada jogo sem tela (milhões de giros, em paralelo) e grava `js/games/calib.js`. Para recalibrar só alguns: `node tools/calibrate.js mahjong1 procurado --spins=2000000`.
+
 ## Engajamento
 
 - **Bônus diário (check-in):** calendário de 7 dias com sequência; perdeu um dia, volta ao Dia 1. Abre sozinho na primeira visita do dia.
@@ -64,12 +145,17 @@ assets/audio/bossa.mp3  música ambiente em loop
 js/core.js          utilidades, RNG, carteira, sons, UI (bigWin, confete), Bus de eventos, GameCtx
 js/progress.js      XP/passe, missões, check-in, roda, anúncios fictícios, rodadas grátis
 js/history.js       histórico de giros dos slots (localStorage) e o modal de histórico
+js/games/kit.js     SlotKit: motor dos slots de estúdio (tela, giro, cascata, ways/linhas/grupos, hold & spin, rodadas grátis)
+js/games/calib.js   calibração gerada (escala de prêmios, preço do bônus, chance de ganho, frequência do bônus)
+js/games/pragmatic.js, pgsoft.js, hacksaw.js, tada.js, nolimit.js   os 50 slots de estúdio
+tools/calibrate.js  simulador que calibra o RTP dos slots de estúdio
 js/slotinfo.js      painel "Prêmios" dos slots (prêmio máximo, tabela, bônus, linhas)
 js/pages.js         páginas Bônus, Missões, Passe e VIP
 js/main.js          roteador por hash (#/id), lobby, carteira, navegação
 js/games/*.js       um arquivo por jogo, cada um chama App.register({ id, name, art, ..., mount(root, ctx) })
 ```
 
+Para adicionar um slot de estúdio: use `SlotKit.create({ ..., make(mode), spin(rt), bonus(rt, opts) })` num dos arquivos de estúdio (a lógica só fala com a tela pelo `rt`: `rt.spin(grade)`, `rt.win(x)`, `rt.fsLoop(n, corpo)`…) e rode `node tools/calibrate.js <id>`.
 Para adicionar um jogo: crie `js/games/novo.js` com `App.register({...})` (com `art` = nome de um sprite em `assets/img`) e inclua o `<script>` no `index.html`.
 Use `ctx.sleep()` / `ctx.interval()` nas animações: ao sair da tela, a rodada termina na hora e paga o que deve.
 Chame `ctx.round(aposta, pagamento)` quando a rodada terminar — é isso que alimenta missões, XP e "jogados recentemente".
