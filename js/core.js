@@ -242,14 +242,19 @@ const Music = {
     document.addEventListener('pointerdown', start);
     document.addEventListener('keydown', start);
     document.addEventListener('visibilitychange', () => {
-      if (document.hidden) this.el.pause(); else if (this.on) this.play();
+      if (document.hidden) { this.el.pause(); if (this.override) this.override.stop(); } else if (this.on) this.play();
     });
   },
-  play() { const p = this.el.play(); if (p) p.catch(() => { /* bloqueado até o próximo gesto */ }); },
+  /** Trilha que substitui a bossa (ex.: tema do slot aberto). */
+  override: null,
+  play() {
+    if (this.override) { this.el.pause(); this.override.start(); return; }
+    const p = this.el.play(); if (p) p.catch(() => { /* bloqueado até o próximo gesto */ });
+  },
   toggle() {
     this.on = !this.on;
     try { localStorage.setItem(this.KEY, this.on ? '1' : '0'); } catch { /* ignore */ }
-    if (this.on) this.play(); else this.el.pause();
+    if (this.on) this.play(); else { this.el.pause(); if (this.override) this.override.stop(); }
     return this.on;
   },
   /** Abaixa a música por um tempo (vitórias, nível). */
@@ -486,6 +491,43 @@ class GameCtx {
     this._sleeps.clear();
   }
 }
+
+/* =========================================================
+   Velocidade dos slots: Normal (mais lenta), Rápido e Turbo.
+   Speed.f multiplica as esperas das animações; fica salvo.
+   ========================================================= */
+const Speed = {
+  KEY: 'fichabet_speed',
+  MODES: [
+    { id: 'normal', label: '▶ Normal', f: 1.4 },
+    { id: 'rapido', label: '⏩ Rápido', f: 1 },
+    { id: 'turbo', label: '⚡ Turbo', f: 0.45 },
+  ],
+  i: 0,
+  load() {
+    let id = null;
+    try { id = localStorage.getItem(this.KEY); } catch { /* ignore */ }
+    this.i = Math.max(0, this.MODES.findIndex(m => m.id === id));
+  },
+  get mode() { return this.MODES[this.i]; },
+  get f() { return this.mode.f; },
+  get turbo() { return this.mode.id === 'turbo'; },
+  /** Valor para o turbo ou o normal (o normal é esticado no modo mais lento). */
+  pick(turboVal, normalVal) { return this.turbo ? turboVal : normalVal * this.f; },
+  next() {
+    this.i = (this.i + 1) % this.MODES.length;
+    try { localStorage.setItem(this.KEY, this.mode.id); } catch { /* ignore */ }
+    Bus.emit('speed', this.mode);
+  },
+  /** Liga um botão .toggle: mostra o modo atual e troca ao clicar. */
+  bind(btn, ctx) {
+    const paint = () => { btn.textContent = this.mode.label; btn.classList.toggle('on', this.mode.id !== 'normal'); btn.title = 'Velocidade do giro'; };
+    paint();
+    if (ctx) ctx.onUnmount(Bus.on('speed', paint));
+    return paint;
+  },
+};
+Speed.load();
 
 /* =========================================================
    Registro de jogos

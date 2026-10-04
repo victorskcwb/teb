@@ -44,7 +44,7 @@ const SlotInfo = {
       <table class="paytable si-table ${t.head.length > 2 ? 'si-wide' : ''}">
         <tr class="si-head"><td></td>${t.head.map(c => `<td>${c}</td>`).join('')}</tr>
         ${t.rows.map(r => `<tr>
-          <td class="pt-sym">${ico(r.img)}<span>${r.name}${r.badge ? ` <span class="badge">${r.badge}</span>` : ''}</span></td>
+          <td class="pt-sym">${r.letter ? `<span class="lt-ico lt-${r.letter}">${r.letter}</span>` : ico(r.img)}<span>${r.name}${r.badge ? ` <span class="badge">${r.badge}</span>` : ''}</span></td>
           ${r.pays.map(p => (p == null ? '<td class="muted">—</td>' : compact ? `<td><b>${this.xs(p)}</b></td>` : `<td><b>${this.coins(p, bet)}</b><small>${this.xs(p)}</small></td>`)).join('')}
         </tr>`).join('')}
       </table>`; };

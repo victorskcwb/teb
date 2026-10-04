@@ -52,7 +52,7 @@ const SlotKit = (() => {
       for (let r = 1; r < col.length; r++) {
         const up = col[r - 1], x = col[r];
         if (!up || !x || up.sc || up.wild || up.coin || x.sc || x.wild || x.coin || RNG.float() >= p) continue;
-        col[r] = { ...x, id: up.id, img: up.img, name: up.name, pays: up.pays };
+        col[r] = { ...x, id: up.id, img: up.img, name: up.name, pays: up.pays, letter: up.letter, hi: up.hi };
       }
     });
     return grid;
@@ -320,6 +320,9 @@ const SlotKit = (() => {
      Criação do jogo
      ========================================================= */
   function create(cfg) {
+    // os 2 símbolos que mais pagam ganham moldura de destaque
+    cfg.symbols.filter(s => s.pays && !s.letter && !s.wild && !s.sc && !s.c)
+      .sort((a, b) => Math.max(...b.pays) - Math.max(...a.pays)).slice(0, 2).forEach(s => { s.hi = true; });
     const cal = (typeof SLOT_CALIB !== 'undefined' && SLOT_CALIB[cfg.id]) || {};
     const K = cal.k || 1;
     const buyX = cfg.buy === false ? 0 : cal.buy || 100;
@@ -366,7 +369,7 @@ const SlotKit = (() => {
               <div class="slot-bet"></div>
               <button class="spin-btn" aria-label="Girar"><span>⟳</span></button>
               <div class="slot-toggles">
-                <button class="toggle" data-t="turbo">⚡ Turbo</button>
+                <button class="toggle speed" data-t="speed"></button>
                 <button class="toggle" data-t="auto">🔁 Auto</button>
               </div>
             </div>
@@ -405,9 +408,10 @@ const SlotKit = (() => {
         addEventListener('resize', fit);
         ctx.onUnmount(() => removeEventListener('resize', fit));
 
-        let busy = false, turbo = false, auto = false, bet = stepper.value;
-        const blur = cfg.symbols.filter(s => !s.noBlur).map(s => s.img);
-        const wait = ms => ctx.sleep(turbo ? ms * 0.45 : ms);
+        let busy = false, auto = false, bet = stepper.value;
+        const blur = cfg.symbols.filter(s => !s.noBlur && (s.img || s.letter));
+        const face = x => (x.letter ? `<span class="ltx">${x.letter}</span>` : x.img ? `<img src="${IMG(x.img)}" alt="" draggable="false">` : '');
+        const wait = ms => ctx.sleep(ms * Speed.f);
         const setAuto = v => { auto = v; $('[data-t="auto"]', el).classList.toggle('on', v); };
         let fsTotal0 = 0;
 
@@ -419,14 +423,16 @@ const SlotKit = (() => {
           if (x.sc) cls.push('sc');
           if (x.gold) cls.push('gold');
           if (x.c) cls.push(x.c);
+          if (x.letter) cls.push('lt', 'lt-' + x.letter);
+          if (x.hi) cls.push('hi');
           if (x.fresh && delay != null) cls.push('drop');
           const lb = label(x);
-          return `<div class="${cls.join(' ')}"${x.fresh && delay != null ? ` style="animation-delay:${delay}ms"` : ''}>${x.img ? `<img src="${IMG(x.img)}" alt="" draggable="false">` : ''}${lb !== '' ? `<b>${lb}</b>` : ''}</div>`;
+          return `<div class="${cls.join(' ')}"${x.fresh && delay != null ? ` style="animation-delay:${delay}ms"` : ''}>${face(x)}${lb !== '' ? `<b>${lb}</b>` : ''}</div>`;
         };
         let cur = null;
         function render(grid, anim = false) {
           cur = grid;
-          gridEl.innerHTML = grid.map((col, c) => `<div class="kcol">${col.map((x, r) => cellHTML(x, anim ? (turbo ? 12 : 28) * c + (col.length - r) * 10 : null)).join('')}</div>`).join('');
+          gridEl.innerHTML = grid.map((col, c) => `<div class="kcol">${col.map((x, r) => cellHTML(x, anim ? (Speed.pick(12, 28)) * c + (col.length - r) * 10 : null)).join('')}</div>`).join('');
           grid.forEach(col => col.forEach(x => { if (x) x.fresh = false; }));
         }
 
@@ -449,16 +455,20 @@ const SlotKit = (() => {
           xs: x => SlotInfo.xs(x * K),
           msg: t => { msgEl.textContent = t; },
           wait,
-          fx: n => { if (Sfx[n]) Sfx[n](); },
+          fx: n => {
+            if (n === 'win' || n === 'big') { SlotAudio.win(n === 'big'); if (n === 'big') Sfx.big(); return; }
+            if (n !== 'boom' && Sfx[n]) Sfx[n](); else SlotAudio.fx(n);
+          },
           stat: () => {},
           show: grid => render(grid),
-          async drop(grid) { render(grid, true); Sfx.reel(); await wait(460); },
+          async drop(grid) { render(grid, true); SlotAudio.drop(); await wait(460); },
           /** Giro com rolos: cada coluna roda e para da esquerda para a direita. */
           async spin(grid, { tease = true } = {}) {
-            const rand = () => `<div class="kc"><img src="${IMG(RNG.pick(blur))}" alt=""></div>`;
+            const rand = () => { const x = RNG.pick(blur); return `<div class="kc${x.letter ? ' lt lt-' + x.letter : ''}">${face(x)}</div>`; };
             const colHTML = n => Array.from({ length: n }, rand).join('');
             gridEl.innerHTML = grid.map(col => `<div class="kcol spinning">${colHTML(col.length)}</div>`).join('');
             const cols = [...gridEl.children];
+            SlotAudio.spin();
             const timers = cols.map((cEl, c) => ctx.interval(() => { cEl.innerHTML = colHTML(grid[c].length); }, 80));
             let sc = 0;
             for (let c = 0; c < grid.length; c++) {
@@ -469,8 +479,9 @@ const SlotKit = (() => {
               cols[c].classList.remove('spinning', 'tease');
               cols[c].innerHTML = grid[c].map(x => cellHTML(x)).join('');
               cols[c].classList.add('land');
-              sc += grid[c].filter(x => x && x.sc).length;
-              Sfx.reel();
+              const scHere = grid[c].filter(x => x && x.sc).length;
+              sc += scHere;
+              SlotAudio.stopReel(c, scHere);
             }
             timers.forEach(t => ctx.clear(t));
             cur = grid;
@@ -500,12 +511,16 @@ const SlotKit = (() => {
             if (!c) { c = h(`<div class="scat-fs" data-chip="${id}"><small></small><b></b></div>`); chipsEl.append(c); }
             $('small', c).textContent = lbl;
             const b = $('b', c);
-            if (b.textContent !== String(val)) { b.textContent = val; c.classList.remove('bump'); void c.offsetWidth; c.classList.add('bump'); }
+            if (b.textContent !== String(val)) {
+              const up = parseFloat(String(val).replace(/[^\d.,]/g, '').replace(',', '.')) > parseFloat(b.textContent.replace(/[^\d.,]/g, '').replace(',', '.'));
+              if (id !== 'fs' && b.textContent && up) SlotAudio.mult();
+              b.textContent = val; c.classList.remove('bump'); void c.offsetWidth; c.classList.add('bump');
+            }
           },
           async banner(title, sub = '', ms = 1600) {
             banner.innerHTML = `<b>${title}</b>${sub ? `<span>${sub}</span>` : ''}`;
             banner.classList.remove('hidden');
-            Sfx.big();
+            SlotAudio.bonus();
             await ctx.sleep(ms);
             banner.classList.add('hidden');
           },
@@ -542,6 +557,7 @@ const SlotKit = (() => {
             mascot.classList.add('roar');
             UI.confetti(36, [cfg.art, 'coin', 'star']);
             await this.banner(title, sub, 1700);
+            SlotAudio.hype(true);
             let left = n;
             const start = this.total;
             const api = {
@@ -552,6 +568,7 @@ const SlotKit = (() => {
             while (left > 0 && !this.capped && ctx.alive) {
               left--;
               this.chip('fs', label, left);
+              if (!left && api.i > 2) SlotAudio.finalSpin();
               this.clear();
               await body(api);
               api.i++;
@@ -559,6 +576,7 @@ const SlotKit = (() => {
             }
             if (!ctx.alive) { while (left > 0 && !this.capped) { left--; await body(api); api.i++; } }
             this.chip('fs', null);
+            SlotAudio.hype(false);
             el.classList.remove('in-fs');
             mascot.classList.remove('roar');
             this.mode = 'base';
@@ -569,6 +587,8 @@ const SlotKit = (() => {
         };
         render(cfg.make('base', rt));
         msgEl.textContent = cfg.hello;
+        SlotAudio.enter(cfg.id);
+        ctx.onUnmount(() => SlotAudio.leave());
 
         function setBusy(b) {
           busy = b;
@@ -616,14 +636,14 @@ const SlotKit = (() => {
           if (pay > 0) {
             Wallet.win(pay);
             winEl.textContent = fmt(pay);
-            if (ctx.alive) UI.result(pay, base);
+            if (ctx.alive) { UI.result(pay, base); if (pay / base >= 10) SlotAudio.bigWin(pay / base); }
           } else if (ctx.alive) Sfx.lose();
           ctx.round(stake, pay, base, extra);
           setBusy(false);
           fsBar.render();
           if (ctx.alive && (auto || (fsBar.active && Progress.s.fs > 0))) {
             (async () => {
-              await ctx.sleep(pay > 0 ? 900 : (turbo ? 200 : 450));
+              await ctx.sleep(pay > 0 ? 900 : (Speed.pick(200, 450)));
               while (ctx.alive && $('.bigwin, .ad-backdrop')) await ctx.sleep(300);
               if (ctx.alive && !busy && (auto || (fsBar.active && Progress.s.fs > 0))) spin();
             })();
@@ -632,11 +652,12 @@ const SlotKit = (() => {
 
         spinBtn.addEventListener('click', spin);
         if (buyBtn) buyBtn.addEventListener('click', buy);
+        Speed.bind($('[data-t="speed"]', el), ctx);
         $('.slot-toggles', el).addEventListener('click', e => {
           const t = e.target.dataset.t;
           if (!t) return;
           Sfx.click();
-          if (t === 'turbo') { turbo = !turbo; e.target.classList.toggle('on', turbo); }
+          if (t === 'speed') Speed.next();
           if (t === 'auto') { setAuto(!auto); if (auto && !busy) spin(); }
         });
         const onKey = e => {
@@ -652,7 +673,10 @@ const SlotKit = (() => {
   /** Símbolo pagante: S('cao', 'dog', 'Cão', [3, 4, 5...], peso) */
   const S = (id, img, name, pays, w = 1, extra = {}) => ({ id, img, name, pays, w, ...extra });
   /** Tabela de pagamento para o painel a partir dos símbolos. */
-  const table = (title, head, syms, note = '') => ({ title, note, head, rows: syms.map(s => ({ img: s.img, name: s.name, badge: s.badge, pays: s.pays })) });
+  const table = (title, head, syms, note = '') => ({ title, note, head, rows: syms.map(s => ({ img: s.img, letter: s.letter, name: s.name, badge: s.badge, pays: s.pays })) });
+  /** Letras de carta (símbolos baixos), como nos slots reais. */
+  const L = (letter, pays, w = 1) => ({ id: letter, img: null, letter, name: letter, pays, w });
+  const ROYALS = (pays, w = [8, 8, 9, 9]) => ['A', 'K', 'Q', 'J'].map((l, i) => L(l, pays[i], w[i]));
   /** "3 rolos", "4 rolos"... */
   const heads = (from, n, suffix = '') => Array.from({ length: n }, (_, i) => `${from + i}${suffix}`);
 
@@ -674,6 +698,6 @@ const SlotKit = (() => {
   return {
     create, simRT, linesFor, stack, key, unkey, makeGrid, cells, count, clone, pool, cascade,
     ways, lines, clusters, anywhere, payClusters, describe, holdSpin, short, pay, tumble, scatters,
-    S, table, heads, LINES_5x3, LINES_5x5,
+    S, L, ROYALS, table, heads, LINES_5x3, LINES_5x5,
   };
 })();

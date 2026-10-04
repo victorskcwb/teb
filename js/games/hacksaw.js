@@ -8,10 +8,7 @@
   const { S, pool, ways, lines, cells, count, key, cascade, clusters, payClusters, table, heads, pay, tumble, scatters } = K;
   const STUDIO = 'hacksaw';
   const grid = (hs, f) => hs.map((hh, c) => Array.from({ length: hh }, (_, r) => f(c, r)));
-  const SUITS = (pays, w = [8, 8, 9, 9]) => [
-    S('as', 'spade', 'Espadas', pays[0], w[0]), S('copas', 'heartsuit', 'Copas', pays[1], w[1]),
-    S('ouros', 'diamondsuit', 'Ouros', pays[2], w[2]), S('paus', 'clubsuit', 'Paus', pays[3], w[3]),
-  ];
+  const SUITS = (pays, w = [8, 8, 9, 9]) => K.ROYALS(pays, w);
   const wmult = list => RNG.weighted(list).m;
   const BIG = [{ m: 2, w: 45 }, { m: 3, w: 25 }, { m: 5, w: 15 }, { m: 10, w: 9 }, { m: 25, w: 4 }, { m: 50, w: 1.5 }, { m: 100, w: 0.5 }];
 
@@ -21,14 +18,14 @@
   (() => {
     const L = K.LINES_5x5;
     const SY = [
-      S('xerife', 'cowboy', 'Pistoleiro', [2, 5, 15], 3), S('caveira', 'skull', 'Caveira', [1.5, 4, 10], 4), S('pistola', 'pistol', 'Pistola', [1, 3, 8], 4),
+      S('xerife', 'cowboy', 'Pistoleiro', [2, 5, 15], 3), S('caveira', 'ox', 'Touro', [1.5, 4, 10], 4), S('pistola', 'pistol', 'Pistola', [1, 3, 8], 4),
       S('whisky', 'tumbler', 'Whisky', [0.8, 2, 5], 5), ...SUITS([[0.3, 0.8, 2], [0.3, 0.8, 2], [0.2, 0.6, 1.5], [0.2, 0.6, 1.5]]),
     ];
     const WILD = { id: 'w', img: 'star', name: 'Estrela de xerife', wild: true, w: 0.9, tw: 1.6 };
-    const VS = { id: 'vs', img: 'swords', name: 'VS', t: 'VS', reels: [1, 2, 3], w: 0.2, dw: 1.4, tw: 0.2, vs: true };
-    const SCD = { id: 'scd', img: 'sunrise', name: 'Duelo', sc: true, kind: 'duel', w: 0.47, dw: 0, tw: 0 };
+    const VS = { id: 'vs', img: 'vs', name: 'VS', t: 'VS', reels: [1, 2, 3], w: 0.2, dw: 1.4, tw: 0.2, vs: true };
+    const SCD = { id: 'scd', img: 'hourglass', name: 'Duelo', sc: true, kind: 'duel', w: 0.47, dw: 0, tw: 0 };
     const SCM = { id: 'scm', img: 'cards', name: 'Mão do Morto', sc: true, kind: 'dead', w: 0.39, dw: 0, tw: 0 };
-    const SCT = { id: 'sct', img: 'moneybag', name: 'Trem', sc: true, kind: 'train', w: 0.39, dw: 0, tw: 0 };
+    const SCT = { id: 'sct', img: 'locomotive', name: 'Trem', sc: true, kind: 'train', w: 0.39, dw: 0, tw: 0 };
     const all = [...SY, WILD, VS, SCD, SCM, SCT];
     const draw = pool(all);
     const make = (wk = 'w') => K.stack(grid([5, 5, 5, 5, 5], c => draw(c, wk)), 0.2);
@@ -59,9 +56,9 @@
       tables: [table('Pagamento por linha', heads(3, 3), SY, 'Iguais seguidos a partir do rolo da esquerda. Rolos de duelo se multiplicam entre si.')],
       highlights: ['⚔️ <b>VS</b> (rolos 2 a 4) vira rolo inteiro de coringa com <b>x2 a x100</b> — vários rolos <b>se multiplicam</b>', '🌅 3 Duelos = <b>Duelo ao Amanhecer</b>: 10 giros com muito mais VS', '🃏 3 Mãos do Morto = coleta de coringas multiplicadores que <b>ficam presos</b>', '💰 3 Trens = <b>Assalto ao Trem</b>: 10 giros com coringas colantes', 'Prêmio máximo: <b>12.500x</b>'],
       how: `<p>Grade <b>5×5</b> com <b>15 linhas</b>. ${ico('star')} é coringa.</p><p>⚔️ <b>DuelReels:</b> um símbolo VS nos rolos 2, 3 ou 4 que ajude num ganho vira um <b>rolo inteiro de coringa</b> com multiplicador de <b>x2 a x100</b>. Numa linha com dois ou mais rolos de duelo os multiplicadores <b>se multiplicam</b>.</p>`,
-      features: `<ul class="si-list"><li>${ico('sunrise')} <b>3 Duelos — Duelo ao Amanhecer:</b> 10 rodadas grátis com VS muito mais frequentes.</li>
+      features: `<ul class="si-list"><li>${ico('hourglass')} <b>3 Duelos — Duelo ao Amanhecer:</b> 10 rodadas grátis com VS muito mais frequentes.</li>
         <li>${ico('cards')} <b>3 Mãos do Morto — Mão do Morto:</b> fase de coleta com 3 respins (cada coringa novo reinicia); os coringas vêm com x2 a x100 e <b>ficam presos</b> para 3 giros finais.</li>
-        <li>${ico('moneybag')} <b>3 Trens — Assalto ao Trem:</b> 10 rodadas grátis em que todo coringa que cair <b>fica preso</b> até o fim.</li></ul><p class="muted small">A compra de bônus dá o Duelo ao Amanhecer.</p>`,
+        <li>${ico('locomotive')} <b>3 Trens — Assalto ao Trem:</b> 10 rodadas grátis em que todo coringa que cair <b>fica preso</b> até o fim.</li></ul><p class="muted small">A compra de bônus dá o Duelo ao Amanhecer.</p>`,
       make: () => make(),
       async spin(rt) {
         const g = make();
@@ -118,12 +115,12 @@
   (() => {
     const L = K.linesFor(5, 19);
     const SY = [
-      S('dinheiro', 'banknote', 'Grana', [2, 6, 20], 3), S('maleta', 'briefcase', 'Maleta', [1.5, 4, 12], 4), S('queijo', 'cheese', 'Queijo', [1, 3, 8], 4),
-      S('cartola', 'tophat', 'Chapéu', [0.8, 2, 5], 5), ...SUITS([[0.3, 0.8, 2], [0.3, 0.8, 2], [0.2, 0.6, 1.5], [0.2, 0.6, 1.5]]),
+      S('dinheiro', 'banknote', 'Grana', [2, 6, 20], 3), S('maleta', 'briefcase', 'Maleta', [1.5, 4, 12], 4), S('queijo', 'mousetrap', 'Ratoeira', [1, 3, 8], 4),
+      S('cartola', 'sunglasses', 'Óculos', [0.8, 2, 5], 5), ...SUITS([[0.3, 0.8, 2], [0.3, 0.8, 2], [0.2, 0.6, 1.5], [0.2, 0.6, 1.5]]),
     ];
     const CAT = { id: 'cat', img: 'catface', name: 'Gato Ro$$', wild: true, cat: true, reels: [1, 2, 3], w: 0.32, fw: 0.5 };
     const MOUSE = { id: 'rato', img: 'mouse', name: 'Rato Maxx', wild: true, w: 0.55, fw: 0.9 };
-    const SC = { id: 'sc', img: 'skull', name: 'Bônus', sc: true, w: 0.55, fw: 0 };
+    const SC = { id: 'sc', img: 'pizza', name: 'Pizza', sc: true, w: 0.55, fw: 0 };
     const all = [...SY, CAT, MOUSE, SC];
     const draw = pool(all);
     const MM = [{ m: 2, w: 50 }, { m: 3, w: 25 }, { m: 5, w: 15 }, { m: 10, w: 10 }];
@@ -178,11 +175,11 @@
   (() => {
     const T = n => (n < 5 ? -1 : n <= 6 ? 0 : n <= 8 ? 1 : n <= 10 ? 2 : n <= 12 ? 3 : 4);
     const SY = [
-      S('cartola', 'tophat', 'Cartola', [1, 2, 5, 12, 40], 4), S('vinho', 'wine', 'Vinho', [0.8, 1.5, 4, 10, 30], 5), S('baguete', 'baguette', 'Baguete', [0.6, 1.2, 3, 7, 20], 6),
-      S('queijo', 'cheese', 'Queijo', [0.5, 1, 2.5, 5, 15], 6), S('as', 'spade', 'Espadas', [0.25, 0.5, 1, 2.5, 6], 9), S('copas', 'heartsuit', 'Copas', [0.25, 0.5, 1, 2.5, 6], 9),
-      S('ouros', 'diamondsuit', 'Ouros', [0.2, 0.4, 0.8, 2, 5], 10), S('paus', 'clubsuit', 'Paus', [0.2, 0.4, 0.8, 2, 5], 10),
+      S('cartola', 'cap', 'Boné', [1, 2, 5, 12, 40], 4), S('vinho', 'wine', 'Vinho', [0.8, 1.5, 4, 10, 30], 5), S('baguete', 'baguette', 'Baguete', [0.6, 1.2, 3, 7, 20], 6),
+      S('queijo', 'croissant', 'Croissant', [0.5, 1, 2.5, 5, 15], 6), K.L('A', [0.25, 0.5, 1, 2.5, 6], 9), K.L('K', [0.25, 0.5, 1, 2.5, 6], 9),
+      K.L('Q', [0.2, 0.4, 0.8, 2, 5], 10), K.L('J', [0.2, 0.4, 0.8, 2, 5], 10),
     ];
-    const WILD = { id: 'w', img: 'scroll', name: 'Cartaz de procurado', wild: true, w: 0.8 };
+    const WILD = { id: 'w', img: 'framed', name: 'Cartaz de procurado', wild: true, w: 0.8 };
     const RAIN = { id: 'arco', img: 'rainbow', name: 'Arco-íris', rainbow: true, noPay: true, w: 0.18, fw: 1.5 };
     const SC = { id: 'sc', img: 'camera', name: 'Câmera', sc: true, w: 0.55, fw: 0.3 };
     const all = [...SY, WILD, RAIN, SC];
@@ -228,7 +225,7 @@
       symbols: all, extraSprites: ['coin', 'clover'],
       tables: [table('Pagamento por tamanho do grupo', ['5–6', '7–8', '9–10', '11–12', '13+'], SY, 'Grupos de 5+ iguais encostados, com supercascata.')],
       highlights: ['🦝 Grade 6×5 com grupos de 5+ e <b>supercascata</b>', '🟨 Cada posição vencedora vira um <b>quadrado dourado</b>', '🌈 O <b>arco-íris</b> revela moedas nos dourados: bronze (até 4x), prata (até 20x) e <b>ouro (até 500x)</b>; o <b>trevo</b> multiplica as moedas vizinhas', '📷 3/4/5 câmeras = 8 ou 12 rodadas grátis (com dourados que não somem)', 'Prêmio máximo: <b>10.000x</b>'],
-      how: `<p>Grade <b>6×5</b>: grupos de <b>5+</b> iguais encostados pagam e somem (cascata). ${ico('scroll')} é coringa.</p><p>Toda posição que fizer parte de um ganho vira um <b>quadrado dourado</b>. Quando um ${ico('rainbow')} <b>arco-íris</b> cai, cada dourado revela uma <b>moeda</b> que paga na hora — ou um ${ico('clover')} <b>trevo</b> que multiplica (x2 a x10) as moedas ao redor.</p>`,
+      how: `<p>Grade <b>6×5</b>: grupos de <b>5+</b> iguais encostados pagam e somem (cascata). ${ico('framed')} é coringa.</p><p>Toda posição que fizer parte de um ganho vira um <b>quadrado dourado</b>. Quando um ${ico('rainbow')} <b>arco-íris</b> cai, cada dourado revela uma <b>moeda</b> que paga na hora — ou um ${ico('clover')} <b>trevo</b> que multiplica (x2 a x10) as moedas ao redor.</p>`,
       features: `<ul class="si-list"><li>📷 <b>3 câmeras:</b> 8 rodadas grátis com mais arco-íris (os dourados zeram a cada giro).</li><li>📷 <b>4 câmeras:</b> 12 rodadas grátis e os dourados <b>ficam a rodada inteira</b>.</li><li>📷 <b>5 câmeras:</b> 12 rodadas, dourados fixos e <b>arco-íris em todo giro</b>.</li></ul>
         <table class="paytable"><tr class="si-head"><td>Moeda</td><td>Valores (x aposta)</td></tr><tr><td>Bronze</td><td>0,2 a 4</td></tr><tr><td>Prata</td><td>5 a 20</td></tr><tr><td>Ouro</td><td>25 a 500</td></tr></table>`,
       make: () => make(),
@@ -260,10 +257,10 @@
   (() => {
     const L = K.linesFor(5, 19);
     const SY = [
-      S('caveira', 'skull', 'Caveira', [2, 6, 20], 3), S('bomba', 'bomb', 'Bomba', [1.5, 4, 12], 4), S('skate', 'skateboard', 'Skate', [1, 3, 8], 4),
+      S('caveira', 'clown', 'Palhaço', [2, 6, 20], 3), S('bomba', 'radio', 'Rádio', [1.5, 4, 12], 4), S('skate', 'skateboard', 'Skate', [1, 3, 8], 4),
       S('spray', 'palette', 'Tinta', [0.8, 2, 5], 5), ...SUITS([[0.3, 0.8, 2], [0.3, 0.8, 2], [0.2, 0.6, 1.5], [0.2, 0.6, 1.5]]),
     ];
-    const WILD = { id: 'w', img: 'catface', name: 'Gato Ranzinza', wild: true, w: 0.8 };
+    const WILD = { id: 'w', img: 'pouting', name: 'Gato Ranzinza', wild: true, w: 0.8 };
     const SC = { id: 'sc', img: 'collision', name: 'Bônus', sc: true, w: 0.55 };
     const all = [...SY, WILD, SC];
     const draw = pool(all);
@@ -278,7 +275,7 @@
       lineList: { cols: 5, rows: 5, list: L, text: '19 linhas fixas, da esquerda para a direita.' },
       tables: [table('Pagamento por linha', heads(3, 3), SY, 'Iguais seguidos a partir do rolo da esquerda.')],
       highlights: ['😾 Gato Ranzinza coringa com <b>x2, x3 ou x5</b>', '💥 3 scatters = bônus <b>sem símbolos pagantes</b>: só caveiras e gatos', '💀 Caveiras grudam e <b>somam</b> no multiplicador acima do rolo; 😼 gatos pagam seu valor <b>× o multiplicador do rolo</b>', 'Prêmio máximo: <b>20.000x</b>'],
-      how: `<p>Grade <b>5×5</b> com <b>19 linhas</b>. ${ico('catface')} é coringa com multiplicador; numa linha, multiplicadores se multiplicam.</p>`,
+      how: `<p>Grade <b>5×5</b> com <b>19 linhas</b>. ${ico('pouting')} é coringa com multiplicador; numa linha, multiplicadores se multiplicam.</p>`,
       features: `<p>💥 <b>3 scatters</b> abrem 10 giros numa grade só de recursos. Acima de cada rolo há um <b>multiplicador</b> que começa em x1:</p>
         <ul class="si-list"><li>${ico('skull')} <b>Caveira:</b> gruda e soma +1 a +3 no multiplicador do rolo <b>em todos os giros seguintes</b>.</li>
         <li>${ico('cat')} <b>Gato:</b> traz um valor (0,2x a 20x) e paga valor × multiplicador do rolo. Alguns <b>grudam</b> e pagam de novo em todo giro.</li>
@@ -322,13 +319,13 @@
   (() => {
     const T = n => (n < 5 ? -1 : n <= 6 ? 0 : n <= 8 ? 1 : n <= 10 ? 2 : n <= 12 ? 3 : 4);
     const SY = [
-      S('anubis', 'wolf', 'Anúbis', [1, 2.5, 6, 15, 50], 4), S('olho', 'eye', 'Olho', [0.8, 2, 5, 12, 35], 5), S('escaravelho', 'beetle', 'Escaravelho', [0.6, 1.5, 4, 9, 25], 6),
-      S('anfora', 'amphora', 'Ânfora', [0.5, 1.2, 3, 7, 18], 6), S('rubi', 'gem', 'Rubi', [0.25, 0.6, 1.5, 3, 8], 9), S('safira', 'bluediamond', 'Safira', [0.25, 0.6, 1.5, 3, 8], 9),
-      S('ambar', 'orangediamond', 'Âmbar', [0.2, 0.5, 1.2, 2.5, 6], 10),
+      S('anubis', 'fox', 'Anúbis', [1, 2.5, 6, 15, 50], 4), S('olho', 'scroll', 'Papiro', [0.8, 2, 5, 12, 35], 5), S('escaravelho', 'ant', 'Formiga', [0.6, 1.5, 4, 9, 25], 6),
+      S('anfora', 'hourglassflow', 'Ampulheta', [0.5, 1.2, 3, 7, 18], 6), K.L('A', [0.25, 0.6, 1.5, 3, 8], 9), K.L('K', [0.25, 0.6, 1.5, 3, 8], 9),
+      K.L('Q', [0.2, 0.5, 1.2, 2.5, 6], 10),
     ];
     const BLUE = { id: 'azul', img: 'bluecircle', name: 'Orbe azul', wild: true, orb: 'blue', w: 0.3, fw: 0.4 };
     const RED = { id: 'verm', img: 'redcircle', name: 'Orbe vermelho', wild: true, orb: 'red', w: 0.14, fw: 0.2 };
-    const SC = { id: 'sc', img: 'skull', name: 'Bônus', sc: true, w: 0.42, fw: 0 };
+    const SC = { id: 'sc', img: 'hand', name: 'Mão de Anúbis', sc: true, w: 0.42, fw: 0 };
     const all = [...SY, BLUE, RED, SC];
     const draw = pool(all);
     const cellOf = (c, wk) => { const x = draw(c, wk); if (x.orb) x.m = 1; return x; };
@@ -384,12 +381,12 @@
   (() => {
     const L = K.linesFor(4, 10);
     const SY = [
-      S('leao', 'lion', 'Leão', [3, 8, 25], 3), S('elmo', 'helmet', 'Elmo', [2, 5, 15], 4), S('escudo', 'shield', 'Escudo', [1.5, 4, 10], 4),
-      S('templo', 'temple', 'Coliseu', [1, 3, 8], 5), ...SUITS([[0.4, 1, 3], [0.4, 1, 3], [0.3, 0.8, 2], [0.3, 0.8, 2]]),
+      S('leao', 'rhino', 'Rinoceronte', [3, 8, 25], 3), S('elmo', 'trident', 'Tridente', [2, 5, 15], 4), S('escudo', 'axe', 'Machado', [1.5, 4, 10], 4),
+      S('templo', 'stadium', 'Coliseu', [1, 3, 8], 5), ...SUITS([[0.4, 1, 3], [0.4, 1, 3], [0.3, 0.8, 2], [0.3, 0.8, 2]]),
     ];
     const WILD = { id: 'w', img: 'trophy', name: 'Coringa', wild: true, w: 0.8 };
-    const VS = { id: 'vs', img: 'swords', name: 'VS', t: 'VS', vs: true, reels: [1, 2, 3], w: 0.4, fw: 0.9 };
-    const SC = { id: 'sc', img: 'temple', name: 'Arena', sc: true, w: 0.68, c: 'gsq' };
+    const VS = { id: 'vs', img: 'vs', name: 'VS', t: 'VS', vs: true, reels: [1, 2, 3], w: 0.4, fw: 0.9 };
+    const SC = { id: 'sc', img: 'ticket', name: 'Arena', sc: true, w: 0.68, c: 'gsq' };
     const all = [...SY, WILD, VS, SC];
     const draw = pool(all);
     const make = (wk = 'w') => grid([4, 4, 4, 4, 4], c => draw(c, wk));
@@ -454,7 +451,7 @@
     const L = K.linesFor(4, 16);
     const SY = [
       S('robo', 'robot', 'Palhaço robô', [3, 10, 30], 3), S('alien', 'alien', 'Palhaço alien', [2, 6, 20], 3), S('ursinho', 'teddy', 'Palhaço urso', [1.5, 4, 12], 4),
-      S('maca', 'apple', 'Maçã', [0.4, 1, 3], 7), S('ameixa', 'plum', 'Ameixa', [0.4, 1, 3], 7), S('uva', 'grapes', 'Uva', [0.3, 0.8, 2], 8), S('banana', 'banana', 'Banana', [0.3, 0.8, 2], 8),
+      S('maca', 'greenapple', 'Maçã verde', [0.4, 1, 3], 7), S('ameixa', 'blueberries', 'Mirtilo', [0.4, 1, 3], 7), S('uva', 'avocado', 'Abacate', [0.3, 0.8, 2], 8), S('banana', 'tomato', 'Tomate', [0.3, 0.8, 2], 8),
     ];
     const GIFT = { id: 'w', img: 'gift', name: 'Presente', wild: true, w: 0.9, fw: 0.9 };
     const SC = { id: 'sc', img: 'balloon', name: 'Lenny', sc: true, w: 0.6, fw: 0 };
@@ -505,8 +502,8 @@
       S('caixa', 'toolbox', 'Caixa', [0.15, 0.4, 1, 2.5, 6], 10),
     ];
     const SC = { id: 'sc', img: 'lightbulb', name: 'Bônus', sc: true, w: 0.42, fw: 0 };
-    const XS = { id: 'x', img: 'collision', name: 'X', t: 'X', noPay: true, w: 0, fw: 0.25 };
-    const QS = { id: 'q', img: 'gift', name: '?', t: '?', noPay: true, w: 0, fw: 0.25 };
+    const XS = { id: 'x', img: 'cross', name: 'X', t: 'X', noPay: true, w: 0, fw: 0.25 };
+    const QS = { id: 'q', img: 'question', name: '?', t: '?', noPay: true, w: 0, fw: 0.25 };
     const all = [...SY, SC, XS, QS];
     const draw = pool(all);
     const make = (wk = 'w') => K.stack(grid([6, 6, 6, 6, 6], c => draw(c, wk)), 0.25);
@@ -563,12 +560,12 @@
   (() => {
     const L = K.LINES_5x5;
     const SY = [
-      S('fantasma', 'ghost', 'Fantasma', [2.5, 8, 25], 3), S('zumbi', 'zombie', 'Zumbi', [2, 6, 18], 3), S('caixao', 'coffin', 'Caixão', [1.5, 4, 12], 4),
+      S('fantasma', 'ghost', 'Fantasma', [2.5, 8, 25], 3), S('zumbi', 'zombie', 'Zumbi', [2, 6, 18], 3), S('caixao', 'pumpkin', 'Abóbora', [1.5, 4, 12], 4),
       S('aranha', 'spider', 'Aranha', [1, 3, 8], 5), ...SUITS([[0.3, 0.8, 2], [0.3, 0.8, 2], [0.2, 0.6, 1.5], [0.2, 0.6, 1.5]]),
     ];
     const WILD = { id: 'w', img: 'bat', name: 'Morcego', wild: true, w: 0.8 };
-    const WALK = { id: 'walk', img: 'headstone', name: 'Walk VS', t: 'VS', walk: true, reels: [1, 2, 3, 4], w: 0.28, fw: 0.7 };
-    const SC = { id: 'sc', img: 'skull', name: 'Tumba', sc: true, reels: [0, 2, 4], w: 1.0, fw: 0 };
+    const WALK = { id: 'walk', img: 'troll', name: 'Walk VS', t: 'VS', walk: true, reels: [1, 2, 3, 4], w: 0.28, fw: 0.7 };
+    const SC = { id: 'sc', img: 'castle', name: 'Cripta', sc: true, reels: [0, 2, 4], w: 1.0, fw: 0 };
     const all = [...SY, WILD, WALK, SC];
     const draw = pool(all);
     const make = (wk = 'w') => grid([5, 5, 5, 5, 5], c => draw(c, wk));
@@ -579,7 +576,7 @@
       for (let c = 1; c < 5; c++) {
         if (!g[c].some(x => x.walk)) continue;
         if (RNG.float() < 0.65) { const m = wmult(WM); walk.push({ c, m }); rt.msg(`🪦 Monstro derrotado! Rolo ${c + 1} vira coringa x${m}`); rt.fx('boom'); }
-        else { rt.msg('🧟 O monstro venceu o duelo...'); }
+        else { rt.msg('🧟 O monstro venceu o duelo...'); rt.fx('zombie'); }
         g[c] = g[c].map(x => (x.walk ? RNG.pick(SY) : x));
       }
       const put = gg => walk.forEach(w => { gg[w.c] = Array.from({ length: 5 }, () => ({ ...WILD, m: w.m, c: 'duel', fresh: true })); });
@@ -629,12 +626,12 @@
      10. Despencou (Drop'em) — 5×6, 7.776 caminhos
      ========================================================= */
   (() => {
-    const HI = [S('gema', 'gem', 'Rubi', [0.8, 2, 6, 12], 4), S('safira', 'bluediamond', 'Safira', [0.6, 1.5, 4, 9], 5), S('topazio', 'orangediamond', 'Topázio', [0.5, 1.2, 3, 7], 5)];
-    const LO = [S('roxo', 'purpleheart', 'Roxo', [0.2, 0.5, 1.2, 3], 8), S('verde', 'greenheart', 'Verde', [0.2, 0.5, 1.2, 3], 8), S('azul', 'blueheart', 'Azul', [0.15, 0.4, 1, 2.5], 9), S('amarelo', 'yellowheart', 'Amarelo', [0.15, 0.4, 1, 2.5], 9)];
+    const HI = [S('gema', 'ringedplanet', 'Planeta', [0.8, 2, 6, 12], 4), S('safira', 'globe', 'Terra', [0.6, 1.5, 4, 9], 5), S('topazio', 'astronaut', 'Astronauta', [0.5, 1.2, 3, 7], 5)];
+    const LO = [K.L('A', [0.2, 0.5, 1.2, 3], 8), K.L('K', [0.2, 0.5, 1.2, 3], 8), K.L('Q', [0.15, 0.4, 1, 2.5], 9), K.L('J', [0.15, 0.4, 1, 2.5], 9)];
     const SY = [...HI, ...LO];
-    const WILD = { id: 'w', img: 'sparkles', name: 'Coringa', wild: true, w: 0.3 };
+    const WILD = { id: 'w', img: 'milkyway', name: 'Via Láctea', wild: true, w: 0.3 };
     const DROP = { id: 'drop', img: 'droplet', name: 'Drop', drop: true, noPay: true, w: 0.45, fw: 2 };
-    const SC = { id: 'sc', img: 'bomb', name: 'FS', sc: true, w: 0.42, fw: 0 };
+    const SC = { id: 'sc', img: 'saucer', name: 'Disco voador', sc: true, w: 0.42, fw: 0 };
     const all = [...SY, WILD, DROP, SC];
     const draw = pool(all);
     const make = (wk = 'w') => K.stack(grid([6, 6, 6, 6, 6], c => draw(c, wk)), 0.4);

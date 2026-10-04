@@ -90,7 +90,7 @@
               <div class="slot-bet"></div>
               <button class="spin-btn" aria-label="Girar"><span>⟳</span></button>
               <div class="slot-toggles">
-                <button class="toggle" data-t="turbo">⚡ Turbo</button>
+                <button class="toggle speed" data-t="speed"></button>
                 <button class="toggle" data-t="auto">🔁 Auto</button>
               </div>
             </div>
@@ -126,7 +126,7 @@
         };
         for (let i = 0; i < 9; i++) setCell(i, draw());
 
-        let busy = false, turbo = false, auto = false;
+        let busy = false, auto = false;
         const msg = t => { msgEl.textContent = t; };
         const setAuto = v => { auto = v; $('[data-t="auto"]', el).classList.toggle('on', v); };
 
@@ -137,7 +137,7 @@
             idx.forEach(i => cells[i].classList.add('spinning'));
             return { idx, t: ctx.interval(() => idx.forEach(i => setCell(i, gen())), 70) };
           });
-          const first = turbo ? 180 : 520, step = turbo ? 110 : 300;
+          const first = Speed.pick(180, 520), step = Speed.pick(110, 300);
           for (let col = 0; col < 3; col++) {
             await ctx.sleep(col === 0 ? first : step);
             const tm = timers[col];
@@ -183,7 +183,7 @@
           let guard = 0;
           while (!LINES.some(L => L.every(i => lock[i])) && guard++ < 60) {
             const fixed = new Set(lock.map((l, i) => (l ? i : -1)).filter(i => i >= 0));
-            await ctx.sleep(turbo ? 150 : 350);
+            await ctx.sleep(Speed.pick(150, 350));
             for (let i = 0; i < 9; i++) if (!lock[i] && RNG.float() < step) lock[i] = roll();
             grid = fill();
             await animateTo(grid, { fixed });
@@ -218,10 +218,10 @@
               cells.forEach((c, i) => { if (grid[i].prize) c.classList.add('win'); });
               winEl.textContent = fmt(total);
               Sfx.coin();
-              await ctx.sleep(turbo ? 350 : 750);
+              await ctx.sleep(Speed.pick(350, 750));
               if (total >= cfg.maxWin * bet) { msg('PRÊMIO MÁXIMO! 🏆'); break; }
             } else {
-              await ctx.sleep(turbo ? 150 : 350);
+              await ctx.sleep(Speed.pick(150, 350));
             }
           }
           mascot.classList.remove('roar');
@@ -244,7 +244,7 @@
             grid = Array.from({ length: 9 }, (_, i) => (mid.has(i) ? wild : draw()));
             await animateTo(grid, { fixed: mid });
             if (evaluate(grid).length) break;
-            await ctx.sleep(turbo ? 120 : 260);
+            await ctx.sleep(Speed.pick(120, 260));
           } while (guard++ < 40);
           mascot.classList.remove('roar');
           el.classList.remove('feature');
@@ -322,7 +322,7 @@
           fsBar.render();
           const keepFree = fsBar.active && Progress.s.fs > 0;
           if ((auto || keepFree) && ctx.alive) {
-            await ctx.sleep(payout > 0 ? 1100 : (turbo ? 250 : 600));
+            await ctx.sleep(payout > 0 ? 1100 : (Speed.pick(250, 600)));
             // espera o overlay de vitória grande (e a oferta de dobrar) sair da tela
             while (ctx.alive && $('.bigwin, .ad-backdrop')) await ctx.sleep(300);
             if (ctx.alive && !busy && (auto || (fsBar.active && Progress.s.fs > 0))) spin();
@@ -330,11 +330,12 @@
         }
 
         spinBtn.addEventListener('click', spin);
+        Speed.bind($('[data-t="speed"]', el), ctx);
         $('.slot-toggles', el).addEventListener('click', e => {
           const t = e.target.dataset.t;
           if (!t) return;
           Sfx.click();
-          if (t === 'turbo') { turbo = !turbo; e.target.classList.toggle('on', turbo); }
+          if (t === 'speed') Speed.next();
           if (t === 'auto') { setAuto(!auto); if (auto && !busy) spin(); }
         });
         const onKey = e => {

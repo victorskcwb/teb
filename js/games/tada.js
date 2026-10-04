@@ -8,10 +8,7 @@
   const { S, pool, ways, lines, cells, count, key, cascade, table, heads, pay, tumble, scatters } = K;
   const STUDIO = 'tada';
   const grid = (hs, f) => hs.map((hh, c) => Array.from({ length: hh }, (_, r) => f(c, r)));
-  const SUITS = (pays, w = [8, 8, 9, 9]) => [
-    S('as', 'spade', 'Espadas', pays[0], w[0]), S('copas', 'heartsuit', 'Copas', pays[1], w[1]),
-    S('ouros', 'diamondsuit', 'Ouros', pays[2], w[2]), S('paus', 'clubsuit', 'Paus', pays[3], w[3]),
-  ];
+  const SUITS = (pays, w = [8, 8, 9, 9]) => K.ROYALS(pays, w);
   const L5 = [[1, 1, 1], [0, 0, 0], [2, 2, 2], [0, 1, 2], [2, 1, 0]];
 
   /* =========================================================
@@ -19,11 +16,11 @@
      ========================================================= */
   (() => {
     const SY = [
-      S('rei', 'crown', 'Rei', [1, 2, 4, 8], 3), S('mascara', 'moai', 'Máscara', [0.8, 1.6, 3, 6], 4), S('idolo', 'sun', 'Ídolo', [0.6, 1.2, 2.5, 5], 5),
-      S('vaso', 'amphora', 'Vaso', [0.5, 1, 2, 4], 5), ...SUITS([[0.2, 0.4, 0.8, 1.5], [0.2, 0.4, 0.8, 1.5], [0.15, 0.3, 0.6, 1.2], [0.15, 0.3, 0.6, 1.2]]),
+      S('rei', 'sunface', 'Rei Sol', [1, 2, 4, 8], 3), S('mascara', 'llama', 'Lhama', [0.8, 1.6, 3, 6], 4), S('idolo', 'feather', 'Pena', [0.6, 1.2, 2.5, 5], 5),
+      S('vaso', 'volcano', 'Vulcão', [0.5, 1, 2, 4], 5), ...SUITS([[0.2, 0.4, 0.8, 1.5], [0.2, 0.4, 0.8, 1.5], [0.15, 0.3, 0.6, 1.2], [0.15, 0.3, 0.6, 1.2]]),
     ];
-    const WILD = { id: 'w', img: 'coin', name: 'Coringa', wild: true, w: 0 };
-    const SC = { id: 'sc', img: 'temple', name: 'Templo', sc: true, w: 0.45 };
+    const WILD = { id: 'w', img: 'militarymedal', name: 'Coringa', wild: true, w: 0 };
+    const SC = { id: 'sc', img: 'hut', name: 'Cabana', sc: true, w: 0.45 };
     const all = [...SY, SC];
     const draw = pool(all);
     const cell = (c, fs) => { const x = draw(c); if (!x.sc && c >= 1 && c <= 4 && RNG.float() < (fs ? 0.1 : 0.07)) x.gold = true; return x; };
@@ -74,11 +71,12 @@
      2 e 3. Joias da Fortuna 1 e 2 (Fortune Gems) — 3×3 + rolo multiplicador
      ========================================================= */
   function gems(cfg) {
+    const G = cfg.gems || ['sparklingheart', 'heartribbon', 'blueheart'];
     const SY = [
-      S('vermelha', 'gem', 'Joia vermelha', [10], 3), S('verde', 'greenheart', 'Joia verde', [7.5], 4), S('azul', 'bluediamond', 'Joia azul', [5], 5),
-      S('A', 'spade', 'A', [2.5], 7), S('K', 'heartsuit', 'K', [2], 8), S('Q', 'diamondsuit', 'Q', [1.5], 9), S('J', 'clubsuit', 'J', [1], 10),
+      S('vermelha', G[0], 'Joia vermelha', [10], 3), S('verde', G[1], 'Joia rosa', [7.5], 4), S('azul', G[2], 'Joia azul', [5], 5),
+      K.L('A', [2.5], 7), K.L('K', [2], 8), K.L('Q', [1.5], 9), K.L('J', [1], 10),
     ];
-    const WILD = { id: 'w', img: 'crown', name: 'Coringa', wild: true, w: 1.6 };
+    const WILD = { id: 'w', img: cfg.wild || 'joker', name: 'Coringa', wild: true, w: 1.6 };
     const all = [...SY, WILD];
     const draw = pool(all);
     const REEL = cfg.mults;
@@ -125,7 +123,7 @@
     mults: [{ m: 1, w: 45 }, { m: 2, w: 22 }, { m: 3, w: 14 }, { m: 5, w: 10 }, { m: 10, w: 6 }, { m: 15, w: 3 }],
   }));
   App.register(gems({
-    id: 'joiasfortuna2', name: 'Joias da Fortuna 2', mascot: 'bluediamond', maxWin: 10000, tag: 'Rolo multiplicador + Roda da Sorte', colors: ['#2563eb', '#ca8a04'], bg: 'radial-gradient(circle at 50% 30%,#1e3a8a,#0b1026 70%)',
+    id: 'joiasfortuna2', name: 'Joias da Fortuna 2', mascot: 'whiteheart', gems: ['orangeheart', 'pinkheart', 'whiteheart'], wild: 'starstruck', maxWin: 10000, tag: 'Rolo multiplicador + Roda da Sorte', colors: ['#2563eb', '#ca8a04'], bg: 'radial-gradient(circle at 50% 30%,#1e3a8a,#0b1026 70%)',
     intro: 'Inspirado no "Fortune Gems 2" (TaDa Gaming).',
     mults: [{ m: 1, w: 40 }, { m: 2, w: 22 }, { m: 3, w: 14 }, { m: 5, w: 10 }, { m: 10, w: 6 }, { m: 15, w: 3 }, { wheel: true, w: 1.6 }],
     wheel: [{ v: 5, w: 30 }, { v: 10, w: 25 }, { v: 20, w: 18 }, { v: 50, w: 12 }, { v: 100, w: 8 }, { v: 200, w: 4 }, { v: 500, w: 2 }, { v: 1000, w: 1 }],
@@ -136,12 +134,12 @@
      ========================================================= */
   (() => {
     const SY = [
-      S('princesa', 'princess', 'Princesa', [0.8, 1.5, 3, 6], 3), S('camelo', 'camel', 'Camelo', [0.6, 1.2, 2.5, 5], 4), S('adaga', 'dagger', 'Adaga', [0.5, 1, 2, 4], 5),
-      S('chave', 'key', 'Chave', [0.4, 0.8, 1.6, 3], 5), ...SUITS([[0.15, 0.3, 0.6, 1.2], [0.15, 0.3, 0.6, 1.2], [0.1, 0.2, 0.5, 1], [0.1, 0.2, 0.5, 1]]),
+      S('princesa', 'monkey', 'Macaquinho', [0.8, 1.5, 3, 6], 3), S('camelo', 'camel', 'Camelo', [0.6, 1.2, 2.5, 5], 4), S('adaga', 'dagger', 'Adaga', [0.5, 1, 2, 4], 5),
+      S('chave', 'palm', 'Palmeira', [0.4, 0.8, 1.6, 3], 5), ...SUITS([[0.15, 0.3, 0.6, 1.2], [0.15, 0.3, 0.6, 1.2], [0.1, 0.2, 0.5, 1], [0.1, 0.2, 0.5, 1]]),
     ];
-    const WILD = { id: 'w', img: 'diya', name: 'Aladim', wild: true, reels: [1, 2, 3, 4, 5], w: 0.7, fw: 1.2 };
+    const WILD = { id: 'w', img: 'teapot', name: 'Lâmpada', wild: true, reels: [1, 2, 3, 4, 5], w: 0.7, fw: 1.2 };
     const GENIE = { id: 'genio', img: 'genie', name: 'Gênio', coin: true, noPay: true, w: 0.9, fw: 2.5 };
-    const SC = { id: 'sc', img: 'ring', name: 'Anel', sc: true, w: 0.55, fw: 0.3 };
+    const SC = { id: 'sc', img: 'crescentmoon', name: 'Lua', sc: true, w: 0.55, fw: 0.3 };
     const all = [...SY, WILD, GENIE, SC];
     const draw = pool(all);
     const VALS = [{ v: 1, w: 35 }, { v: 2, w: 25 }, { v: 3, w: 15 }, { v: 5, w: 12 }, { v: 10, w: 7 }, { v: 20, w: 4 }, { v: 50, w: 2 }];
@@ -167,7 +165,7 @@
       symbols: all,
       tables: [table('Pagamento por caminho', heads(3, 4, ' rolos'), SY, '6 rolos × 5 linhas = 15.625 caminhos.'), { title: 'Gênios (valores)', head: ['valor'], rows: VALS.map(v => ({ img: 'genie', name: 'Gênio', pays: [v.v] })) }],
       highlights: ['🧞 <b>Gênios</b> trazem prêmios de 1x a 50x', '🪔 Se o <b>Aladim (coringa)</b> estiver na tela, ele <b>coleta</b> todos os gênios', 'Coringas podem <b>expandir</b> no rolo inteiro', '💍 3+ anéis = <b>8 rodadas grátis</b> com mais gênios e expansões', 'Prêmio máximo: <b>2.000x</b>'],
-      how: `<p><b>6×5</b> com <b>15.625 caminhos</b>. ${ico('diya')} Aladim é coringa (rolos 2 a 6) e pode expandir no rolo inteiro.</p><p>${ico('genie')} <b>Gênios</b> mostram prêmios; com o Aladim na tela, ele soma e paga todos.</p>`,
+      how: `<p><b>6×5</b> com <b>15.625 caminhos</b>. ${ico('teapot')} Aladim é coringa (rolos 2 a 6) e pode expandir no rolo inteiro.</p><p>${ico('genie')} <b>Gênios</b> mostram prêmios; com o Aladim na tela, ele soma e paga todos.</p>`,
       features: '<p>💍 <b>3 ou mais anéis</b> dão <b>8 rodadas grátis</b>: gênios e coringas aparecem mais e as expansões são o dobro de frequentes. 3+ anéis nelas dão +5 giros.</p>',
       make: () => make(),
       async spin(rt) {
@@ -193,7 +191,7 @@
   (() => {
     const L15 = K.LINES_5x3.slice(0, 15);
     const SY = [
-      S('gladiador', 'helmet', 'Gladiador', [5, 15, 50], 3), S('escudo', 'shield', 'Escudo', [3, 10, 30], 4), S('espadas', 'swords', 'Espadas', [2, 6, 20], 4),
+      S('gladiador', 'helmet', 'Gladiador', [5, 15, 50], 3), S('escudo', 'bowarrow', 'Arco', [3, 10, 30], 4), S('espadas', 'shield', 'Escudo', [2, 6, 20], 4),
       S('anfora', 'amphora', 'Ânfora', [1, 3, 10], 5), ...SUITS([[0.5, 1.5, 5], [0.5, 1.5, 5], [0.3, 1, 3], [0.3, 1, 3]]),
     ];
     const WILD = { id: 'w', img: 'temple', name: 'Coliseu', wild: true, reels: [1, 2, 3], w: 1 };
@@ -304,11 +302,11 @@
   (() => {
     const L20 = K.LINES_5x3.slice(0, 20);
     const SY = [
-      S('catrina', 'skull', 'Catrina', [5, 15, 50], 3), S('violao', 'guitar', 'Violão', [3, 10, 30], 4), S('maracas', 'maracas', 'Maracas', [2, 6, 20], 4),
-      S('rosa', 'rose', 'Rosa', [1, 3, 10], 5), ...SUITS([[0.5, 1.5, 5], [0.5, 1.5, 5], [0.3, 1, 3], [0.3, 1, 3]]),
+      S('catrina', 'performing', 'Máscaras', [5, 15, 50], 3), S('violao', 'trumpet', 'Trompete', [3, 10, 30], 4), S('maracas', 'accordion', 'Acordeão', [2, 6, 20], 4),
+      S('rosa', 'sunflower', 'Girassol', [1, 3, 10], 5), ...SUITS([[0.5, 1.5, 5], [0.5, 1.5, 5], [0.3, 1, 3], [0.3, 1, 3]]),
     ];
-    const WILD = { id: 'w', img: 'crossbones', name: 'Coringa', wild: true, w: 0.55, fw: 0.9 };
-    const SC = { id: 'sc', img: 'candle', name: 'Vela', sc: true, w: 0.95, fw: 0.6 };
+    const WILD = { id: 'w', img: 'rosette', name: 'Coringa', wild: true, w: 0.55, fw: 0.9 };
+    const SC = { id: 'sc', img: 'bouquet', name: 'Buquê', sc: true, w: 0.95, fw: 0.6 };
     const all = [...SY, WILD, SC];
     const draw = pool(all);
     const make = (wk = 'w') => grid([3, 3, 3, 3, 3], c => draw(c, wk));
@@ -368,10 +366,10 @@
      ========================================================= */
   (() => {
     const SY = [
-      S('alibaba', 'genie', 'Ali Babá', [1, 2, 4, 8], 3), S('camelo', 'camel', 'Camelo', [0.8, 1.6, 3, 6], 4), S('adaga', 'dagger', 'Adaga', [0.6, 1.2, 2.5, 5], 5),
-      S('lampada', 'diya', 'Lâmpada', [0.5, 1, 2, 4], 5), ...SUITS([[0.2, 0.4, 0.8, 1.5], [0.2, 0.4, 0.8, 1.5], [0.15, 0.3, 0.6, 1.2], [0.15, 0.3, 0.6, 1.2]]),
+      S('alibaba', 'prince', 'Ali Babá', [1, 2, 4, 8], 3), S('camelo', 'bactrian', 'Camelo', [0.8, 1.6, 3, 6], 4), S('adaga', 'knife', 'Faca', [0.6, 1.2, 2.5, 5], 5),
+      S('lampada', 'oldkey', 'Chave antiga', [0.5, 1, 2, 4], 5), ...SUITS([[0.2, 0.4, 0.8, 1.5], [0.2, 0.4, 0.8, 1.5], [0.15, 0.3, 0.6, 1.2], [0.15, 0.3, 0.6, 1.2]]),
     ];
-    const WILD = { id: 'w', img: 'key', name: 'Chave', wild: true, reels: [1, 2, 3, 4], w: 0.6 };
+    const WILD = { id: 'w', img: 'lockkey', name: 'Cadeado', wild: true, reels: [1, 2, 3, 4], w: 0.6 };
     const CHEST = { id: 'bau', img: 'chest', name: 'Baú', chest: true, noPay: true, w: 0.15, fw: 0.3 };
     const SC = { id: 'sc', img: 'moneybag', name: 'Tesouro', sc: true, w: 0.62, fw: 0.4 };
     const all = [...SY, WILD, CHEST, SC];
@@ -431,11 +429,11 @@
      ========================================================= */
   (() => {
     const SY = [
-      S('bufalo', 'bison', 'Búfalo', [1, 2, 4, 8], 3), S('aguia', 'eagle', 'Águia', [0.8, 1.5, 3, 6], 4), S('lobo', 'wolf', 'Lobo', [0.6, 1.2, 2.5, 5], 4),
-      S('cervo', 'deer', 'Cervo', [0.5, 1, 2, 4], 5), S('puma', 'leopard', 'Puma', [0.4, 0.8, 1.6, 3], 5), ...SUITS([[0.15, 0.3, 0.6, 1.2], [0.15, 0.3, 0.6, 1.2], [0.1, 0.2, 0.5, 1], [0.1, 0.2, 0.5, 1]]),
+      S('bufalo', 'waterbuffalo', 'Búfalo', [1, 2, 4, 8], 3), S('aguia', 'bird', 'Pássaro', [0.8, 1.5, 3, 6], 4), S('lobo', 'turkey', 'Peru', [0.6, 1.2, 2.5, 5], 4),
+      S('cervo', 'goat', 'Bode', [0.5, 1, 2, 4], 5), S('puma', 'badger', 'Texugo', [0.4, 0.8, 1.6, 3], 5), ...SUITS([[0.15, 0.3, 0.6, 1.2], [0.15, 0.3, 0.6, 1.2], [0.1, 0.2, 0.5, 1], [0.1, 0.2, 0.5, 1]]),
     ];
-    const WILD = { id: 'w', img: 'sunrise', name: 'Coringa', wild: true, reels: [1, 2, 3, 4], w: 0.9, fw: 2.2 };
-    const SC = { id: 'sc', img: 'coin', name: 'Moeda', sc: true, w: 0.65, fw: 0.45 };
+    const WILD = { id: 'w', img: 'tornado', name: 'Coringa', wild: true, reels: [1, 2, 3, 4], w: 0.9, fw: 2.2 };
+    const SC = { id: 'sc', img: 'moneywings', name: 'Moeda', sc: true, w: 0.65, fw: 0.45 };
     const all = [...SY, WILD, SC];
     const draw = pool(all);
     const WM = [{ m: 2, w: 55 }, { m: 3, w: 30 }, { m: 5, w: 15 }];
@@ -478,13 +476,13 @@
   (() => {
     const L50 = K.linesFor(4, 50);
     const SY = [
-      S('tigre', 'tiger', 'Tigre', [2, 8, 25], 3), S('leopardo', 'leopard', 'Leopardo', [1.5, 5, 15], 4), S('papagaio', 'parrot', 'Papagaio', [1, 3, 10], 4),
-      S('macaco', 'monkey', 'Macaco', [0.8, 2, 6], 5), S('banana', 'banana', 'Banana', [0.3, 1, 3], 7), ...SUITS([[0.2, 0.6, 2], [0.2, 0.6, 2], [0.15, 0.5, 1.5], [0.15, 0.5, 1.5]]),
+      S('tigre', 'hippo', 'Hipopótamo', [2, 8, 25], 3), S('leopardo', 'zebra', 'Zebra', [1.5, 5, 15], 4), S('papagaio', 'flamingo', 'Flamingo', [1, 3, 10], 4),
+      S('macaco', 'orangutan', 'Orangotango', [0.8, 2, 6], 5), S('banana', 'herb', 'Folhagem', [0.3, 1, 3], 7), ...SUITS([[0.2, 0.6, 2], [0.2, 0.6, 2], [0.15, 0.5, 1.5], [0.15, 0.5, 1.5]]),
     ];
     const WILD = { id: 'w', img: 'gorilla', name: 'Gorila', wild: true, w: 0.9 };
-    const COIN = { id: 'moeda', img: 'coin', name: 'Moeda do gorila', mystery: true, t: '?', w: 0.8 };
-    const SC = { id: 'sc', img: 'bank', name: 'Arranha-céu', sc: true, w: 0.85 };
-    const PLANE = { id: 'aviao', img: 'rocket', name: 'Avião', plane: true, noPay: true, w: 0, fw: 1.0 };
+    const COIN = { id: 'moeda', img: 'greyq', name: 'Mistério', mystery: true, t: '?', w: 0.8 };
+    const SC = { id: 'sc', img: 'cityscape', name: 'Arranha-céu', sc: true, w: 0.85 };
+    const PLANE = { id: 'aviao', img: 'airplane', name: 'Avião', plane: true, noPay: true, w: 0, fw: 1.0 };
     const all = [...SY, WILD, COIN, SC, PLANE];
     const draw = pool(all);
     const make = (wk = 'w') => grid([4, 4, 4, 4, 4], c => draw(c, wk));
@@ -534,9 +532,9 @@
   (() => {
     const SY = [
       S('micro', 'microphone', 'Microfone', [2, 5, 15], 3), S('sax', 'saxophone', 'Saxofone', [1.5, 4, 10], 4), S('drink', 'cocktail', 'Drink', [1, 3, 8], 4),
-      S('fone', 'headphone', 'Fone', [0.8, 2, 5], 5), S('notas', 'notes', 'Notas', [0.4, 1, 2.5], 7), S('balao', 'balloon', 'Balão', [0.3, 0.8, 2], 8), S('estrela', 'star', 'Estrela', [0.25, 0.6, 1.5], 9),
+      S('fone', 'headphone', 'Fone', [0.8, 2, 5], 5), S('notas', 'notes', 'Notas', [0.4, 1, 2.5], 7), S('balao', 'confettiball', 'Confete', [0.3, 0.8, 2], 8), S('estrela', 'violin', 'Violino', [0.25, 0.6, 1.5], 9),
     ];
-    const WILD = { id: 'w', img: 'party', name: 'DJ', wild: true, reels: [1, 2, 3], w: 0.8 };
+    const WILD = { id: 'w', img: 'dancer', name: 'DJ', wild: true, reels: [1, 2, 3], w: 0.8 };
     const SC = { id: 'sc', img: 'mirrorball', name: 'Globo', sc: true, w: 0.7 };
     const all = [...SY, WILD, SC];
     const draw = pool(all);

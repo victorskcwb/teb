@@ -25,8 +25,8 @@
      ========================================================= */
   function mahjong(cfg) {
     const SY = cfg.syms;
-    const WILD = { id: 'w', img: 'coin', name: 'Lingote', wild: true, c: 'tile', w: 0 };
-    const SC = { id: 'sc', img: 'mahjong', name: 'Hu', sc: true, c: 'tile', w: cfg.scW, fw: cfg.scW * 0.8 };
+    const WILD = { id: 'w', img: cfg.wildImg, name: 'Lingote', wild: true, c: 'tile', w: 0 };
+    const SC = { id: 'sc', img: cfg.scImg, name: 'Hu', sc: true, c: 'tile', w: cfg.scW, fw: cfg.scW * 0.8 };
     const all = [...SY, SC];
     const draw = pool(all);
     const BASE = [1, 2, 3, 5], FS = [2, 4, 6, 10];
@@ -61,9 +61,9 @@
       tables: [table('Pagamento por caminho', heads(3, 3, ' rolos'), SY, `${cfg.waysTxt} caminhos fixos. Iguais em rolos seguidos a partir da esquerda.`)],
       highlights: [`🀄 ${cfg.layout} com <b>${cfg.waysTxt} caminhos</b> e <b>cascata</b>`, '🪙 Peças com <b>moldura dourada</b> (rolos do meio) viram <b>coringa</b> quando ganham', `Multiplicador sobe a cada cascata: <b>x1 → x2 → x3 → x5</b> (nas rodadas grátis <b>x2 → x4 → x6 → x10</b>)`, `🀄 3 Hu = <b>${cfg.fs} rodadas grátis</b> (+2 por Hu extra)`, `Prêmio máximo: <b>${fmt(cfg.maxWin).replace(',00', '')}x</b>`],
       how: `<p>${cfg.layout}: <b>${cfg.waysTxt} caminhos</b>. Peças iguais em rolos seguidos a partir da esquerda pagam; as vencedoras somem e novas caem (<b>cascata</b>).</p>
-        <p>Peças com <b>moldura dourada</b> nos rolos do meio, quando fazem parte de um ganho, <b>viram o coringa ${ico('coin')}</b> em vez de sumir.</p>
+        <p>Peças com <b>moldura dourada</b> nos rolos do meio, quando fazem parte de um ganho, <b>viram o coringa ${ico(cfg.wildImg)}</b> em vez de sumir.</p>
         <p>A barra de multiplicador sobe a cada cascata seguida: ${ladder(BASE, 9)}.</p>`,
-      features: `<p>${ico('mahjong')} <b>3 Hu (scatter)</b> em qualquer lugar dão <b>${cfg.fs} rodadas grátis</b>; cada Hu extra dá +2. 3+ Hu durante elas dão mais giros.</p>
+      features: `<p>${ico(cfg.scImg)} <b>3 Hu (scatter)</b> em qualquer lugar dão <b>${cfg.fs} rodadas grátis</b>; cada Hu extra dá +2. 3+ Hu durante elas dão mais giros.</p>
         <p>Nas rodadas grátis os multiplicadores dobram: ${ladder(FS, 9)} e aparecem mais peças douradas.</p>`,
       make: () => make(),
       async spin(rt) {
@@ -86,20 +86,20 @@
   }
   const tile = (id, img, name, pays, w) => S(id, img, name, pays, w, { c: 'tile' });
   App.register(mahjong({
-    id: 'mahjong1', name: 'Caminhos do Mahjong', art: 'mahjong', mascot: 'mahjong', heights: [4, 4, 4, 4, 4], cols: 5, layout: 'Grade 5×4', waysTxt: '1.024',
+    id: 'mahjong1', name: 'Caminhos do Mahjong', art: 'mahjong', mascot: 'mahjong', wildImg: 'coin', scImg: 'mahjong', heights: [4, 4, 4, 4, 4], cols: 5, layout: 'Grade 5×4', waysTxt: '1.024',
     tag: 'Peças douradas · x10 nas grátis', colors: ['#15803d', '#b91c1c'], bg: 'linear-gradient(180deg,#14532d,#166534 60%,#052e16)',
     intro: 'Inspirado no "Mahjong Ways" (PG Soft).', fs: 12, maxWin: 25000, rtp: '~96,9%', target: 0.969, scW: 0.62, gold: 0.1, goldFS: 0.3,
-    syms: [tile('fa', 'redenvelope', 'Fa verde', [1.5, 3, 5], 3), tile('zhong', 'lantern', 'Zhong', [1, 2.5, 4], 4), tile('bai', 'firecracker', 'Bai', [0.8, 2, 3], 5),
-      tile('8w', 'blossom', '8 Wan', [0.6, 1.5, 2.5], 6), tile('5t', 'bamboo', '5 Tong', [0.3, 0.8, 1.5], 8), tile('5s', 'mooncake', '5 Bambu', [0.3, 0.8, 1.5], 8),
-      tile('2t', 'cards', '2 Tong', [0.15, 0.4, 0.8], 10), tile('2s', 'om', '2 Bambu', [0.15, 0.4, 0.8], 10)],
+    syms: [tile('fa', 'redenvelope', 'Fa verde', [1.5, 3, 5], 3), tile('zhong', 'lantern', 'Zhong', [1, 2.5, 4], 4), tile('bai', 'panda', 'Panda', [0.8, 2, 3], 5),
+      tile('8w', 'bamboo', 'Bambu', [0.6, 1.5, 2.5], 6), tile('5t', 'turtle', 'Tartaruga', [0.3, 0.8, 1.5], 8), tile('5s', 'mooncake', '5 Bambu', [0.3, 0.8, 1.5], 8),
+      tile('2t', 'tangerine', 'Tangerina', [0.15, 0.4, 0.8], 10), tile('2s', 'moonview', 'Lua cheia', [0.15, 0.4, 0.8], 10)],
   }));
   App.register(mahjong({
-    id: 'mahjong2', name: 'Caminhos do Mahjong 2', art: 'redenvelope', mascot: 'redenvelope', heights: [4, 5, 5, 5, 4], cols: 5, layout: 'Rolos 4-5-5-5-4', waysTxt: '2.000',
+    id: 'mahjong2', name: 'Caminhos do Mahjong 2', art: 'fortunecookie', mascot: 'dumpling', wildImg: 'yen', scImg: 'fireworks', heights: [4, 5, 5, 5, 4], cols: 5, layout: 'Rolos 4-5-5-5-4', waysTxt: '2.000',
     tag: '2.000 caminhos · até 100.000x', colors: ['#b91c1c', '#ca8a04'], bg: 'linear-gradient(180deg,#7f1d1d,#991b1b 60%,#450a0a)',
     intro: 'Inspirado no "Mahjong Ways 2" (PG Soft).', fs: 10, maxWin: 100000, rtp: '~96,9%', target: 0.969, scW: 0.55, gold: 0.1, goldFS: 0.3,
-    syms: [tile('fa', 'mahjong', 'Fa verde', [1.5, 3, 5], 3), tile('zhong', 'coin', 'Zhong', [1, 2.5, 4], 4), tile('bai', 'firecracker', 'Bai', [0.8, 2, 3], 5),
-      tile('8w', 'lantern', '8 Wan', [0.6, 1.5, 2.5], 6), tile('5t', 'bamboo', '5 Tong', [0.3, 0.8, 1.5], 8), tile('5s', 'blossom', '5 Bambu', [0.3, 0.8, 1.5], 8),
-      tile('2t', 'cards', '2 Tong', [0.15, 0.4, 0.8], 10), tile('2s', 'mooncake', '2 Bambu', [0.15, 0.4, 0.8], 10)].map(s => (s.id === 'zhong' ? { ...s, img: 'redenvelope' } : s)),
+    syms: [tile('fa', 'dumpling', 'Dumpling', [1.5, 3, 5], 3), tile('zhong', 'fortunecookie', 'Biscoito da sorte', [1, 2.5, 4], 4), tile('bai', 'chopsticks', 'Hashi', [0.8, 2, 3], 5),
+      tile('8w', 'bento', 'Bentô', [0.6, 1.5, 2.5], 6), tile('5t', 'teacup', 'Chá', [0.3, 0.8, 1.5], 8), tile('5s', 'fishcake', 'Narutomaki', [0.3, 0.8, 1.5], 8),
+      tile('2t', 'riceball', 'Onigiri', [0.15, 0.4, 0.8], 10), tile('2s', 'ricecracker', 'Biscoito de arroz', [0.15, 0.4, 0.8], 10)],
   }));
 
   /* =========================================================
@@ -107,8 +107,8 @@
      ========================================================= */
   (() => {
     const T = n => (n < 4 ? -1 : n === 4 ? 0 : n === 5 ? 1 : n === 6 ? 2 : n === 7 ? 3 : n === 8 ? 4 : n <= 10 ? 5 : 6);
-    const HI = [S('rubi', 'gem', 'Rubi', [1, 2, 3, 5, 8, 15, 40], 5), S('safira', 'bluediamond', 'Safira', [0.8, 1.5, 2.5, 4, 6, 12, 30], 6), S('topazio', 'orangediamond', 'Topázio', [0.6, 1.2, 2, 3, 5, 10, 25], 6)];
-    const LO = [S('ovo', 'egg', 'Ovo', [0.3, 0.5, 0.8, 1.2, 2, 4, 10], 9), S('chama', 'fire', 'Chama', [0.25, 0.4, 0.7, 1, 1.6, 3, 8], 10), S('cristal', 'crystal', 'Cristal', [0.2, 0.35, 0.6, 0.9, 1.4, 2.5, 6], 10), S('pena', 'feather', 'Pena', [0.2, 0.3, 0.5, 0.8, 1.2, 2, 5], 11)];
+    const HI = [S('rubi', 'dragon', 'Dragão', [1, 2, 3, 5, 8, 15, 40], 5), S('safira', 'sauropod', 'Dinossauro', [0.8, 1.5, 2.5, 4, 6, 12, 30], 6), S('topazio', 'crocodile', 'Crocodilo', [0.6, 1.2, 2, 3, 5, 10, 25], 6)];
+    const LO = [S('ovo', 'egg', 'Ovo', [0.3, 0.5, 0.8, 1.2, 2, 4, 10], 9), S('chama', 'fire', 'Chama', [0.25, 0.4, 0.7, 1, 1.6, 3, 8], 10), S('cristal', 'wood', 'Lenha', [0.2, 0.35, 0.6, 0.9, 1.4, 2.5, 6], 10), S('pena', 'leaf', 'Folha', [0.2, 0.3, 0.5, 0.8, 1.2, 2, 5], 11)];
     const SY = [...HI, ...LO];
     const WILD = { id: 'w', img: 'dragonface', name: 'Coringa', wild: true, w: 0.6 };
     const all = [...SY, WILD];
@@ -174,10 +174,10 @@
     const SY = [
       S('caveira', 'skull', 'Caveira', [1.2, 2.5, 5], 3), S('violao', 'guitar', 'Violão', [1, 2, 4], 4), S('pimenta', 'pepper', 'Pimenta', [0.8, 1.6, 3], 5),
       S('maracas', 'maracas', 'Maracas', [0.6, 1.2, 2.5], 5), S('rosa', 'rose', 'Rosa', [0.3, 0.6, 1.2], 8), S('cacto', 'cactus', 'Cacto', [0.25, 0.5, 1], 8),
-      S('flor', 'hibiscus', 'Hibisco', [0.2, 0.4, 0.8], 9), S('vela', 'candle', 'Vela', [0.15, 0.3, 0.6], 10),
+      S('flor', 'hibiscus', 'Hibisco', [0.2, 0.4, 0.8], 9), S('vela', 'taco', 'Taco', [0.15, 0.3, 0.6], 10),
     ];
-    const WILD = { id: 'w', img: 'tophat', name: 'Coringa', wild: true, w: 0 };
-    const SC = { id: 'sc', img: 'crossbones', name: 'Scatter', sc: true, w: 0.55, fw: 0.5 };
+    const WILD = { id: 'w', img: 'disguised', name: 'Bandido', wild: true, w: 0 };
+    const SC = { id: 'sc', img: 'bell', name: 'Sino', sc: true, w: 0.55, fw: 0.5 };
     const all = [...SY, SC];
     const draw = pool(all);
     const cell = (c, fs) => { const x = draw(c, fs ? 'fw' : 'w'); if (!x.sc && c >= 1 && c <= 3 && RNG.float() < (fs ? 0.3 : 0.12)) x.gold = true; return x; };
@@ -205,8 +205,8 @@
       highlights: ['💀 Grade 5×4 com <b>1.024 caminhos</b> e <b>cascata</b>', '♾️ Cada cascata com ganho soma <b>+1 no multiplicador</b>, sem limite', '🥇 Símbolos dourados (rolos 2 a 4) viram <b>coringa</b> ao ganhar', '☠️ 3 scatters = <b>12 rodadas grátis</b> (+2 por extra) com o multiplicador <b>que não zera</b> e todos os rolos do meio dourados', 'Prêmio máximo: <b>25.000x</b>'],
       how: `<p>Grade <b>5×4</b> com <b>1.024 caminhos</b>. Iguais em rolos seguidos pagam e as cascatas continuam até não haver mais ganho.</p>
         <p>O multiplicador começa em <b>x1</b> e soma <b>+1</b> a cada cascata com ganho. No jogo base ele volta a x1 no giro seguinte.</p>
-        <p>Símbolos com <b>moldura dourada</b> nos rolos 2, 3 e 4 viram ${ico('tophat')} coringa quando fazem parte de um ganho.</p>`,
-      features: `<p>${ico('crossbones')} <b>3 scatters</b> dão <b>12 rodadas grátis</b> (+2 para cada scatter extra; 3+ nelas dão mais giros).</p><p>Nas rodadas grátis <b>todos</b> os símbolos dos rolos 2 a 4 vêm dourados e o multiplicador <b>não zera</b> entre os giros.</p>`,
+        <p>Símbolos com <b>moldura dourada</b> nos rolos 2, 3 e 4 viram ${ico('disguised')} coringa quando fazem parte de um ganho.</p>`,
+      features: `<p>${ico('bell')} <b>3 scatters</b> dão <b>12 rodadas grátis</b> (+2 para cada scatter extra; 3+ nelas dão mais giros).</p><p>Nas rodadas grátis <b>todos</b> os símbolos dos rolos 2 a 4 vêm dourados e o multiplicador <b>não zera</b> entre os giros.</p>`,
       make: () => make(),
       async spin(rt) {
         const g = make();
@@ -288,10 +288,10 @@
         <p>Símbolos dos rolos 2 a 5 podem vir com <b>moldura prata</b>: ao ganhar viram outro símbolo com <b>moldura dourada</b>; a dourada, ao ganhar de novo, vira <b>coringa</b>.</p>`,
       features: '<p>☀️ <b>4 ou mais sóis</b> dão <b>10 rodadas grátis</b> (+2 por sol extra; 4+ nelas dão mais giros). O multiplicador começa em <b>x2</b>, soma <b>+2</b> a cada cascata com ganho e <b>não zera</b> até o fim do bônus.</p>',
     },
-    syms: [S('mascara', 'moai', 'Máscara', [1, 2, 4, 8], 3), S('aguia', 'eagle', 'Águia', [0.8, 1.6, 3, 6], 4), S('serpente', 'snake', 'Serpente', [0.6, 1.2, 2.5, 5], 5),
-      S('milho', 'corn', 'Milho', [0.5, 1, 2, 4], 5), S('esmeralda', 'greenheart', 'Esmeralda', [0.2, 0.4, 0.8, 1.5], 8), S('rubi', 'gem', 'Rubi', [0.2, 0.4, 0.8, 1.5], 8),
-      S('pena', 'feather', 'Pena', [0.15, 0.3, 0.6, 1.2], 9), S('ouro', 'orangediamond', 'Ouro', [0.15, 0.3, 0.6, 1.2], 9)],
-    wildImg: 'sun', scImg: 'sunrise', scName: 'Sol', scW: 1.0, scMin: 4, silver: 0.1, stack: 0.35,
+    syms: [S('mascara', 'moai', 'Máscara', [1, 2, 4, 8], 3), S('aguia', 'peacock', 'Pavão', [0.8, 1.6, 3, 6], 4), S('serpente', 'snake', 'Serpente', [0.6, 1.2, 2.5, 5], 5),
+      S('milho', 'corn', 'Milho', [0.5, 1, 2, 4], 5), K.L('A', [0.2, 0.4, 0.8, 1.5], 8), K.L('K', [0.2, 0.4, 0.8, 1.5], 8),
+      K.L('Q', [0.15, 0.3, 0.6, 1.2], 9), K.L('J', [0.15, 0.3, 0.6, 1.2], 9)],
+    wildImg: 'sun', scImg: 'snowcap', scName: 'Sol', scW: 1.0, scMin: 4, silver: 0.1, stack: 0.35,
     heights: () => [RNG.int(3, 5), RNG.int(3, 6), RNG.int(3, 6), RNG.int(3, 6), RNG.int(3, 6), RNG.int(3, 5)],
     baseStep: 1, fsStart: 2, fsStep: 2, fsCount: s => 10 + (s - 4) * 2,
     waysNote: 'Rolos de altura variável (até 32.400 caminhos). Iguais em rolos seguidos a partir da esquerda.',
@@ -306,10 +306,10 @@
       how: '<p>Grade <b>6×6</b>: <b>46.656 caminhos</b>. Iguais em rolos seguidos pagam, com <b>cascata</b>. O 🎩 duende é coringa (rolos 2 a 5).</p><p>Símbolos com <b>moldura prata</b> que ganham ficam com <b>moldura dourada</b>; ganhando de novo viram <b>coringa</b>.</p>',
       features: '<p>🌈 <b>3, 4 ou 5 arco-íris</b> dão <b>10, 15 ou 20 rodadas grátis</b>. O multiplicador começa em <b>x1</b> e soma <b>+1 a cada ganho</b>, sem zerar até o fim.</p>',
     },
-    syms: [S('pote', 'moneybag', 'Pote de ouro', [1, 2, 4, 8], 3), S('cerveja', 'beer', 'Caneca', [0.8, 1.5, 3, 6], 4), S('cartola', 'tophat', 'Cartola', [0.6, 1.2, 2.5, 5], 5),
-      S('moeda', 'coin', 'Moeda', [0.5, 1, 2, 4], 5), S('trevo', 'clover', 'Trevo', [0.2, 0.4, 0.8, 1.5], 8), S('copas', 'heartsuit', 'Copas', [0.2, 0.4, 0.8, 1.5], 8),
-      S('espadas', 'spade', 'Espadas', [0.15, 0.3, 0.6, 1.2], 9), S('ouros', 'diamondsuit', 'Ouros', [0.15, 0.3, 0.6, 1.2], 9)],
-    wildImg: 'shamrock', wildReels: [1, 2, 3, 4], wildW: 0.8, scImg: 'rainbow', scName: 'Arco-íris', scW: 0.22, scMin: 3, silver: 0.08, stack: 0.4,
+    syms: [S('pote', 'honeypot', 'Pote de mel', [1, 2, 4, 8], 3), S('cerveja', 'beer', 'Caneca', [0.8, 1.5, 3, 6], 4), S('cartola', 'tophat', 'Cartola', [0.6, 1.2, 2.5, 5], 5),
+      S('moeda', 'pound', 'Libra', [0.5, 1, 2, 4], 5), K.L('A', [0.2, 0.4, 0.8, 1.5], 8), K.L('K', [0.2, 0.4, 0.8, 1.5], 8),
+      K.L('Q', [0.15, 0.3, 0.6, 1.2], 9), K.L('J', [0.15, 0.3, 0.6, 1.2], 9)],
+    wildImg: 'shamrock', wildReels: [1, 2, 3, 4], wildW: 0.8, scImg: 'clover', scName: 'Arco-íris', scW: 0.22, scMin: 3, silver: 0.08, stack: 0.4,
     heights: () => [6, 6, 6, 6, 6, 6],
     baseStep: 0, fsStart: 1, fsStep: 1, fsCount: s => ({ 3: 10, 4: 15 }[s] || 20),
     waysNote: 'Grade 6×6 = 46.656 caminhos. Iguais em rolos seguidos a partir da esquerda.',
@@ -321,10 +321,10 @@
   (() => {
     const SY = [
       S('ganesha', 'elephant', 'Ganesha', [2, 6, 15], 3), S('lotus', 'lotus', 'Lótus', [1.5, 4, 10], 4), S('lampada', 'diya', 'Diya', [1, 2.5, 6], 5),
-      S('coco', 'coconut', 'Coco', [0.8, 2, 5], 5), S('rubi', 'gem', 'Rubi', [0.3, 0.8, 2], 8), S('safira', 'bluediamond', 'Safira', [0.3, 0.8, 2], 8), S('manga', 'mango', 'Manga', [0.2, 0.5, 1.5], 9),
+      S('coco', 'coconut', 'Coco', [0.8, 2, 5], 5), K.L('A', [0.3, 0.8, 2], 8), K.L('K', [0.3, 0.8, 2], 8), K.L('Q', [0.2, 0.5, 1.5], 9),
     ];
     const WILD = { id: 'w', img: 'om', name: 'Om', wild: true, reels: [1, 2, 3], w: 1.2, fw: 1.6 };
-    const SC = { id: 'sc', img: 'sparkles', name: 'Scatter', sc: true, w: 0.95 };
+    const SC = { id: 'sc', img: 'hindutemple', name: 'Templo', sc: true, w: 0.95 };
     const all = [...SY, WILD, SC];
     const draw = pool(all);
     const make = (wk = 'w') => grid([3, 3, 3, 3, 3], c => draw(c, wk));
@@ -372,10 +372,10 @@
     const L20 = K.LINES_5x3.slice(0, 20);
     const SY = [
       S('capitao', 'pirateflag', 'Capitão', [3, 10, 40], 3), S('papagaio', 'parrot', 'Papagaio', [2, 6, 25], 4), S('luneta', 'telescope', 'Luneta', [1.5, 4, 15], 5),
-      S('bussola', 'compass', 'Bússola', [1, 3, 10], 5), S('ancora', 'anchor', 'Âncora', [0.5, 1.5, 5], 8), S('espadas', 'swords', 'Espadas', [0.4, 1.2, 4], 8), S('moeda', 'coin', 'Moeda', [0.3, 1, 3], 9),
+      S('bussola', 'oyster', 'Ostra', [1, 3, 10], 5), S('ancora', 'anchor', 'Âncora', [0.5, 1.5, 5], 8), S('espadas', 'octopus', 'Kraken', [0.4, 1.2, 4], 8), S('moeda', 'crab', 'Caranguejo', [0.3, 1, 3], 9),
     ];
     const WILD = { id: 'w', img: 'sailboat', name: 'Navio', wild: true, reels: [1, 2, 3], w: 1.1 };
-    const SC = { id: 'sc', img: 'worldmap', name: 'Mapa do tesouro', sc: true, w: 0.85 };
+    const SC = { id: 'sc', img: 'island', name: 'Ilha do tesouro', sc: true, w: 0.85 };
     const all = [...SY, WILD, SC];
     const draw = pool(all);
     const BASE = [1, 2, 3, 5], FS = [3, 6, 9, 15];
@@ -422,12 +422,12 @@
   (() => {
     const L20 = K.LINES_5x3.slice(0, 20);
     const SY = [
-      S('castelo', 'castlejp', 'Castelo', [2.5, 10, 50], 3), S('mascara', 'ogre', 'Máscara', [2, 8, 30], 4), S('espadas', 'swords', 'Katanas', [1.5, 5, 20], 4),
-      S('sakura', 'blossom', 'Sakura', [1, 3, 12], 5), S('lanterna', 'lantern', 'Lanterna', [0.5, 1.5, 6], 8), S('leque', 'bamboo', 'Bambu', [0.4, 1.2, 5], 8), S('moeda', 'coin', 'Moeda', [0.3, 1, 4], 9),
+      S('castelo', 'castlejp', 'Castelo', [2.5, 10, 50], 3), S('mascara', 'ogre', 'Máscara', [2, 8, 30], 4), S('espadas', 'dolls', 'Bonecas', [1.5, 5, 20], 4),
+      S('sakura', 'blossom', 'Sakura', [1, 3, 12], 5), S('lanterna', 'windchime', 'Sino de vento', [0.5, 1.5, 6], 8), S('leque', 'tanabata', 'Tanabata', [0.4, 1.2, 5], 8), S('moeda', 'sake', 'Saquê', [0.3, 1, 4], 9),
     ];
-    const WILD = { id: 'w', img: 'dragonface', name: 'Coringa', wild: true, w: 0.9 };
+    const WILD = { id: 'w', img: 'goblin', name: 'Tengu', wild: true, w: 0.9 };
     const SCN = { id: 'scn', img: 'ninja', name: 'Ninja', sc: true, kind: 'ninja', reels: [1, 2, 3], w: 0.9 };
-    const SCS = { id: 'scs', img: 'helmet', name: 'Samurai', sc: true, kind: 'samurai', reels: [1, 2, 3], w: 0.9 };
+    const SCS = { id: 'scs', img: 'swords', name: 'Samurai', sc: true, kind: 'samurai', reels: [1, 2, 3], w: 0.9 };
     const all = [...SY, WILD, SCN, SCS];
     const draw = pool(all);
     const make = () => grid([3, 3, 3, 3, 3], c => draw(c));
@@ -461,7 +461,7 @@
       tables: [table('Pagamento por linha', heads(3, 3), SY, 'Iguais seguidos a partir do rolo da esquerda.')],
       highlights: ['🥷 <b>Ninja</b> aparece ao acaso e multiplica o ganho por <b>x2, x3 ou x5</b>', '⚔️ <b>Samurai</b> ataca e enche de <b>1 a 5 rolos</b> de coringas', '3 scatters (rolos 2 a 4) = <b>9 rodadas grátis</b> do Ninja ou do Samurai', 'Prêmio máximo: <b>2.610x</b>'],
       how: '<p>Grade <b>5×3</b> com <b>20 linhas</b>.</p><p>🥷 <b>Recurso Ninja:</b> em qualquer giro o ninja pode atacar e multiplicar o ganho por x2, x3 ou x5.</p><p>⚔️ <b>Recurso Samurai:</b> em qualquer giro o samurai pode transformar de 1 a 5 rolos inteiros em coringas.</p>',
-      features: `<p>${ico('ninja')} / ${ico('helmet')} <b>3 scatters</b> de Ninja e/ou Samurai nos rolos 2, 3 e 4 dão <b>9 rodadas grátis</b> do lado que tiver mais scatters:</p>
+      features: `<p>${ico('ninja')} / ${ico('swords')} <b>3 scatters</b> de Ninja e/ou Samurai nos rolos 2, 3 e 4 dão <b>9 rodadas grátis</b> do lado que tiver mais scatters:</p>
         <ul class="si-list"><li><b>Ninja:</b> em quase metade dos giros o ninja multiplica o ganho (x2 a x10).</li><li><b>Samurai:</b> em 40% dos giros a espada do samurai transforma rolos inteiros em coringas.</li></ul>`,
       make,
       async spin(rt) {
@@ -481,12 +481,12 @@
      ========================================================= */
   (() => {
     const SY = [
-      S('caishen', 'moneybag', 'Lingote', [1, 2, 4, 8], 3), S('envelope', 'redenvelope', 'Envelope', [0.8, 1.5, 3, 6], 4), S('jade', 'greenheart', 'Jade', [0.6, 1.2, 2.5, 5], 5),
-      S('moeda', 'coin', 'Moeda', [0.5, 1, 2, 4], 5), S('lanterna', 'lantern', 'Lanterna', [0.2, 0.4, 0.8, 1.5], 8), S('bombinha', 'firecracker', 'Bombinha', [0.2, 0.4, 0.8, 1.5], 8),
-      S('leque', 'cards', 'Leque', [0.15, 0.3, 0.6, 1.2], 9), S('tangerina', 'tangerine', 'Tangerina', [0.15, 0.3, 0.6, 1.2], 9),
+      S('caishen', 'moneymouth', 'Caishen', [1, 2, 4, 8], 3), S('envelope', 'abacus', 'Ábaco', [0.8, 1.5, 3, 6], 4), S('jade', 'plant', 'Bonsai', [0.6, 1.2, 2.5, 5], 5),
+      S('moeda', 'sparkler', 'Estrelinha', [0.5, 1, 2, 4], 5), K.L('A', [0.2, 0.4, 0.8, 1.5], 8), K.L('K', [0.2, 0.4, 0.8, 1.5], 8),
+      K.L('Q', [0.15, 0.3, 0.6, 1.2], 9), K.L('J', [0.15, 0.3, 0.6, 1.2], 9),
     ];
-    const WILD = { id: 'w', img: 'mahjong', name: 'Coringa', wild: true, w: 0 };
-    const SC = { id: 'sc', img: 'seven', name: 'Sorte 8', sc: true, w: 0.62 };
+    const WILD = { id: 'w', img: 'drum', name: 'Coringa', wild: true, w: 0 };
+    const SC = { id: 'sc', img: 'eight', name: 'Sorte 8', sc: true, w: 0.62 };
     const all = [...SY, SC];
     const draw = pool(all);
     const cell = (c, fs) => silver(draw(c), c, fs ? 0.25 : 0.08);

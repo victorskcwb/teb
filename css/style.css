@@ -1211,3 +1211,19 @@ select { padding: 9px 10px; border-radius: 12px; background: var(--bg2); border:
 .studio-chips .fchip { font-size: .82rem; padding: 6px 12px; white-space: nowrap; }
 .studio-chips .fchip .ico { width: 20px; height: 20px; }
 .filters .fchip { white-space: nowrap; }
+
+/* Letras de carta (A K Q J) nos slots de estúdio */
+.kc.lt { background: rgba(255, 255, 255, .08); }
+.kc .ltx { font-family: var(--title); font-weight: 400; font-size: clamp(1rem, 7vw, 2.6rem); line-height: 1; pointer-events: none;
+  background: linear-gradient(180deg, #fff 0%, var(--lc, #fde047) 45%, color-mix(in srgb, var(--lc, #fde047) 55%, #000) 100%); -webkit-background-clip: text; background-clip: text; color: transparent;
+  -webkit-text-stroke: 1.5px color-mix(in srgb, var(--lc, #fde047) 35%, #000); filter: drop-shadow(0 2px 2px rgba(0, 0, 0, .55)); }
+.kc.lt-A { --lc: #ef4444; } .kc.lt-K { --lc: #3b82f6; } .kc.lt-Q { --lc: #a855f7; } .kc.lt-J { --lc: #22c55e; }
+.kc.lt { container-type: size; }
+.kc.lt .ltx { font-size: 66cqmin; }
+.kcol.spinning .kc .ltx { animation: blurSpin .12s linear infinite; }
+.kc.win .ltx { animation: winSym .55s ease-in-out infinite; }
+.lt-ico { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 6px; background: #1e1b4b; font-family: var(--title); font-size: 1.05rem; }
+.lt-ico.lt-A { color: #f87171; } .lt-ico.lt-K { color: #60a5fa; } .lt-ico.lt-Q { color: #c084fc; } .lt-ico.lt-J { color: #4ade80; }
+/* Símbolos premium com moldura brilhante */
+.kc.hi { background: radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--k1) 55%, #fff3), color-mix(in srgb, var(--k2) 65%, #0006)); box-shadow: inset 0 0 0 2px rgba(255, 247, 194, .55); }
+.kc.hi img { width: 90%; height: 90%; filter: drop-shadow(0 0 6px rgba(255, 247, 194, .6)) drop-shadow(0 2px 3px rgba(0, 0, 0, .45)); }
