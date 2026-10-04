@@ -63,6 +63,10 @@ const SlotAudio = (() => {
     arcoirisduplo: 'irish', colheitaselvagem: 'prairie', caminhoguerreiro: 'japan', porquinhomagico: 'cartoon', forjadotempestade: 'epic', foodtruckfred: 'cartoon', doisselvagens: 'western', bennycerveja: 'irish', punhodestruicao: 'epic', densho: 'japan',
     gatoslaser: 'space', aurorareis: 'egypt', sintabatida: 'party', bombasaltitantes: 'cartoon', rustycurly: 'western', gangdinheiro: 'noir', matadoressa: 'dark', zezeus: 'epic', criptamaldita: 'dark', faraoguaxinim: 'egypt',
     seisseisseis: 'horror', labtorcido: 'dark', aguiaalfa: 'snow', livrotempo: 'mystic', gemasgronk: 'gems', garotosbowery: 'noir', motoqueiros: 'party', cubos2: 'gems', xpander: 'space',
+    lapide: 'western', manhattan: 'noir', acampamentotrator: 'space', cristais: 'gems', jukeboxsorte: 'party', sushimania: 'japan', churrascofrenesi: 'western', oktoberfest: 'party', parquearrepiante: 'horror', moedasfortuna: 'china',
+    missaomasmorra: 'dark', yetigelo: 'snow', corujas: 'mystic', estrelato: 'party', magiamaia: 'jungle', thormartelo: 'epic', tribodragao: 'epic', evavenenosa: 'dark', arlequim: 'mystic', coelhosbonus: 'cartoon',
+    geniodourado: 'arabia', viaslacteas: 'space', livrosombras: 'dark', cacabufalos: 'prairie', ouromacaco: 'jungle', cemiterioguerreiros: 'dark', buracofogo2: 'mine', sanguesombra2: 'horror', lapidesempiedade: 'western', celaxways2: 'noir',
+    cobrinha2000: 'classic', novecinco: 'noir', bolasnatal: 'snow', terraliberdade: 'prairie', diad: 'epic', cidadefantasmarip: 'western', solitario: 'classic', pescariabizarra: 'ocean', encruzilhada: 'western', perturbado: 'horror',
     manicomio: 'horror', celaxways: 'dark', lapiderip: 'western', cidadefantasma: 'western', buracofogo: 'mine', submarino: 'ocean', blococelas: 'dark', sanguesombra: 'horror', gulaggelado: 'snow', detetiveserial: 'noir',
   };
 

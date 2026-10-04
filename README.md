@@ -233,6 +233,46 @@ Recriações com nomes e artes próprios dos slots mais jogados de cada estúdio
 | Sangue e Sombra | Blood & Shadow | Barra do Ritual · giros amaldiçoados | ~96% | 6.666x |
 | Gulag Gelado | Remember Gulag | Scatters destrancam rolos | ~96% | 30.000x |
 | Detetive Serial | Serial | Enhancer Cells · até 74.800x | ~96% | 74.800x |
+| Lápide | Tombstone | xNudge · 3 rodadas grátis | ~96,2% | 11.456x |
+| Manhattan Fica Selvagem | Manhattan Goes Wild | Anos 20 · coringas dourados | ~96,2% | 2.025x |
+| Acampamento do Trator | Tractor Beam | Clones e abduções na fazenda | ~96% | 5.000x |
+| Cristais | WiXX | Respins de reforço até x5 | ~96,6% | 2.796x |
+| Jukebox da Sorte | Casino Win Spin | Gire até ganhar | ~96,7% | 2.000x |
+| Drama na Cozinha: Sushi Mania | Kitchen Drama: Sushi Mania | Clones coringa · ingredientes | ~96,7% | 697x |
+| Drama na Cozinha: Churrasco | Kitchen Drama: BBQ Frenzy | Carnes coringa · Espírito da Pimenta | ~96,7% | 1.050x |
+| Oktoberfest | Oktoberfest | Festas surpresa · canecas x5 | ~96,7% | 500x |
+| Parque Arrepiante | The Creepy Carnival | Respins de vitória · até 70 giros | ~96,1% | 1.595x |
+| Moedas da Fortuna | Coins of Fortune | Empurrão do Dragão · moedas x10 | ~96,5% | 6.015x |
+| Missão na Masmorra | Dungeon Quest | Paga dos dois lados · alquimia | ~96,3% | 450x |
+| Yeti do Gelo | Ice Ice Yeti | Gelo quebra · até 16.807 caminhos | ~96,2% | 8.920x |
+| Corujas | Owls | Saque da Lua · 3 sonhos | ~96,2% | 1.500x |
+| Estrelato | Starstruck | Coringas x2/x3/x5 · prêmio 1.000x | ~96,2% | 1.635x |
+| Magia Maia | Mayan Magic Wildfire | Coringas colantes · paga dos dois lados | ~96% | 1.264x |
+| Thor: Hora do Martelo | Thor: Hammer Time | Relâmpago · runas · martelos | ~96% | 2.328x |
+| Tribo do Dragão | Dragon Tribe | xWays + xNudge · 27.000x | ~96,1% | 27.000x |
+| Eva Venenosa | Poison Eve | Magia líquida · portais coringa | ~96,1% | 2.000x |
+| Carnaval do Arlequim | Harlequin Carnival | xNudge que anda · 5.861x | ~96,1% | 5.861x |
+| Coelhos Bônus | Bonus Bunnies | Explosões · Carrot Link | ~96,1% | 6.950x |
+| Gênio Dourado | Golden Genie and the Walking Wilds | Desfile do Gênio · coringas andantes | ~96% | 9.583x |
+| Vias Lácteas | Milky Ways | Coringas solares · fusão | ~96,1% | 5.664x |
+| Livro das Sombras | Book of Shadows | Livro com linhas sombrias · 30.338x | ~96% | 30.338x |
+| Caçador de Búfalos | Buffalo Hunter | Manada e multiplicadores da pradaria | ~96% | 12.647x |
+| Ouro do Macaco | Monkey's Gold xPays | Colossais até x500 · cipó multiplicador | ~96% | 12.683x |
+| Cemitério dos Guerreiros | Warrior Graveyard | Lápides xNudge · mult. sem teto | ~96,2% | 9.797x |
+| Buraco de Fogo 2 | Fire in the Hole 2 | Mina desaba · até 46.656 caminhos | ~96,1% | 65.000x |
+| Sangue e Sombra 2 | Blood & Shadow 2 | Barra do ritual · coringas colantes | ~96,1% | 16.161x |
+| Lápide: Sem Piedade | Tombstone: No Mercy | xNudge · 4 modos de bônus · 16.480x | ~96% | 16.480x |
+| Cela xWays 2 | San Quentin 2: Death Row | Células reforçadas · 200.000x | ~96,1% | 200.000x |
+| Cobrinha 2000 | Brick Snake 2000 | Cobra coringa que anda · xWays | ~96% | 8.110x |
+| Das Nove às Cinco | Nine to Five | Escritório dos anos 90 · xNudge | ~96% | 9.217x |
+| Bolas de Natal | Jingle Balls | Natal noir · Giros do Espírito | ~96,1% | 12.250x |
+| Terra da Liberdade | Land of the Free | Esteira de modificadores · enchente | ~96,1% | 57.000x |
+| Dia D | D-Day | Modificadores · coringa supremo | ~96,1% | 55.555x |
+| Cidade Fantasma R.I.P. | Deadwood R.I.P | xNudge · rolo final x2 · 100.000x | ~96,1% | 100.000x |
+| Solitário | Loner | Monitores · 3 minijogos retrô | ~96,1% | 14.999x |
+| Pescaria Bizarra | Ugliest Catch | Células reforçadas · troféus até 1.000x | ~96,1% | 50.000x |
+| Encruzilhada | Devil's Crossroad | Crosslink · Giros da Redenção | ~96,1% | 13.180x |
+| Perturbado | Disturbed | Células reforçadas · 54.391x | ~96,1% | 54.391x |
 
 Os RTPs e preços de compra de bônus são calibrados por simulação: `node tools/calibrate.js` roda a lógica de cada jogo sem tela (milhões de giros, em paralelo) e grava `js/games/calib.js`. Para recalibrar só alguns: `node tools/calibrate.js mahjong1 procurado --spins=2000000`.
 
@@ -270,7 +310,8 @@ js/progress.js      XP/passe, missões, check-in, roda, anúncios fictícios, ro
 js/history.js       histórico de giros dos slots (localStorage) e o modal de histórico
 js/games/kit.js     SlotKit: motor dos slots de estúdio (tela, giro, cascata, ways/linhas/grupos, hold & spin, rodadas grátis)
 js/games/calib.js   calibração gerada (escala de prêmios, preço do bônus, chance de ganho, frequência do bônus)
-js/games/pragmatic.js, pgsoft.js, hacksaw.js, tada.js, nolimit.js   os 50 slots de estúdio
+js/games/pragmatic*.js, pgsoft*.js, hacksaw*.js, tada.js, nolimit*.js   os 208 slots de estúdio
+js/games/templates.js  modelos reaproveitados (paga em qualquer lugar, grupos, PG Soft)
 tools/calibrate.js  simulador que calibra o RTP dos slots de estúdio
 js/slotinfo.js      painel "Prêmios" dos slots (prêmio máximo, tabela, bônus, linhas)
 js/pages.js         páginas Bônus, Missões, Passe e VIP

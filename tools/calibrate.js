@@ -17,7 +17,7 @@ const { Worker, isMainThread, parentPort, workerData } = require('worker_threads
 const os = require('os');
 
 const ROOT = path.join(__dirname, '..');
-const FILES = ['js/games/kit.js', 'js/games/templates.js', 'js/games/pragmatic.js', 'js/games/pgsoft.js', 'js/games/hacksaw.js', 'js/games/tada.js', 'js/games/nolimit.js', 'js/games/pragmatic2.js', 'js/games/pragmatic3.js', 'js/games/pgsoft2.js', 'js/games/pgsoft3.js', 'js/games/hacksaw2.js', 'js/games/hacksaw3.js'];
+const FILES = ['js/games/kit.js', 'js/games/templates.js', 'js/games/pragmatic.js', 'js/games/pgsoft.js', 'js/games/hacksaw.js', 'js/games/tada.js', 'js/games/nolimit.js', 'js/games/pragmatic2.js', 'js/games/pragmatic3.js', 'js/games/pgsoft2.js', 'js/games/pgsoft3.js', 'js/games/hacksaw2.js', 'js/games/hacksaw3.js', 'js/games/nolimit2.js', 'js/games/nolimit3.js'];
 const OUT = path.join(ROOT, 'js/games/calib.js');
 
 function loadGames() {
