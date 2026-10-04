@@ -52,7 +52,7 @@ const SlotKit = (() => {
       for (let r = 1; r < col.length; r++) {
         const up = col[r - 1], x = col[r];
         if (!up || !x || up.sc || up.wild || up.coin || x.sc || x.wild || x.coin || RNG.float() >= p) continue;
-        col[r] = { ...x, id: up.id, img: up.img, name: up.name, pays: up.pays, letter: up.letter, hi: up.hi };
+        col[r] = { ...x, id: up.id, img: up.img, name: up.name, pays: up.pays, letter: up.letter, hi: up.hi, mid: up.mid };
       }
     });
     return grid;
@@ -227,6 +227,9 @@ const SlotKit = (() => {
       const m = mult(step, res, grid);
       total += await pay(rt, res, m);
       if (rt.capped) break;
+      // os vencedores "estouram" antes de cair os novos
+      rt.mark(res.cells, 'burst');
+      await rt.wait(200);
       const rm = new Set();
       res.cells.forEach(k => {
         const [c, r] = unkey(k), x = grid[c][r];
@@ -327,8 +330,11 @@ const SlotKit = (() => {
      ========================================================= */
   function create(cfg) {
     // os 2 símbolos que mais pagam ganham moldura de destaque
-    cfg.symbols.filter(s => s.pays && !s.letter && !s.wild && !s.sc && !s.c)
-      .sort((a, b) => Math.max(...b.pays) - Math.max(...a.pays)).slice(0, 2).forEach(s => { s.hi = true; });
+    // e os 2 seguintes um fundo mais discreto (dá hierarquia visual aos símbolos)
+    const tiers = cfg.symbols.filter(s => s.pays && !s.letter && !s.wild && !s.sc && !s.c)
+      .sort((a, b) => Math.max(...b.pays) - Math.max(...a.pays));
+    tiers.slice(0, 2).forEach(s => { s.hi = true; });
+    tiers.slice(2, 4).forEach(s => { s.mid = true; });
     const cal = (typeof SLOT_CALIB !== 'undefined' && SLOT_CALIB[cfg.id]) || {};
     const K = cal.k || 1;
     const buyX = cfg.buy === false ? 0 : cal.buy || 100;
@@ -367,6 +373,7 @@ const SlotKit = (() => {
             <div class="kit-frame">
               <div class="kit-head hidden"></div>
               <div class="kit-grid"></div>
+              <div class="kit-fx"></div>
               <div class="scat-banner hidden"></div>
             </div>
             <div class="slot-winbar">Ganho <b>0,00</b></div>
@@ -384,7 +391,56 @@ const SlotKit = (() => {
         root.append(el);
 
         const gridEl = $('.kit-grid', el), headEl = $('.kit-head', el), msgEl = $('.scat-msg', el), winEl = $('.slot-winbar b', el);
-        const chipsEl = $('.kit-chips', el), banner = $('.scat-banner', el);
+        const chipsEl = $('.kit-chips', el), banner = $('.scat-banner', el), fxEl = $('.kit-fx', el), frameFx = $('.kit-frame', el);
+        const LITE = !!window.LITE;
+        /* ---------- efeitos de ganho (só transform/opacity: leves até no celular) ---------- */
+        // contador do ganho que sobe até o valor novo
+        let shown = 0, tween = 0;
+        const setWin = v => { cancelAnimationFrame(tween); shown = v; winEl.textContent = fmt(v); };
+        const countTo = v => {
+          cancelAnimationFrame(tween);
+          const from = shown, t0 = performance.now(), d = Speed.turbo ? 160 : 520;
+          const step = t => {
+            const p = Math.min(1, (t - t0) / d);
+            shown = from + (v - from) * (1 - Math.pow(1 - p, 3));
+            winEl.textContent = fmt(round2(p < 1 ? shown : v));
+            if (p < 1) tween = requestAnimationFrame(step); else shown = v;
+          };
+          tween = requestAnimationFrame(step);
+          winEl.classList.remove('bump'); void winEl.offsetWidth; winEl.classList.add('bump');
+        };
+        // faíscas saindo das células vencedoras
+        const sparks = keys => {
+          if (!ctx.alive || !keys.size) return;
+          const fr = frameFx.getBoundingClientRect(), per = LITE ? 1 : 3, cap = LITE ? 10 : 36;
+          const list = [...keys].slice(0, Math.ceil(cap / per));
+          const html = [];
+          list.forEach(k => {
+            const [c, r] = unkey(k), cell = gridEl.children[c] && gridEl.children[c].children[r];
+            if (!cell) return;
+            const b = cell.getBoundingClientRect(), x = b.left - fr.left + b.width / 2, y = b.top - fr.top + b.height / 2;
+            for (let i = 0; i < per; i++) {
+              const a = Math.random() * Math.PI * 2, d = (0.45 + Math.random() * 0.6) * b.width;
+              html.push(`<i class="spark" style="left:${x}px;top:${y}px;--dx:${Math.cos(a) * d}px;--dy:${Math.sin(a) * d}px;--sc:${0.6 + Math.random() * 0.8}"></i>`);
+            }
+          });
+          const box = document.createElement('div');
+          box.innerHTML = html.join('');
+          fxEl.append(box);
+          setTimeout(() => box.remove(), 900);
+        };
+        // valor do ganho subindo do centro da grade
+        const floatWin = x => {
+          const v = round2(x * K * bet);
+          // ganhos pequenos só sobem no contador; o selo aparece a partir de 1x a aposta
+          if (!ctx.alive || !(v > 0) || x * K < 1) return;
+          const f = document.createElement('div');
+          f.className = 'kit-float' + (x * K >= 5 ? ' big' : '');
+          f.textContent = '+🪙 ' + fmt(v);
+          fxEl.append(f);
+          setTimeout(() => f.remove(), 1300);
+          if (x * K >= 5) { frameFx.classList.remove('shake'); void frameFx.offsetWidth; frameFx.classList.add('shake'); }
+        };
         const spinBtn = $('.spin-btn', el), buyBtn = $('.buy', el), mascot = $('.scat-mascot', el);
         const stepper = UI.betStepper([0.2, 0.4, 1, 2, 3, 5, 10, 20, 50, 100, 200], 3);
         $('.slot-bet', el).append(stepper.el);
@@ -431,6 +487,7 @@ const SlotKit = (() => {
           if (x.c) cls.push(x.c);
           if (x.letter) cls.push('lt', 'lt-' + x.letter);
           if (x.hi) cls.push('hi');
+          if (x.mid) cls.push('mid');
           if (x.fresh && delay != null) cls.push('drop');
           const lb = label(x);
           return `<div class="${cls.join(' ')}"${x.fresh && delay != null ? ` style="animation-delay:${delay}ms"` : ''}>${face(x)}${lb !== '' ? `<b>${lb}</b>` : ''}</div>`;
@@ -455,7 +512,8 @@ const SlotKit = (() => {
               msgEl.textContent = 'PRÊMIO MÁXIMO! 🏆';
               Sfx.big();
             }
-            winEl.textContent = fmt(round2(this.total * K * bet));
+            countTo(round2(this.total * K * bet));
+            floatWin(x);
           },
           coins: x => `🪙 ${fmt(round2(x * K * bet))}`,
           xs: x => SlotInfo.xs(x * K),
@@ -501,6 +559,7 @@ const SlotKit = (() => {
               cell.classList.toggle(cls, on);
               if (cls === 'win') cell.classList.toggle('dim', !on && set.size > 0);
             }));
+            if (cls === 'win') sparks(set);
           },
           clear() { $$('.kc', gridEl).forEach(x => x.classList.remove('win', 'dim', 'hl')); },
           /** Muda a altura da grade (nº de linhas) e reajusta a tela. */
@@ -620,7 +679,7 @@ const SlotKit = (() => {
           setBusy(true);
           rt.reset();
           rt.clear();
-          winEl.textContent = fmt(0);
+          setWin(0);
           rt.msg(free ? '🎁 Rodada grátis!' : 'Girando...');
           // marca se o giro entrou no bônus (missões)
           const ob = game.bonus;
@@ -644,7 +703,7 @@ const SlotKit = (() => {
           setBusy(true);
           rt.reset();
           rt.clear();
-          winEl.textContent = fmt(0);
+          setWin(0);
           try { await game.bonus(rt, { buy: true }); } catch (e) { console.error(e); }
           const pay = round2(Math.min(rt.total * K, cfg.maxWin) * bet);
           finish(price, pay, price, { buy: true });
@@ -653,7 +712,7 @@ const SlotKit = (() => {
         function finish(stake, pay, base, extra) {
           if (pay > 0) {
             Wallet.win(pay);
-            winEl.textContent = fmt(pay);
+            if (Math.abs(shown - pay) > 0.005) countTo(pay);
             if (ctx.alive) { UI.result(pay, base); if (pay / base >= 10) SlotAudio.bigWin(pay / base); }
           } else if (ctx.alive) Sfx.lose();
           ctx.round(stake, pay, base, extra);

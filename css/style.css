@@ -1302,3 +1302,45 @@ select { padding: 9px 10px; border-radius: 12px; background: var(--bg2); border:
 .ask-body { font-size: 1rem; line-height: 1.4; margin-bottom: 14px; }
 .ask-btns { display: flex; gap: 8px; justify-content: flex-end; }
 .ask-btns .btn { min-width: 110px; }
+
+/* =========================================================
+   Visual dos slots de estúdio (SlotKit): azulejos com brilho, hierarquia
+   dos símbolos, faíscas, estouro na cascata, valor subindo e flash no rolo.
+   Tudo em transform/opacity; o modo leve (celular) corta o que é contínuo.
+   ========================================================= */
+.kc { background: linear-gradient(180deg, rgba(255, 255, 255, .17), rgba(255, 255, 255, .05) 55%, rgba(0, 0, 0, .12)); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .22), inset 0 -2px 0 rgba(0, 0, 0, .28); }
+.kc > img, .kc > .ltx { position: relative; z-index: 1; }
+.kc > b { z-index: 2; }
+.kc.mid { background: radial-gradient(circle at 50% 38%, color-mix(in srgb, var(--k1) 32%, rgba(255, 255, 255, .2)), color-mix(in srgb, var(--k2) 40%, rgba(0, 0, 0, .25))); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .25), inset 0 -2px 0 rgba(0, 0, 0, .3); }
+.kc.hi::after, .kc.wild::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; background: linear-gradient(115deg, transparent 35%, rgba(255, 255, 255, .45) 50%, transparent 65%); transform: translateX(-120%); }
+.kc.wild::after { animation: tileShine 2.6s ease-in-out infinite; }
+.kc.hi::after { animation: tileShine 4.5s ease-in-out infinite; animation-delay: 1.2s; }
+@keyframes tileShine { 0%, 60% { transform: translateX(-120%); } 100% { transform: translateX(120%); } }
+/* scatter: raios girando atrás */
+.kc.sc::before { content: ""; position: absolute; left: 50%; top: 50%; width: 150%; aspect-ratio: 1; transform: translate(-50%, -50%); background: repeating-conic-gradient(rgba(253, 224, 71, .38) 0 12deg, transparent 12deg 30deg); border-radius: 50%; animation: scRays 7s linear infinite; pointer-events: none; }
+@keyframes scRays { to { transform: translate(-50%, -50%) rotate(360deg); } }
+/* ganho: moldura dourada + faixa de luz que passa uma vez */
+.kc.win { background: radial-gradient(circle at 50% 40%, rgba(255, 247, 194, .75), rgba(251, 191, 36, .35) 70%); box-shadow: inset 0 0 0 2px #fde047, 0 0 14px rgba(253, 224, 71, .85); }
+.kc.win::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: 2; background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, .8) 50%, transparent 70%); animation: winShine .7s ease-out; transform: translateX(120%); }
+@keyframes winShine { from { transform: translateX(-120%); } }
+.kc.burst img, .kc.burst .ltx { animation: burst .22s ease-in forwards !important; }
+@keyframes burst { 40% { transform: scale(1.3); opacity: 1; } 100% { transform: scale(.2); opacity: 0; } }
+/* flash ao parar cada rolo */
+.kcol { position: relative; }
+.kcol.land::after { content: ""; position: absolute; inset: 0; border-radius: 9px; pointer-events: none; background: linear-gradient(180deg, transparent, rgba(255, 255, 255, .35), transparent); animation: landFlash .35s ease-out forwards; }
+@keyframes landFlash { from { opacity: 1; } to { opacity: 0; } }
+/* camada de efeitos por cima da grade */
+.kit-fx { position: absolute; inset: 0; pointer-events: none; overflow: visible; z-index: 5; }
+.spark { position: absolute; width: 9px; height: 9px; margin: -4.5px 0 0 -4.5px; border-radius: 50%; background: radial-gradient(circle, #fff, #fde047 45%, rgba(251, 146, 60, 0) 70%); animation: spark .75s cubic-bezier(.2, .7, .3, 1) forwards; }
+@keyframes spark { from { transform: translate(0, 0) scale(var(--sc)); opacity: 1; } to { transform: translate(var(--dx), var(--dy)) scale(0); opacity: 0; } }
+.kit-float { position: absolute; left: 50%; top: 46%; transform: translate(-50%, 0); padding: 4px 14px; border-radius: 999px; background: rgba(15, 10, 40, .82); border: 2px solid #fde047; color: #fde047; font-family: var(--title); font-size: clamp(1rem, 5vw, 1.5rem); white-space: nowrap; text-shadow: 0 2px 0 #000; animation: floatUp 1.25s ease-out forwards; }
+.kit-float.big { font-size: clamp(1.3rem, 7vw, 2.1rem); border-color: #fb923c; color: #fff7c2; box-shadow: 0 0 22px rgba(251, 146, 60, .8); }
+@keyframes floatUp { 0% { transform: translate(-50%, 20px) scale(.6); opacity: 0; } 18% { transform: translate(-50%, 0) scale(1.08); opacity: 1; } 70% { opacity: 1; } 100% { transform: translate(-50%, -70px) scale(1); opacity: 0; } }
+.kit-frame.shake { animation: frameShake .4s ease-out; }
+@keyframes frameShake { 20% { transform: translate(-4px, 2px); } 40% { transform: translate(4px, -2px); } 60% { transform: translate(-3px, 1px); } 80% { transform: translate(2px, -1px); } }
+.slot-winbar b.bump { animation: winBump .4s ease-out; display: inline-block; }
+@keyframes winBump { 40% { transform: scale(1.18); color: #fff7c2; } }
+/* celular: sem brilhos contínuos (o resto é curto e leve) */
+.lite .kc.wild::after, .lite .kc.hi::after { animation: none; display: none; }
+.lite .kc.sc::before { animation: none; }
+.lite .kit-frame.shake { animation-duration: .3s; }
