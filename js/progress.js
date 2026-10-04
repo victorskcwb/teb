@@ -67,24 +67,24 @@ const MISSIONS_PER_DAY = 5;
    recompensa crescem a cada nível. Progresso que passa do objetivo sobra
    para o próximo nível. `abs` = progresso absoluto (contador total). */
 const MISSION_TRACKS = [
-  { id: 'spins', text: n => `Faça ${fmt0(n)} giros em slots`, base: 100, step: 60, inc: e => (e.cat === 'slots' && !e.buy ? 1 : 0), coins: 300, xp: 200, art: 'slot' },
-  { id: 'rounds', text: n => `Jogue ${fmt0(n)} rodadas em qualquer jogo`, base: 150, step: 90, inc: () => 1, coins: 300, xp: 200, art: 'die' },
-  { id: 'wins', text: n => `Vença ${fmt0(n)} rodadas`, base: 40, step: 25, inc: e => (e.payout > e.stake ? 1 : 0), coins: 300, xp: 220, art: 'trophy' },
-  { id: 'big', text: n => `Ganhe 10x ou mais ${n} vez${n > 1 ? 'es' : ''}`, base: 3, step: 2, inc: e => (e.mult >= 10 ? 1 : 0), coins: 400, xp: 250, art: 'fire' },
-  { id: 'huge', text: n => `Ganhe 100x ou mais ${n} vez${n > 1 ? 'es' : ''}`, base: 1, step: 1, inc: e => (e.mult >= 100 && !e.buy ? 1 : 0), coins: 1000, xp: 500, art: 'heartfire' },
-  { id: 'bonus', text: n => `Ative ${n} bônus em slots girando (sem comprar)`, base: 3, step: 2, inc: e => (e.bonus ? 1 : 0), coins: 500, xp: 300, art: 'gift' },
-  { id: 'wager', text: n => `Aposte 🪙 ${fmt0(n)} no total`, base: 2000, step: 1500, inc: e => e.stake, coins: 350, xp: 250, art: 'coin', money: true },
-  { id: 'earn', text: n => `Receba 🪙 ${fmt0(n)} em prêmios`, base: 1500, step: 1200, inc: e => e.payout, coins: 350, xp: 250, art: 'moneybag', money: true },
-  { id: 'explore', text: n => `Jogue ${n} jogos diferentes (total)`, base: 5, step: 5, abs: s => s.played.length, coins: 400, xp: 300, art: 'joker' },
-  { id: 'mega', text: n => `Ganhe 50x ou mais ${n} vez${n > 1 ? 'es' : ''} em slots`, base: 1, step: 1, inc: e => (e.cat === 'slots' && e.mult >= 50 && !e.buy ? 1 : 0), coins: 700, xp: 400, art: 'glowstar' },
+  { id: 'spins', text: n => `Faça ${fmt0(n)} giros em slots`, base: 300, step: 180, inc: e => (e.cat === 'slots' && !e.buy ? 1 : 0), r: 5, xp: 200, art: 'slot' },
+  { id: 'rounds', text: n => `Jogue ${fmt0(n)} rodadas em qualquer jogo`, base: 450, step: 270, inc: () => 1, r: 5, xp: 200, art: 'die' },
+  { id: 'wins', text: n => `Vença ${fmt0(n)} rodadas`, base: 120, step: 75, inc: e => (e.payout > e.stake ? 1 : 0), r: 5, xp: 220, art: 'trophy' },
+  { id: 'big', text: n => `Ganhe 10x ou mais ${n} vez${n > 1 ? 'es' : ''}`, base: 6, step: 4, inc: e => (e.mult >= 10 ? 1 : 0), r: 6, xp: 250, art: 'fire' },
+  { id: 'huge', text: n => `Ganhe 100x ou mais ${n} vez${n > 1 ? 'es' : ''}`, base: 1, step: 1, inc: e => (e.mult >= 100 && !e.buy ? 1 : 0), r: 12, xp: 500, art: 'heartfire' },
+  { id: 'bonus', text: n => `Ative ${n} bônus em slots girando (sem comprar)`, base: 6, step: 4, inc: e => (e.bonus ? 1 : 0), r: 8, xp: 300, art: 'gift' },
+  { id: 'wager', text: n => `Aposte 🪙 ${fmt0(n)} no total`, base: 800, step: 600, units: true, inc: e => e.stake, r: 5, xp: 250, art: 'coin', money: true },
+  { id: 'earn', text: n => `Receba 🪙 ${fmt0(n)} em prêmios`, base: 600, step: 480, units: true, inc: e => e.payout, r: 5, xp: 250, art: 'moneybag', money: true },
+  { id: 'explore', text: n => `Jogue ${n} jogos diferentes (total)`, base: 5, step: 5, abs: s => s.played.length, r: 5, xp: 300, art: 'joker' },
+  { id: 'mega', text: n => `Ganhe 50x ou mais ${n} vez${n > 1 ? 'es' : ''} em slots`, base: 1, step: 1, inc: e => (e.cat === 'slots' && e.mult >= 50 && !e.buy ? 1 : 0), r: 9, xp: 400, art: 'glowstar' },
 ];
 /* Missões infinitas de cada slot: um ciclo de tipos que fica mais difícil a cada volta. */
 const SLOT_QUESTS = [
-  { k: 'spins', text: n => `Faça ${n} giros`, base: 25, step: 25, inc: e => (e.buy ? 0 : 1), art: 'slot' },
-  { k: 'wins', text: n => `Vença ${n} giros`, base: 8, step: 7, inc: e => (e.payout > e.stake && !e.buy ? 1 : 0), art: 'trophy' },
+  { k: 'spins', text: n => `Faça ${n} giros`, base: 50, step: 50, inc: e => (e.buy ? 0 : 1), art: 'slot' },
+  { k: 'wins', text: n => `Vença ${n} giros`, base: 15, step: 12, inc: e => (e.payout > e.stake && !e.buy ? 1 : 0), art: 'trophy' },
   { k: 'bonus', text: n => `Ative o bônus ${n} vez${n > 1 ? 'es' : ''} girando`, base: 1, step: 1, inc: e => (e.bonus ? 1 : 0), art: 'gift', kit: true },
-  { k: 'big', text: n => `Ganhe 10x ou mais ${n} vez${n > 1 ? 'es' : ''}`, base: 1, step: 1, inc: e => (e.mult >= 10 ? 1 : 0), art: 'fire' },
-  { k: 'wager', text: n => `Aposte 🪙 ${fmt0(n)} neste jogo`, base: 300, step: 300, inc: e => e.stake, art: 'coin', money: true },
+  { k: 'big', text: n => `Ganhe 10x ou mais ${n} vez${n > 1 ? 'es' : ''}`, base: 2, step: 1, inc: e => (e.mult >= 10 ? 1 : 0), art: 'fire' },
+  { k: 'wager', text: n => `Aposte 🪙 ${fmt0(n)} neste jogo`, base: 120, step: 120, units: true, inc: e => e.stake, art: 'coin', money: true },
   { k: 'mega', text: n => `Ganhe ${n}x ou mais numa rodada`, base: 25, step: 25, inc: (e, n) => (e.mult >= n ? 1 : 0), one: true, art: 'heartfire' },
 ];
 const fmt0 = n => Math.round(n).toLocaleString('pt-BR');
@@ -163,8 +163,8 @@ const Progress = {
   PREMIUM_PRICE: 5000,
   /** Versão da economia: ao mudar, migra o estado salvo sem despejar recompensas antigas. */
   ECON: 2,
-  /** Fração das fichas das missões (o XP fica igual, para elas continuarem puxando o passe). */
-  MISSION_COINS: 0.6,
+  /** Missões pagam em apostas médias do jogador: quem aposta 2 ganha pouco, quem aposta 50 ganha mais (sempre proporcional). */
+  MISSION_DAILY_DIV: 30,
   s: null,
 
   load() {
@@ -178,7 +178,7 @@ const Progress = {
       vip: { week: this.weekNum(), net: 0, pending: 0 }, vipSeen: 0,
       scratch: { day: null },
       tracks: {}, slotq: {}, played: [],
-      mile: null, econ: 0,
+      mile: null, econ: 0, avgBet: 2,
     };
     this.s = Object.assign(d, this.s || {});
     this.migrate();
@@ -370,8 +370,12 @@ const Progress = {
     this.grant(this.missionReward(def), 'Missão');
     return true;
   },
-  /** Recompensa de uma missão diária (fichas reduzidas por MISSION_COINS, XP inteiro). */
-  missionReward(def) { return { coins: Math.round((def.coins * this.MISSION_COINS) / 10) * 10, xp: def.xp }; },
+  /** Aposta média recente (média móvel das ~50 últimas rodadas), entre 🪙 1 e 🪙 200. */
+  betUnit() { return Math.max(1, Math.min(200, this.s.avgBet || 2)); },
+  /** Arredonda prêmios: inteiro até 100, de 5 em 5 até 1.000, depois de 10 em 10. */
+  nice(v) { return v < 100 ? Math.max(1, Math.round(v)) : v < 1000 ? Math.round(v / 5) * 5 : Math.round(v / 10) * 10; },
+  /** Recompensa de uma missão diária: proporcional à aposta média (XP inteiro). */
+  missionReward(def) { return { coins: this.nice((this.betUnit() * def.coins) / this.MISSION_DAILY_DIV), xp: def.xp }; },
   /** Quantas recompensas de missão (diárias, baú, gerais e de slots) estão prontas. */
   missionsReady() {
     return this.missions().filter(m => m.done && !m.claimed).length + (this.allMissionsClaimed() && !this.s.missions.bonus ? 1 : 0)
@@ -417,10 +421,12 @@ const Progress = {
   /* ---------- missões infinitas gerais ---------- */
   trackDef(id) { return MISSION_TRACKS.find(t => t.id === id); },
   trackState(id) { return this.s.tracks[id] || (this.s.tracks[id] = { lv: 0, p: 0 }); },
-  trackGoal(t, lv) { return Math.round(t.base + t.step * lv * (1 + lv / 25)); },
+  /** Meta do nível lv; metas em fichas (apostar/receber) são contadas em apostas médias. */
+  trackGoal(t, lv) { const g = t.base + t.step * lv * (1 + lv / 25); return Math.round(t.units ? g * this.betUnit() : g); },
   /** Recompensa de nível lv (0 = primeiro): cresce devagar; a cada 5 níveis vem com rodadas grátis. */
-  questReward(coins, xp, lv) {
-    const r = { coins: Math.round((coins * this.MISSION_COINS * (1 + 0.3 * lv)) / 10) * 10, xp: Math.round(xp * (1 + 0.2 * lv)) };
+  questReward(r0, xp, lv) {
+    // r0 = prêmio em apostas médias; cresce 10% por nível (antes eram 30%, o que inflava o saldo)
+    const r = { coins: this.nice(this.betUnit() * r0 * (1 + 0.1 * lv)), xp: Math.round(xp * (1 + 0.2 * lv)) };
     if ((lv + 1) % 5 === 0) r.fs = 3 + Math.floor(lv / 5);
     return r;
   },
@@ -428,7 +434,7 @@ const Progress = {
     return MISSION_TRACKS.map(t => {
       const st = this.trackState(t.id), goal = this.trackGoal(t, st.lv);
       const p = t.abs ? t.abs(this.s) : st.p;
-      return { ...t, lv: st.lv, p, goal, text: t.text(goal), done: p >= goal, reward: this.questReward(t.coins, t.xp, st.lv) };
+      return { ...t, lv: st.lv, p, goal, text: t.text(goal), done: p >= goal, reward: this.questReward(t.r, t.xp, st.lv) };
     });
   },
   claimTrack(id) {
@@ -449,9 +455,9 @@ const Progress = {
     const st = this.s.slotq[gid] || { lv: 0, p: 0 };
     const list = this.slotQuestList(g);
     const q = list[st.lv % list.length], tier = Math.floor(st.lv / list.length);
-    const goal = q.base + q.step * tier;
+    const goal = Math.round((q.base + q.step * tier) * (q.units ? this.betUnit() : 1));
     const n = q.one ? 1 : goal;
-    return { ...q, gid, game: g, lv: st.lv, p: st.p, goal: n, text: q.text(goal), done: st.p >= n, reward: this.questReward(150, 100, st.lv), tierGoal: goal };
+    return { ...q, gid, game: g, lv: st.lv, p: st.p, goal: n, text: q.text(goal), done: st.p >= n, reward: this.questReward(3, 100, st.lv), tierGoal: goal };
   },
   claimSlotQuest(gid) {
     const q = this.slotQuest(gid);
@@ -495,6 +501,7 @@ const Progress = {
     this.bumpMission('streak3', 0, ms.streak);
     // jogados recentemente
     if (e.game) this.s.recent = [e.game, ...this.s.recent.filter(g => g !== e.game)].slice(0, 8);
+    if (e.stake > 0) this.s.avgBet = round2((this.s.avgBet || 2) * 0.98 + e.stake * 0.02);
     // XP: um pouco por rodada + raiz da aposta (não premia só apostas enormes)
     const xp = e.stake > 0 ? Math.round(2 + Math.sqrt(e.stake) * 1.5) : 2;
     this.save(false);
