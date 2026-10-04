@@ -278,7 +278,10 @@
         </div>
         <div class="game-body"></div>
       </section>`);
-    $('.help', el).addEventListener('click', () => UI.modal(`Como jogar — ${g.name}`, g.rules));
+    $('.help', el).addEventListener('click', () => {
+      if (g.info) SlotInfo.open(g, ctx && ctx.bet ? ctx.bet() : 1);
+      else UI.modal(`Como jogar — ${g.name}`, g.rules);
+    });
     return el;
   }
 

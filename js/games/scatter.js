@@ -29,6 +29,30 @@
         <table class="paytable"><tr><td></td><td>8–9</td><td>10–11</td><td>12+</td></tr>
         ${cfg.symbols.map(s => `<tr><td class="pt-sym">${ico(s.img)} ${s.name}</td>${s.pays.map(p => `<td><b>${fmt(p)}x</b></td>`).join('')}</tr>`).join('')}</table>
         <p class="muted small">RTP teórico aproximado: ${cfg.rtp}. Atalho: barra de espaço gira.</p>`,
+      info: {
+        maxWin: cfg.maxWin, vol: cfg.vol, rtp: cfg.rtp, hit: cfg.hit, highlights: cfg.highlights,
+        how: `<p>Grade <b>6×5 sem linhas</b>: junte <b>8 ou mais</b> símbolos iguais em <b>qualquer posição</b>. Quanto mais iguais, mais paga.</p>
+          <p>Os símbolos vencedores explodem e novos caem no lugar (<b>cascata</b>) — um único giro pode pagar várias vezes.</p>
+          <p>${ico(cfg.scatter.img)} <b>${cfg.scatter.name}</b> é o scatter: 4+ abrem as rodadas grátis.</p>`,
+        tables: [
+          {
+            title: 'Pagamento por quantidade', note: 'Paga o maior grupo de cada símbolo. Grupos de símbolos diferentes se somam.',
+            head: ['8–9', '10–11', '12+'],
+            rows: cfg.symbols.map(s => ({ img: s.img, name: s.name, pays: s.pays })),
+          },
+          {
+            title: `${cfg.scatter.name} (scatter)`, note: `Além do prêmio, 4+ dão ${cfg.fsCount} rodadas grátis.`,
+            head: ['4', '5', '6+'],
+            rows: [{ img: cfg.scatter.img, name: cfg.scatter.name, badge: 'SCATTER', pays: [SCATTER_PAY[4], SCATTER_PAY[5], SCATTER_PAY[6]] }],
+          },
+        ],
+        features: `
+          <p>${ico(cfg.scatter.img)} <b>Rodadas grátis:</b> 4 ou mais ${cfg.scatter.name.toLowerCase()}s dão <b>${cfg.fsCount} rodadas grátis</b> com a mesma aposta. Durante elas, 3+ dão <b>+5 rodadas</b>.</p>
+          ${cfg.orbRules}
+          <table class="paytable"><tr class="si-head"><td>Multiplicador</td><td>Chance (entre os multiplicadores)</td></tr>${cfg.orbs.map(o => `<tr><td><b>x${o.m}</b></td><td>${Math.round((o.w / cfg.orbs.reduce((s, x) => s + x.w, 0)) * 100)}%</td></tr>`).join('')}</table>
+          <p>💰 <b>Comprar bônus:</b> entra direto nas rodadas grátis por <b>${cfg.buyX}x</b> a aposta.</p>
+          <p class="muted small">As rodadas grátis aparecem em média 1 a cada ~${cfg.fsEvery} giros. Prêmio máximo: ${fmt(cfg.maxWin).replace(',00', '')}x a aposta — ao atingir, a rodada termina.</p>`,
+      },
 
       mount(root, ctx) {
         const el = h(`
@@ -59,6 +83,8 @@
         const spinBtn = $('.spin-btn', el), buyBtn = $('.buy', el), mascot = $('.scat-mascot', el);
         const stepper = UI.betStepper([0.2, 0.4, 1, 2, 3, 5, 10, 20, 50, 100, 200], 3);
         $('.slot-bet', el).append(stepper.el);
+        ctx.bet = () => stepper.value;
+        SlotInfo.attach(el, ctx);
         const fsBar = freeSpinBar(ctx, on => { if (on && !busy) spin(); });
         $('.fs-slot', el).append(fsBar.el);
         const renderBuy = () => { buyBtn.innerHTML = `💰 Comprar bônus <b>🪙 ${fmt(stepper.value * cfg.buyX)}</b>`; };
@@ -178,6 +204,14 @@
             w = round2(w + (SCATTER_PAY[Math.min(6, r.scatters)] || 0) * bet);
             total = round2(total + w);
             winEl.textContent = fmt(total);
+            if (total >= cfg.maxWin * bet) {
+              total = round2(cfg.maxWin * bet);
+              winEl.textContent = fmt(total);
+              msg('PRÊMIO MÁXIMO! 🏆');
+              Sfx.big();
+              await wait(1200);
+              break;
+            }
             if (r.scatters >= 3) {
               left += 5;
               msg('+5 RODADAS GRÁTIS!');
@@ -216,7 +250,7 @@
           } else if (pay === 0) {
             msg('Não foi dessa vez...');
           }
-          finish(free ? 0 : bet, pay, bet);
+          finish(free ? 0 : bet, Math.min(pay, round2(cfg.maxWin * bet)), bet);
         }
 
         async function buy() {
@@ -293,6 +327,8 @@
     scatter: { id: 'sc', img: 'lollipop', name: 'Pirulito', w: 1.25 },
     orbImg: 'rainbow', orbs: ORBS, orbBase: 0, orbFS: 0.048,
     fsCount: 10, buyX: 87, accumulate: false,
+    maxWin: 21100, vol: 3, hit: '~1 em 3 giros (33%)', fsEvery: 460,
+    highlights: ['🍭 4+ pirulitos = <b>10 rodadas grátis</b>', '🌈 Nas rodadas grátis caem <b>bombas de 2x a 100x</b> que se somam', 'Cascatas: um giro pode pagar várias vezes', 'Prêmio máximo: <b>21.100x</b>'],
   }));
 
   App.register(createScatterSlot({
@@ -307,6 +343,8 @@
     scatter: { id: 'sc', img: 'voltage', name: 'Raio de Zeus', w: 1.25 },
     orbImg: 'crystal', orbs: ORBS, orbBase: 0.0048, orbFS: 0.03,
     fsCount: 10, buyX: 60, accumulate: true,
+    maxWin: 5000, vol: 4, hit: '~1 em 3 giros (32%)', fsEvery: 510,
+    highlights: ['⚡ Orbes de <b>2x a 100x</b> podem cair em qualquer giro', 'Nas rodadas grátis os orbes <b>acumulam</b> e valem para todos os ganhos seguintes', '4+ raios = <b>10 rodadas grátis</b>', 'Prêmio máximo: <b>5.000x</b>'],
   }));
 
   App.register(createScatterSlot({
@@ -321,5 +359,7 @@
     scatter: { id: 'sc', img: 'shootingstar', name: 'Estrela cadente', w: 1.25 },
     orbImg: 'glowstar', orbs: ORBS, orbBase: 0.0048, orbFS: 0.03,
     fsCount: 10, buyX: 60, accumulate: true,
+    maxWin: 5000, vol: 4, hit: '~1 em 3 giros (32%)', fsEvery: 510,
+    highlights: ['🌟 Estrelas de <b>2x a 100x</b> podem cair em qualquer giro', 'Nas rodadas grátis as estrelas <b>acumulam</b> e valem para todos os ganhos seguintes', '4+ estrelas cadentes = <b>10 rodadas grátis</b>', 'Prêmio máximo: <b>5.000x</b>'],
   }));
 })();

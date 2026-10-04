@@ -50,6 +50,7 @@ Os RTPs dos slots foram calibrados por simulação; o do Keno é exato (hipergeo
 - **Anúncios fictícios:** +🪙 250 por anúncio (10 por dia); prêmios altos (≥10x, ou ≥🪙 300 com ≥3x) oferecem **dobrar o prêmio** assistindo um anúncio. Para plugar uma rede de anúncios de verdade, troque só `Ads.watch()` em `js/progress.js`.
 - **Retenção:** carrossel de promoções, "Mais jogados", "Continue jogando", selos HOT/NOVO, pontinhos de notificação na navegação, celebração de nível, oferta de anúncio/recarga quando as fichas acabam.
 - **Histórico de giros (slots):** botão 📜 no topo de todo slot mostra o resultado da sessão e abre os últimos 100 giros com vitórias/perdas, filtros, resumo (apostado, recebido, resultado, maior prêmio) e gráfico dos últimos giros. Qualquer slot novo entra sozinho (vem do `ctx.round`).
+- **Painel de prêmios (slots):** botão 🏆 "Prêmios" ao lado do ganho (e o "?") abre abas Resumo (prêmio máximo, RTP, volatilidade, chance de ganho), Pagamentos (em fichas para a aposta atual), Bônus e Linhas (desenho de cada linha). Cada slot descreve isso em `info` (ver `js/slotinfo.js`).
 - **Jogo responsável:** lembrete de pausa a cada 1h de sessão.
 
 ## Estrutura
@@ -63,6 +64,7 @@ assets/audio/bossa.mp3  música ambiente em loop
 js/core.js          utilidades, RNG, carteira, sons, UI (bigWin, confete), Bus de eventos, GameCtx
 js/progress.js      XP/passe, missões, check-in, roda, anúncios fictícios, rodadas grátis
 js/history.js       histórico de giros dos slots (localStorage) e o modal de histórico
+js/slotinfo.js      painel "Prêmios" dos slots (prêmio máximo, tabela, bônus, linhas)
 js/pages.js         páginas Bônus, Missões, Passe e VIP
 js/main.js          roteador por hash (#/id), lobby, carteira, navegação
 js/games/*.js       um arquivo por jogo, cada um chama App.register({ id, name, art, ..., mount(root, ctx) })

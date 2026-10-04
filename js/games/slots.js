@@ -48,6 +48,32 @@
         <p>🎁 <b>Rodadas grátis</b> do bônus diário, missões e passe podem ser usadas aqui.</p>
         <h4>Tabela (por linha, × aposta total)</h4>${paytable(cfg)}
         <p class="muted small">RTP teórico aproximado: ${cfg.rtp}. Atalho: barra de espaço gira.</p>`,
+      info: {
+        maxWin: cfg.maxWin, vol: cfg.vol, rtp: cfg.rtp, hit: cfg.hit, highlights: cfg.highlights,
+        how: `<p>Grade <b>3×3</b> com <b>5 linhas fixas</b> (veja a aba Linhas). Três símbolos iguais numa linha pagam; ganhos em linhas diferentes <b>se somam</b>.</p>
+          <p>${ico(wild.img)} <b>${wild.name}</b> é o coringa: substitui qualquer símbolo${prize ? ` (menos a ${prize.name.toLowerCase()})` : ''} e 3 dele pagam o maior valor da tabela.</p>
+          ${prize ? `<p>${ico(prize.img)} <b>${cfg.prizeMin} ou mais ${prize.plural}</b> em qualquer lugar pagam a soma dos valores escritos nelas.</p>` : ''}`,
+        tables: [
+          {
+            title: 'Pagamento por linha', note: 'Valor de cada linha com 3 iguais. O coringa completa qualquer linha.',
+            head: ['3 na linha'],
+            rows: cfg.symbols.filter(s => !s.prize).map(s => ({ img: s.img, name: s.name, badge: s.wild ? 'CORINGA' : '', pays: [s.pay / 5] })),
+          },
+          ...(prize ? [{
+            title: `Valores da ${prize.name.toLowerCase()}`, note: `Cada ${prize.name.toLowerCase()} mostra um destes valores. Com ${cfg.prizeMin}+ na tela (ou nas Rodadas do Coelho) você ganha a soma.`,
+            head: ['cada uma'],
+            rows: cfg.prizeValues.map(p => ({ img: prize.img, name: fmtV(p.v), pays: [p.v] })),
+          }] : []),
+        ],
+        features: `${cfg.featureRules}
+          ${cfg.multipliers ? `<table class="paytable"><tr class="si-head"><td>Multiplicador</td><td>Chance por giro</td></tr>${cfg.multipliers.map(m => `<tr><td><b>x${m.m}</b></td><td>${Math.round((m.w / cfg.multipliers.reduce((s, x) => s + x.w, 0)) * 100)}%</td></tr>`).join('')}</table>` : ''}
+          <p>🎁 <b>Rodadas grátis</b> do bônus diário, missões e passe valem aqui (aposta fixa de 🪙 ${fmt(Progress.FS_BET)}).</p>
+          <p class="muted small">Prêmio máximo por giro: ${fmtV(cfg.maxWin)} a aposta.</p>`,
+        lines: {
+          cols: 3, rows: 3, list: LINES.map(L => L.map(i => `${i % 3}:${Math.floor(i / 3)}`)),
+          text: 'As 5 linhas ficam ativas em todo giro: 3 horizontais e 2 diagonais. A aposta total é dividida entre elas.',
+        },
+      },
 
       mount(root, ctx) {
         const el = h(`
@@ -79,6 +105,8 @@
         const mascot = $('.slot-mascot', el);
         const stepper = UI.betStepper(undefined, 3);
         $('.slot-bet', el).append(stepper.el);
+        ctx.bet = () => stepper.value;
+        SlotInfo.attach(el, ctx);
         const fsBar = freeSpinBar(ctx, on => { spinBtn.classList.toggle('free', on); if (on && !busy) spin(); });
         $('.fs-slot', el).append(fsBar.el);
 
@@ -186,11 +214,12 @@
             await animateTo(grid, { gen });
             const sum = grid.reduce((s, x) => s + (x.val || 0), 0);
             if (sum > 0) {
-              total = round2(total + sum * bet);
+              total = round2(Math.min(cfg.maxWin * bet, total + sum * bet));
               cells.forEach((c, i) => { if (grid[i].prize) c.classList.add('win'); });
               winEl.textContent = fmt(total);
               Sfx.coin();
               await ctx.sleep(turbo ? 350 : 750);
+              if (total >= cfg.maxWin * bet) { msg('PRÊMIO MÁXIMO! 🏆'); break; }
             } else {
               await ctx.sleep(turbo ? 150 : 350);
             }
@@ -263,7 +292,7 @@
           const wins = evaluate(res.grid);
           const prizes = prize && !res.bonus ? res.grid.map((x, i) => (x.prize ? i : -1)).filter(i => i >= 0) : [];
           const prizeWin = prizes.length >= cfg.prizeMin ? round2(prizes.reduce((s, i) => s + res.grid[i].val, 0) * bet) : 0;
-          const payout = round2(wins.reduce((s, w) => s + w.sym.pay, 0) * (bet / 5) * res.mult + prizeWin + (res.bonus || 0));
+          const payout = round2(Math.min(cfg.maxWin * bet, wins.reduce((s, w) => s + w.sym.pay, 0) * (bet / 5) * res.mult + prizeWin + (res.bonus || 0)));
           if (wins.length || prizeWin) {
             cells.forEach(c => c.classList.add('dim'));
             wins.forEach(w => w.cells.forEach(i => { cells[i].classList.remove('dim'); cells[i].classList.add('win'); }));
@@ -323,6 +352,8 @@
     intro: 'Inspirado no famoso "jogo do tigrinho".',
     featureRules: `<p><b>🐯 Carta do Tigre:</b> em qualquer giro o tigre pode soltar a carta. Um símbolo é sorteado e os rolos fazem <b>respins</b> travando esse símbolo (e coringas) até formar ao menos uma linha. Se a <b>tela inteira</b> for preenchida, o prêmio é multiplicado por <b>x10</b>!</p>`,
     featureChance: 1 / 45, lock: [0.35, 0.22, 0.15], emoji: '🐯',
+    maxWin: 2500, vol: 3, hit: '~1 em 3 giros (33%)',
+    highlights: ['🐯 <b>Carta do Tigre</b> (≈1 em 45 giros): respins até sair pelo menos 1 linha — ganho garantido', 'Encheu a tela com um símbolo? Prêmio <b>x10</b>', 'Tela cheia de Tigres = <b>2.500x</b>, o prêmio máximo'],
     featureMsg: t => `CARTA DO TIGRE! Símbolo da rodada: ${t.name}`,
     symbols: [
       { id: 'tigre', img: 'tiger', name: 'Tigre', w: 3, pay: 250, wild: true },
@@ -340,6 +371,8 @@
     tag: 'Rolo coringa · ganho garantido', colors: ['#f43f5e', '#7c2d12'], rtp: '~95,7%',
     intro: 'Inspirado no "Fortune Mouse".',
     feature: 'mouse',
+    maxWin: 250, vol: 1, hit: '~1 em 3 giros (32%)',
+    highlights: ['🐭 <b>Ratinho Sortudo</b> (≈1 em 18 giros): rolo do meio vira coringa e o ganho é garantido', 'Muitos ganhos pequenos: bom para saldo baixo', 'Tela cheia de Ratinhos = <b>250x</b>'],
     featureRules: `<p><b>🐭 Ratinho Sortudo:</b> em qualquer giro (≈ 1 a cada 18) o rolo do meio vira <b>coringa</b> inteiro e os outros rolos giram de novo até formar pelo menos uma linha — <b>vitória garantida</b>!</p>`,
     featureChance: 1 / 18,
     symbols: [
@@ -358,6 +391,8 @@
     tag: 'Touro Furioso · tela cheia x10', colors: ['#dc2626', '#a16207'], rtp: '~96%',
     intro: 'Inspirado no "Fortune Ox".',
     feature: 'ox', featureChance: 1 / 40, lock: [0.3, 0.25, 0.12], emoji: '🐂',
+    maxWin: 2350, vol: 3, hit: '~1 em 3 giros (30%)',
+    highlights: ['🐂 <b>Touro Furioso</b> (≈1 em 40 giros): ganho garantido', 'Encheu a tela? Prêmio <b>x10</b>', 'Tela cheia de Touros = <b>2.350x</b>, o prêmio máximo'],
     featureMsg: t => `TOURO FURIOSO! Rolo do meio travado em ${t.name}`,
     featureRules: `<p><b>🐂 Touro Furioso:</b> em qualquer giro (≈ 1 a cada 40) o rolo do meio trava inteiro com um símbolo sorteado e os rolos das pontas fazem <b>respins</b>, travando esse símbolo (e coringas), até formar pelo menos uma linha. Encheu a <b>tela inteira</b>? Prêmio <b>x10</b>!</p>`,
     symbols: [
@@ -377,6 +412,8 @@
     intro: 'Inspirado no "Fortune Rabbit".',
     feature: 'rabbit', featureChance: 1 / 70, featureName: 'Rodadas do Coelho',
     rabbitSpins: 8, rabbitP: 0.1, prizeMin: 5,
+    maxWin: 5000, vol: 3, hit: '~1 em 4 giros (24%)',
+    highlights: ['🥕 Cenouras valem de <b>0,5x a 200x</b> a aposta', '<b>5+ cenouras</b> na tela pagam a soma de todas', '🐰 <b>Rodadas do Coelho</b> (≈1 em 70 giros): 8 giros em que toda cenoura paga', 'Prêmio máximo: <b>5.000x</b> por giro'],
     prizeValues: [{ v: 0.5, w: 35 }, { v: 1, w: 25 }, { v: 2, w: 18 }, { v: 5, w: 10 }, { v: 10, w: 6 }, { v: 25, w: 2.5 }, { v: 50, w: 1 }, { v: 200, w: 0.15 }],
     featureRules: `<p><b>🥕 Cenouras de prêmio:</b> cada cenoura mostra um valor (0,5x a 200x a aposta). Com <b>5 ou mais</b> cenouras na tela, você ganha a soma de todas — além das linhas.</p>
       <p><b>🐰 Rodadas do Coelho:</b> em qualquer giro (≈ 1 a cada 70) começam <b>8 giros grátis</b> em que só caem cenouras e espaços vazios — e <b>toda cenoura paga</b>, sem mínimo.</p>`,
@@ -397,6 +434,8 @@
     tag: 'Multiplicador até x10', colors: ['#e11d48', '#6d28d9'], rtp: '~96%',
     intro: 'Inspirado no "jogo do dragãozinho".',
     featureRules: `<p><b>🔥 Sopro do Dragão:</b> todo giro sorteia um multiplicador (x1, x2, x5 ou x10) mostrado no topo, aplicado a todos os ganhos daquele giro.</p>`,
+    maxWin: 1000, vol: 2, hit: '~1 em 3,5 giros (29%)',
+    highlights: ['🔥 Todo giro sorteia um multiplicador: <b>x1, x2, x5 ou x10</b>', 'O multiplicador vale para todas as linhas do giro', 'Tela cheia de Dragões com x10 = <b>1.000x</b>'],
     multipliers: [{ m: 1, w: 60 }, { m: 2, w: 25 }, { m: 5, w: 11 }, { m: 10, w: 4 }],
     symbols: [
       { id: 'dragao', img: 'dragon', name: 'Dragão', w: 2, pay: 100, wild: true },

@@ -1034,3 +1034,48 @@ select { padding: 9px 10px; border-radius: 12px; background: var(--bg2); border:
   .slot-grid { gap: 6px; padding: 6px; }
   .slot-winbar b { font-size: 1.35rem; }
 }
+
+/* =========================================================
+   Painel "Prêmios" dos slots
+   ========================================================= */
+.slot-winbar { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 6px; }
+.wb-main { grid-column: 2; white-space: nowrap; }
+.info-btn { grid-column: 3; justify-self: end; display: inline-flex; align-items: center; gap: 4px; padding: 5px 10px 5px 6px; border-radius: 999px; background: linear-gradient(180deg, #3b2a80, #251a4f); border: 1px solid var(--gold2); color: var(--gold); font-size: .78rem; font-weight: 900; box-shadow: 0 2px 0 #120c26, 0 0 10px rgba(251, 191, 36, .25); }
+.info-btn .ico { width: 20px; height: 20px; }
+.sinfo { display: flex; flex-direction: column; gap: 10px; }
+.sinfo h4 { margin: 6px 0 0; }
+.sinfo p { margin: 0; }
+
+.si-max { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 16px; background: linear-gradient(135deg, #b45309, #7c2d12); border: 1px solid var(--gold); box-shadow: 0 0 18px rgba(251, 191, 36, .3); }
+.si-max .si-trophy { width: 54px; height: 54px; flex: none; animation: float 2.5s ease-in-out infinite; }
+.si-max small { display: block; color: #fde68a; font-size: .75rem; }
+.si-max b { display: block; font-family: var(--title); font-weight: 400; font-size: 1.5rem; color: #fff7c2; line-height: 1.1; }
+.si-max span { font-size: .82rem; color: #fde68a; }
+.si-stats b { font-size: .95rem; }
+.vol { color: var(--gold); letter-spacing: 1px; }
+.si-list { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; }
+.si-table td { vertical-align: middle; }
+.si-table td:not(:first-child) { text-align: right; white-space: nowrap; }
+.si-table td small { display: block; color: var(--muted); font-size: .7rem; }
+.si-table .pt-sym { display: flex; align-items: center; gap: 6px; }
+.si-table .pt-sym .ico { width: 28px; height: 28px; flex: none; }
+.si-head td { color: var(--muted); font-size: .75rem; font-weight: 900; }
+.ln-wrap { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 8px; }
+.ln { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px; border-radius: 12px; background: var(--bg2); }
+.ln-grid { display: grid; gap: 3px; width: 100%; }
+.ln-grid i { aspect-ratio: 1; border-radius: 3px; background: rgba(255, 255, 255, .1); }
+.ln-grid i.on { background: var(--gold); box-shadow: 0 0 6px rgba(251, 191, 36, .7); }
+.ln small { color: var(--muted); font-size: .72rem; }
+@media (max-width: 520px) {
+  .info-btn { padding: 4px 8px 4px 5px; font-size: .72rem; }
+  .info-btn .ico { width: 18px; height: 18px; }
+  .si-table td { padding: 5px 3px; font-size: .82rem; }
+  .si-table .pt-sym .ico { width: 24px; height: 24px; }
+}
+@media (max-width: 520px) {
+  /* tabelas com 3 colunas de valores: só o ícone do símbolo */
+  .si-wide .pt-sym > span { display: none; }
+  .si-wide td { font-size: .76rem; }
+  .si-wide td small { font-size: .64rem; }
+}
+.si-max b.si-coins { display: inline; font-family: inherit; font-size: inherit; font-weight: 900; color: #fff7c2; }

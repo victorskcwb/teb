@@ -33,6 +33,7 @@
   const SCAT_PAY = { 3: 2, 4: 20, 5: 200 };
   const STEPS = [{ at: 4, m: 2 }, { at: 8, m: 3 }, { at: 12, m: 10 }];
   const BUY_X = 77;
+  const MAX_WIN = 5000;
   const sym = id => SYMBOLS.find(s => s.id === id);
 
   const draw = fs => {
@@ -74,6 +75,46 @@
       <table class="paytable"><tr><td></td><td>3</td><td>4</td><td>5</td></tr>
       ${SYMBOLS.filter(s => s.pays).map(s => `<tr><td class="pt-sym">${ico(s.img)} ${s.name}</td>${s.pays.map(p => `<td><b>${fmt(p)}x</b></td>`).join('')}</tr>`).join('')}</table>
       <p class="muted small">RTP teórico aproximado: ~94% (compra de bônus ~95%). Atalho: barra de espaço gira.</p>`,
+    info: {
+      maxWin: MAX_WIN, vol: 4, rtp: '~94%', hit: '~1 em 4,5 giros (22%)',
+      highlights: [
+        '🛟 3+ boias = <b>10 a 20 rodadas grátis</b> (≈1 em 165 giros)',
+        '🎣 Nas rodadas grátis o <b>Pescador fisga o valor de todos os peixes</b> da tela',
+        'A cada 4 pescadores: <b>+10 rodadas</b> e a coleta passa a valer <b>x2, x3 e x10</b>',
+        `Prêmio máximo: <b>${fmt(MAX_WIN).replace(',00', '')}x</b>`,
+      ],
+      how: `<p>Grade <b>5×3</b> com <b>10 linhas</b> (veja a aba Linhas). Junte <b>3, 4 ou 5 símbolos iguais seguidos a partir do rolo da esquerda</b> numa linha.</p>
+        <p>${ico('buoy')} <b>Boia</b> é o scatter: paga em qualquer lugar e 3+ abrem as rodadas grátis.</p>
+        <p>${ico('fishingpole')} O <b>Pescador</b> só aparece nas rodadas grátis: é coringa e coleta os peixes.</p>`,
+      tables: [
+        {
+          title: 'Pagamento por linha', note: 'Símbolos iguais seguidos a partir do 1º rolo. Linhas diferentes se somam.',
+          head: ['3', '4', '5'],
+          rows: SYMBOLS.filter(s => s.pays).map(s => ({ img: s.img, name: s.name, pays: s.pays })),
+        },
+        {
+          title: 'Boia (scatter)', note: 'Paga em qualquer posição e abre as rodadas grátis: 3 = 10 giros, 4 = 15, 5 = 20.',
+          head: ['3', '4', '5'],
+          rows: [{ img: 'buoy', name: 'Boia', badge: 'SCATTER', pays: [SCAT_PAY[3], SCAT_PAY[4], SCAT_PAY[5]] }],
+        },
+        {
+          title: 'Valores dos peixes', note: 'Cada peixe mostra um destes valores. Nas rodadas grátis, cada Pescador na tela coleta todos eles.',
+          head: ['cada peixe'],
+          rows: FISH.map(f => ({ img: 'fish', name: `Peixe ${f.v}x`, pays: [f.v] })),
+        },
+      ],
+      features: `
+        <p>${ico('buoy')} <b>Rodadas grátis:</b> 3, 4 ou 5 boias dão <b>10, 15 ou 20 giros</b> com a mesma aposta.</p>
+        <p>${ico('fishingpole')} <b>Pescador:</b> em cada giro grátis, cada Pescador na tela coleta a <b>soma de todos os peixes</b>. Dois pescadores = coleta dupla.</p>
+        <table class="paytable"><tr class="si-head"><td>Pescadores coletados</td><td>Bônus</td></tr>
+          ${STEPS.map(st => `<tr><td><b>${st.at}</b></td><td>+10 rodadas · coleta <b>x${st.m}</b></td></tr>`).join('')}</table>
+        <p>💰 <b>Comprar bônus:</b> 10 rodadas grátis por <b>${BUY_X}x</b> a aposta.</p>
+        <p class="muted small">Prêmio máximo: ${fmt(MAX_WIN).replace(',00', '')}x a aposta — ao atingir, a pescaria termina.</p>`,
+      lines: {
+        cols: 5, rows: 3, list: LINES.map(L => L.map((row, r) => `${r}:${row}`)),
+        text: 'As 10 linhas ficam ativas em todo giro. O ganho conta a partir do rolo da esquerda.',
+      },
+    },
 
     mount(root, ctx) {
       const el = h(`
@@ -104,6 +145,8 @@
       const spinBtn = $('.spin-btn', el), buyBtn = $('.buy', el), mascot = $('.slot-mascot', el);
       const stepper = UI.betStepper([0.2, 0.5, 1, 2, 3, 5, 10, 20, 50, 100, 200], 3);
       $('.slot-bet', el).append(stepper.el);
+      ctx.bet = () => stepper.value;
+      SlotInfo.attach(el, ctx);
       const fsBar = freeSpinBar(ctx, on => { spinBtn.classList.toggle('free', on); if (on && !busy) spin(); });
       $('.fs-slot', el).append(fsBar.el);
       const renderBuy = () => { buyBtn.innerHTML = `💰 Comprar bônus <b>🪙 ${fmt(stepper.value * BUY_X)}</b>`; };
@@ -222,6 +265,14 @@
           }
           total = round2(total + w);
           winEl.textContent = fmt(total);
+          if (total >= MAX_WIN * bet) {
+            total = round2(MAX_WIN * bet);
+            winEl.textContent = fmt(total);
+            msg('PRÊMIO MÁXIMO! 🏆');
+            Sfx.big();
+            await wait(1200);
+            break;
+          }
           const before = collected;
           collected += wilds;
           for (const st of STEPS) {
@@ -271,7 +322,7 @@
         } else if (pay === 0) {
           msg('Não foi dessa vez...');
         }
-        finish(free ? 0 : bet, pay, bet);
+        finish(free ? 0 : bet, Math.min(pay, round2(MAX_WIN * bet)), bet);
       }
 
       async function buy() {
