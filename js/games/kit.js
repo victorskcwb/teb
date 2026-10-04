@@ -61,10 +61,16 @@ const SlotKit = (() => {
   /** Cascata: remove as chaves e completa cada coluna por cima com draw(c). */
   function cascade(grid, keys, draw, keep = () => false) {
     const rm = keys instanceof Set ? keys : new Set(keys);
+    // casas trancadas (lock/fixed) não caem: os outros símbolos descem só pelas casas livres
+    const fixed = x => x && (x.fixed || x.id === 'lock');
     grid.forEach((col, c) => {
-      const stay = col.filter((x, r) => !rm.has(key(c, r)) || keep(x));
-      const add = Array.from({ length: col.length - stay.length }, () => ({ ...draw(c), fresh: true }));
-      grid[c] = [...add, ...stay];
+      const slots = col.map((x, r) => r).filter(r => !fixed(col[r]));
+      const stay = slots.filter(r => !rm.has(key(c, r)) || keep(col[r])).map(r => col[r]);
+      const add = Array.from({ length: slots.length - stay.length }, () => ({ ...draw(c), fresh: true }));
+      const fill = [...add, ...stay];
+      const out = col.slice();
+      slots.forEach((r, i) => { out[r] = fill[i]; });
+      grid[c] = out;
     });
     return grid;
   }
@@ -344,7 +350,7 @@ const SlotKit = (() => {
         tables: (cfg.tables || []).map(t => ({ ...t, rows: t.raw ? t.rows : scale(t.rows) })),
         features: `${cfg.features}
           ${fsEvery && cfg.buy !== false ? `<p class="muted small">O bônus aparece em média 1 vez a cada ~${fsEvery} giros.</p>` : ''}
-          ${buyX ? `<p>💰 <b>Comprar bônus:</b> entra direto no bônus por <b>${buyX}x</b> a aposta.</p>` : ''}
+          ${buyX ? `<p>💰 <b>Comprar bônus:</b> entra direto no bônus por <b>${buyX}x</b> a aposta (retorno médio da compra ~94%).</p>` : ''}
           <p class="muted small">Prêmio máximo: ${maxTxt}x a aposta — ao atingir, a rodada termina.</p>`,
         lines: L ? { cols: L.cols, rows: L.rows, list: L.list.map(line => line.map((r, c) => `${c}:${r}`)), text: L.text } : null,
       },
