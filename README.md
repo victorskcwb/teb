@@ -163,6 +163,45 @@ Recriações com nomes e artes próprios dos slots mais jogados de cada estúdio
 | Empilha Aí | Stack 'Em | Pilhas multiplicam · 5 vidas | ~96,2% | 10.000x |
 | Fortuna dos Mortos-Vivos | Undead Fortune | Coringas que andam até x200 | ~96,3% | 10.000x |
 | Despencou | Drop 'Em | Drop preenche com um só símbolo | ~96,3% | 10.000x |
+| Medo do Escuro | Fear the Dark | Lua Cheia até x100 · grade que encolhe | ~96,3% | 5.000x |
+| Mares Malditos | Cursed Seas | Baús amaldiçoados até x200 | ~96,2% | 12.500x |
+| Templo do Tormento | Temple of Torment | Escaravelhos até x200 | ~96,2% | 10.000x |
+| Segure-as! | Keep'em | Cash'em · Get'em · Keep'em | ~96,3% | 10.000x |
+| Deixe Nevar | Let it Snow | Símbolo que se espalha · roda até 50 giros | ~96,4% | 7.400x |
+| Bússola do Tesouro | Cash Compass | Bússola espalha símbolos · 7.400x | ~96,4% | 7.400x |
+| Multiplicador Miami | Miami Multiplier | Multiplicador total até x60 | ~96,3% | 5.000x |
+| Os Respinners | The Respinners | A banda dá respins | ~96,4% | 5.150x |
+| Giro Asteca | Aztec Twist | Linhas completas dão respin | ~96,4% | 6.900x |
+| Fortuna da Floresta | Forest Fortune | Vento clona coringas · 10.000x | ~96,3% | 10.000x |
+| Arco-Íris Duplo | Double Rainbow | Rolos coloridos até x250 | ~96,4% | 5.000x |
+| Colheita Selvagem | Harvest Wilds | Girassóis multiplicadores que pulam | ~96,4% | 10.000x |
+| Caminho do Guerreiro | Warrior Ways | Duelos de clãs até x100 | ~96,3% | 10.000x |
+| Porquinho Mágico | Magic Piggy | Cartola vira porquinhos em coringa ou notas | ~96,2% | 7.500x |
+| Forjado na Tempestade | Stormforged | Coringas até x200 · dois bônus | ~96,4% | 12.500x |
+| Food Truck do Fred | Fred's Food Truck | Multiplicador global até x100 | ~96,3% | 10.000x |
+| 2 Selvagens 2 Morrer | 2 Wild 2 Die | Revólveres atiram coringas até x200 | ~96,3% | 15.000x |
+| Benny, a Cerveja | Benny the Beer | Stackways até 100.000 caminhos | ~96,2% | 10.000x |
+| Punho da Destruição | Fist of Destruction | Punhos viram rolos coringa até x200 | ~96,3% | 10.000x |
+| Densho | Densho | Rolos multiplicadores até x100 | ~96,3% | 10.000x |
+| Gatos Laser | Beam Boys | Lasers criam fileiras coringa | ~96,3% | 12.500x |
+| Aurora dos Reis | Dawn of Kings | Livro com expansão · 10.000x | ~96,2% | 10.000x |
+| Sinta a Batida | Feel the Beat | Caixas de som · X até x500 | ~96,2% | 10.000x |
+| Bombas Saltitantes | Bouncy Bombs | Bombas x5–x25 que dobram | ~96,2% | 10.000x |
+| Rusty e Curly | Rusty & Curly | Cartazes com corações e respins | ~96,3% | 10.000x |
+| Gangue do Dinheiro | Cash Crew | Notas até 500x · coringas x25 | ~96,3% | 10.000x |
+| Matadores S.A. | Slayers Inc | DuelReels até x500 · 15.000x | ~96,3% | 15.000x |
+| Zé Zeus | Ze Zeus | Quadrados divinos · Mão de Zeus | ~96,3% | 10.000x |
+| Cripta Amaldiçoada | Cursed Crypt | Maldição transforma rolos | ~96,2% | 10.000x |
+| O Faraó Guaxinim | Le Pharaoh | Re-drops colantes · 15.000x | ~96,2% | 15.000x |
+| Seis Seis Seis | SixSixSix | Rodas Malvadas até 500x | ~94,2% | 16.666x |
+| Laboratório Torcido | Twisted Lab | RotoGrid gira a grade | ~96,3% | 15.000x |
+| Águia Alfa | Alpha Eagle | Stack'n'Sync · dourado até x100 | ~96,3% | 10.000x |
+| Livro do Tempo | Book of Time | Livro clássico · relógios até x12 | ~96,4% | 10.000x |
+| Gemas do Gronk | Gronk's Gems | Gema Épica transforma tudo | ~96,2% | 7.500x |
+| Garotos do Bowery | The Bowery Boys | Cofres até x100 · banco da gangue | ~96,4% | 10.000x |
+| Motoqueiros S.A. | Outlaws Inc | Pumas somam, orcs multiplicam | ~96,2% | 10.000x |
+| Cubos 2 | Cubes 2 | Grade cresce até 11×11 | ~96,3% | 10.500x |
+| Xpander | Xpander | Saltador até 4×4 e x128 | ~96,3% | 10.000x |
 
 **Estilo TaDa / JILI**
 

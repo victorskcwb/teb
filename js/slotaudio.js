@@ -59,6 +59,10 @@ const SlotAudio = (() => {
     carnavalmascaras: 'latin', maravilhasespirituais: 'japan', bufalovencedor: 'prairie', invasoresfazenda: 'space', riquezassereia: 'ocean', golpemestre: 'noir', totens: 'prairie', deliciasrestaurante: 'cartoon', padaria: 'candy', songkran: 'tropical',
     espiritosmisticos: 'mystic', tikihavaiano: 'tropical', gloriagladiador: 'epic', asgard: 'epic', montanharussa: 'party', perseu: 'epic', lendadragao: 'china', espadagemas: 'classic', favorimperador: 'china', tumbatesouro: 'egypt',
     tresmacacos: 'japan', engrenagens: 'mine', simbolosegito: 'egypt', panelaquente: 'china', pandahiphop: 'party', senhorhallow: 'horror', restaurantemaluco: 'cartoon', diaochan: 'china', livromisterio: 'egypt', sonhosmacau: 'classic',
+    medoescuro: 'horror', maresmalditos: 'pirate', templotormento: 'egypt', segureas: 'cartoon', deixenevar: 'snow', bussolatesouro: 'pirate', miamimult: 'party', respinners: 'party', giroasteca: 'jungle', fortunafloresta: 'jungle',
+    arcoirisduplo: 'irish', colheitaselvagem: 'prairie', caminhoguerreiro: 'japan', porquinhomagico: 'cartoon', forjadotempestade: 'epic', foodtruckfred: 'cartoon', doisselvagens: 'western', bennycerveja: 'irish', punhodestruicao: 'epic', densho: 'japan',
+    gatoslaser: 'space', aurorareis: 'egypt', sintabatida: 'party', bombasaltitantes: 'cartoon', rustycurly: 'western', gangdinheiro: 'noir', matadoressa: 'dark', zezeus: 'epic', criptamaldita: 'dark', faraoguaxinim: 'egypt',
+    seisseisseis: 'horror', labtorcido: 'dark', aguiaalfa: 'snow', livrotempo: 'mystic', gemasgronk: 'gems', garotosbowery: 'noir', motoqueiros: 'party', cubos2: 'gems', xpander: 'space',
     manicomio: 'horror', celaxways: 'dark', lapiderip: 'western', cidadefantasma: 'western', buracofogo: 'mine', submarino: 'ocean', blococelas: 'dark', sanguesombra: 'horror', gulaggelado: 'snow', detetiveserial: 'noir',
   };
 
