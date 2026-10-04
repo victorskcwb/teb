@@ -616,15 +616,72 @@
     }));
   })();
 
-  /* 35. Açúcar Supremo Powernudge — 6×6 com posições multiplicadoras */
-  App.register(T.clusterSpots({
-    id: 'acucarsupremo', name: 'Açúcar Supremo Powernudge', studio: STUDIO, art: 'candy', mascot: 'lollipop',
-    tag: '6×6 · posições até x128', colors: ['#d946ef', '#38bdf8'], bg: 'linear-gradient(180deg,#f5d0fe,#e879f9 50%,#7e22ce)',
-    intro: 'Inspirado no "Sugar Supreme Powernudge" (Pragmatic Play).', maxWin: 5000, cap: 128, n: 6,
-    syms: rushSyms([['bala', 'candy', 'Bala'], ['pirulito', 'lollipop', 'Pirulito'], ['donut', 'doughnut', 'Rosquinha'], ['cupcake', 'cupcake', 'Cupcake'], ['chiclete', 'gumball', 'Chiclete'], ['jujuba', 'jelly', 'Jujuba'], ['biscoito', 'cookie', 'Biscoito']]),
-    scImg: 'birthday', scName: 'Bolo', scW: 0.5, fsTable: { 3: 10, 4: 12, 5: 15, 6: 20, 7: 20 },
-    highlights: ['🍬 6×6 com grupos e cascata (<b>Powernudge</b>: tudo que vence desce e abre espaço)', '✨ Posições vencedoras viram multiplicadores que dobram até <b>x128</b>', '3/4/5/6 bolos = <b>10/12/15/20 rodadas grátis</b> com as posições guardadas', 'Prêmio máximo: <b>5.000x</b>'],
-  }));
+  /* 35. Açúcar Supremo Powernudge — 6×6 em grupos com Powernudge e posições multiplicadoras */
+  (() => {
+    const N = 6, CAP = 100;
+    const SY = rushSyms([['bala', 'candy', 'Bala'], ['pirulito', 'lollipop', 'Pirulito'], ['donut', 'doughnut', 'Rosquinha'], ['cupcake', 'cupcake', 'Cupcake'], ['chiclete', 'gumball', 'Chiclete'], ['jujuba', 'jelly', 'Jujuba'], ['biscoito', 'cookie', 'Biscoito']]).map((x, i) => (i >= 4 ? { ...x, fw: x.w * 1.35 } : x));
+    const SC = { id: 'sc', img: 'birthday', name: 'Bolo', sc: true, w: 0.5, fw: 0 };
+    const FS = { 3: 10, 4: 12, 5: 15, 6: 20 };
+    const draw = pool([...SY, SC]);
+    const make = wk => grid(Array(N).fill(N), c => draw(c, wk));
+    const fresh = () => Array.from({ length: N }, () => new Array(N).fill(0));
+    /** mostra os biscoitos multiplicadores (x1, x2...) nas posições marcadas */
+    const deco = (g, sp) => g.forEach((col, c) => col.forEach((x, r) => {
+      if (x.sc) return;
+      const v = sp[c][r];
+      x.c = v >= 2 ? 'mult' : v === 1 ? 'mark' : '';
+      x.t = v ? 'x' + v : undefined;
+    }));
+    /**
+     * Uma sequência: paga os grupos (cada grupo × soma dos multiplicadores sob ele), marca/soma +1
+     * nas posições vencedoras e, se o Powernudge entrar, empurra para baixo cada rolo com símbolo
+     * vencedor (um símbolo novo entra no topo). Repete enquanto houver ganho.
+     */
+    async function play(rt, g, wk, sp, always) {
+      let nudging = false;
+      for (let step = 0; step < 40; step++) {
+        const cl = clusters(g, 5);
+        const res = payClusters(cl, TT, k => k.cells.reduce((sum, kk) => { const [c, r] = unkey(kk); return sum + sp[c][r]; }, 0) || 1);
+        if (!res.total) break;
+        await pay(rt, res);
+        res.cells.forEach(kk => { const [c, r] = unkey(kk); sp[c][r] = Math.min(CAP, sp[c][r] + 1); });
+        deco(g, sp);
+        if (!nudging) { if (!always && RNG.float() >= 0.4) break; nudging = true; rt.msg('🍭 Powernudge!'); rt.fx('rise'); }
+        const cols = [...new Set([...res.cells].map(kk => unkey(kk)[0]))];
+        cols.forEach(c => { g[c] = [{ ...draw(c, wk), fresh: true }, ...g[c].slice(0, N - 1)]; });
+        deco(g, sp);
+        await rt.drop(g);
+      }
+    }
+    App.register(K.create({
+      id: 'acucarsupremo', name: 'Açúcar Supremo Powernudge', studio: STUDIO, art: 'candy', mascot: 'lollipop',
+      tag: '6×6 · Powernudge · biscoitos multiplicadores', colors: ['#d946ef', '#38bdf8'], bg: 'linear-gradient(180deg,#f5d0fe,#e879f9 50%,#7e22ce)',
+      cols: N, rows: N, maxWin: 5000, vol: 4, rtp: '~96,1%', target: 0.961,
+      intro: 'Inspirado no "Sugar Supreme Powernudge" (Pragmatic Play).', hello: 'Grupos de 5+ doces iguais pagam!',
+      symbols: [...SY, SC],
+      tables: [table('Pagamento por tamanho do grupo', CLH, SY, 'Grupos de 5+ iguais encostados (na horizontal ou vertical).')],
+      highlights: ['🍬 6×6 em grupos: <b>5 ou mais</b> doces iguais encostados pagam', '🍭 <b>Powernudge:</b> depois de um ganho, todo rolo com símbolo vencedor <b>desce uma casa</b> e entra um doce novo no topo, enquanto houver ganho', '🍪 Cada posição vencedora deixa um <b>biscoito multiplicador</b> que começa em x1 e ganha <b>+1</b> a cada novo ganho nela; os multiplicadores sob um grupo <b>se somam</b>', '🎂 3/4/5/6 bolos = <b>10/12/15/20 rodadas grátis</b>: Powernudge em <b>todo</b> ganho e biscoitos que <b>ficam até o fim</b>', 'Prêmio máximo: <b>5.000x</b>'],
+      how: '<p>Grade <b>6×6</b> que paga por grupos de 5 ou mais símbolos iguais encostados. Depois de um giro com ganho, o <b>Powernudge</b> pode entrar: os rolos que têm símbolo vencedor descem uma posição (um símbolo novo aparece no topo) e o jogo avalia de novo; isso se repete enquanto sair ganho.</p><p>🍪 Toda posição que participa de um ganho ganha um biscoito <b>x1</b>; cada novo ganho na mesma posição soma <b>+1</b> (até x100). Um grupo é multiplicado pela <b>soma</b> dos biscoitos sob ele. No jogo base os biscoitos somem no fim do giro.</p>',
+      features: `<p>🎂 <b>3, 4, 5 ou 6 bolos</b> dão <b>10, 12, 15 ou 20 rodadas grátis</b>. Nelas o Powernudge entra em <b>todo</b> giro com ganho e os biscoitos multiplicadores <b>ficam na grade até o fim</b> do bônus.</p>${fsTab(FS)}`,
+      make: () => make('w'),
+      async spin(rt) {
+        const g = make('w');
+        await rt.spin(g);
+        const sc = count(g, x => x.sc);
+        await play(rt, g, 'w', fresh(), false);
+        if (sc >= 3) { rt.mark(scatters(g)); await rt.wait(1000); await this.bonus(rt, { sc }); }
+      },
+      async bonus(rt, { sc = 3 } = {}) {
+        const sp = fresh();
+        await rt.fsLoop(FS[Math.min(6, Math.max(3, sc))], async () => {
+          const g = make('fw');
+          deco(g, sp);
+          await rt.spin(g, { tease: false });
+          await play(rt, g, 'fw', sp, true);
+        }, { sub: 'Powernudge sempre · biscoitos ficam' });
+      },
+    }));
+  })();
 
   /* 36. Estouro de Fogo (Fire Stampede) — conecte e colete */
   (() => {

@@ -88,7 +88,7 @@ Recriações com nomes e artes próprios dos slots mais jogados de cada estúdio
 | Princesa do Crepúsculo | Twilight Princess | Coringas x2 a x10 colantes · 7.500x | ~96,5% | 7.500x |
 | Coringa Infectante | Infective Wild | Infecção vira coringas · 40 linhas | ~96,5% | 5.000x |
 | Pilhas de Madeira | Timber Stacks | Até 100.000 caminhos | ~96,5% | 10.000x |
-| Açúcar Supremo Powernudge | Sugar Supreme Powernudge | 6×6 · posições até x128 | ~96,5% | 5.000x |
+| Açúcar Supremo Powernudge | Sugar Supreme Powernudge | 6×6 · Powernudge · biscoitos multiplicadores | ~96,1% | 5.000x |
 | Estouro de Fogo | Fire Stampede | Respin com jackpots até 4.000x | ~96,5% | 5.000x |
 | O Alter Ego | The Alter Ego | Mistérios · até 100.000 caminhos | ~96,5% | 10.000x |
 | Pompeia Megareels Megaways | Pompeii Megareels Megaways | Rolos que crescem até 8 · 10.000x | ~96,5% | 10.000x |
@@ -322,6 +322,7 @@ js/games/*.js       um arquivo por jogo, cada um chama App.register({ id, name, 
 
 Para adicionar um slot de estúdio: use `SlotKit.create({ ..., make(mode), spin(rt), bonus(rt, opts) })` num dos arquivos de estúdio (a lógica só fala com a tela pelo `rt`: `rt.spin(grade)`, `rt.win(x)`, `rt.fsLoop(n, corpo)`…) e rode `node tools/calibrate.js <id>`.
 Para adicionar um jogo: crie `js/games/novo.js` com `App.register({...})` (com `art` = nome de um sprite em `assets/img`) e inclua o `<script>` no `index.html`.
+Ao publicar uma versão nova, troque o `?v=...` dos `<script>`/`<link>` no `index.html` (ex.: `sed -i 's/?v=[0-9]*/?v=NOVO/g' index.html`), senão o navegador do celular pode misturar arquivos antigos do cache com os novos.
 Use `ctx.sleep()` / `ctx.interval()` nas animações: ao sair da tela, a rodada termina na hora e paga o que deve.
 Chame `ctx.round(aposta, pagamento)` quando a rodada terminar — é isso que alimenta missões, XP e "jogados recentemente".
 

@@ -4,7 +4,7 @@
 const SLOT_CALIB = {
   "abelhasgrudentas": {"k":2.7622,"buy":79,"hit":0.3522,"fs":0.0027},
   "acampamentotrator": {"k":0.74461,"buy":60,"hit":0.313,"fs":0.00206},
-  "acucarsupremo": {"k":5.7914,"buy":71,"hit":0.2264,"fs":0.003},
+  "acucarsupremo": {"k":0.84014,"buy":94,"hit":0.225,"fs":0.0028},
   "aguiaalfa": {"k":0.24114,"buy":21,"hit":0.3287,"fs":0.00227},
   "alibaba": {"k":0.043217,"buy":45,"hit":0.5122,"fs":0.00262},
   "alterego": {"k":0.72933,"buy":113,"hit":0.5171,"fs":0.00281},
