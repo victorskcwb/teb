@@ -55,6 +55,10 @@ const SlotAudio = (() => {
     extrasuculentomw: 'gems', kraken2: 'ocean', sabedoriaatena: 'epic', forjaolimpo: 'mine', festapraia: 'tropical', ovogalinha: 'cartoon', festafazenda: 'prairie', portaisvalhalla: 'snow', carnavalzumbi: 'horror', goblinheist: 'irish',
     mochimon: 'japan', jardimcoelhos: 'cartoon', abelhasgrudentas: 'cartoon', onibuscelebridades: 'party', assaltopepitas: 'mine', pandagordo: 'china', tresabelhas: 'prairie', recompensaceu: 'space', reisbar: 'irish', trilhamustang: 'western',
     gravidade: 'space', princesacrepusculo: 'dark', coringainfectante: 'horror', pilhasmadeira: 'prairie', acucarsupremo: 'candy', estourofogo: 'western', alterego: 'epic', pompeia: 'epic', riquezasloki: 'epic',
+    qilin: 'china', dueloselvagem: 'western', ouroalquimico: 'mystic', cruzeiroreal: 'tropical', capsuladoces: 'candy', solelua: 'mystic', reinojurassico: 'jungle', supermercado: 'cartoon', noitescoquetel: 'party', prosperidade: 'china',
+    carnavalmascaras: 'latin', maravilhasespirituais: 'japan', bufalovencedor: 'prairie', invasoresfazenda: 'space', riquezassereia: 'ocean', golpemestre: 'noir', totens: 'prairie', deliciasrestaurante: 'cartoon', padaria: 'candy', songkran: 'tropical',
+    espiritosmisticos: 'mystic', tikihavaiano: 'tropical', gloriagladiador: 'epic', asgard: 'epic', montanharussa: 'party', perseu: 'epic', lendadragao: 'china', espadagemas: 'classic', favorimperador: 'china', tumbatesouro: 'egypt',
+    tresmacacos: 'japan', engrenagens: 'mine', simbolosegito: 'egypt', panelaquente: 'china', pandahiphop: 'party', senhorhallow: 'horror', restaurantemaluco: 'cartoon', diaochan: 'china', livromisterio: 'egypt', sonhosmacau: 'classic',
     manicomio: 'horror', celaxways: 'dark', lapiderip: 'western', cidadefantasma: 'western', buracofogo: 'mine', submarino: 'ocean', blococelas: 'dark', sanguesombra: 'horror', gulaggelado: 'snow', detetiveserial: 'noir',
   };
 

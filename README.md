@@ -108,6 +108,46 @@ Recriações com nomes e artes próprios dos slots mais jogados de cada estúdio
 | Recompensa do Capitão | Captain's Bounty | Cascata · até x15 nas grátis | ~96,2% | 30.000x |
 | Ninja x Samurai | Ninja vs Samurai | Ninja multiplica · Samurai enche de coringas | ~97,4% | 2.610x |
 | Vitórias de Caishen | Caishen Wins | Arrisque na roda: até 20 giros x20 | ~96,9% | 100.000x |
+| Caminhos do Qilin | Ways of the Qilin | Até 46.656 caminhos · mult. sem teto | ~96,7% | 7.106x |
+| Duelo Selvagem | Wild Bounty Showdown | Multiplicador dobra até x1.024 | ~96,8% | 5.000x |
+| Ouro Alquímico | Alchemy Gold | Grupos · dourados viram coringa | ~96,8% | 2.661x |
+| Cruzeiro Real | Cruise Royale | Coringas que viajam na diagonal | ~96,6% | 2.500x |
+| Cápsula de Doces | Candy Bonanza | Grupos de 4 · mult. até x100 | ~96,7% | 50.000x |
+| Destino do Sol e da Lua | Destiny of Sun & Moon | Paga dos dois lados · 20.000x | ~96,8% | 20.000x |
+| Reino Jurássico | Jurassic Kingdom | Até 46.656 caminhos · molduras | ~96,7% | 6.684x |
+| Farra no Supermercado | Supermarket Spree | Multiplicadores até x50 · 25.000x | ~96,7% | 25.000x |
+| Noites de Coquetel | Cocktail Nights | Multiplicadores sob os rolos | ~96,8% | 5.173x |
+| Prosperidade Oriental | Oriental Prosperity | Cada scatter +x2 nas grátis | ~96,8% | 3.269x |
+| Carnaval das Máscaras | Mask Carnival | Mult. +1 a cada ganho | ~96,7% | 2.451x |
+| Maravilhas Espirituais | Spirited Wonders | Mistérios · x15 nas grátis | ~96,7% | 50.000x |
+| Búfalo Vencedor | Buffalo Win | Rolos infinitos · 25.000x | ~96,7% | 25.000x |
+| Invasores da Fazenda | Farm Invaders | Cada alien vale x2 | ~96,7% | 20.000x |
+| Riquezas da Sereia | Mermaid Riches | Pérola coringa que passeia | ~96,7% | 20.000x |
+| Golpe de Mestre | Heist Stakes | Rolo central vira coringa | ~96,7% | 30.000x |
+| Maravilhas dos Totens | Totem Wonders | Rolos laterais x5 ou coringa | ~96,7% | 2.500x |
+| Delícias do Restaurante | Diner Delights | Pratos multiplicadores acumulam | ~96,8% | 2.989x |
+| Bonança da Padaria | Bakery Bonanza | Mult. +2 por cascata · 12.190x | ~96,7% | 12.190x |
+| Festival Songkran | Songkran Splash | Multiplicadores sobre os rolos | ~96,7% | 5.000x |
+| Espíritos Místicos | Mystical Spirits | 3 medidores que se multiplicam | ~96,8% | 5.000x |
+| Tiki Havaiano | Hawaiian Tiki | Coringas que crescem | ~96,8% | 1.274x |
+| Glória do Gladiador | Gladiator's Glory | Coringas x1, x3 ou x5 | ~96,8% | 5.000x |
+| Ascensão de Asgard | Asgardian Rising | 32.400 caminhos · mult. +1 | ~96,8% | 8.305x |
+| Montanha-Russa Selvagem | Wild Coaster | Coringas com vidas · 16.465x | ~96,7% | 16.465x |
+| Lenda de Perseu | Legend of Perseus | Gigantes 2×2 e 3×3 até x10 | ~96,7% | 7.524x |
+| Lenda do Dragão | Dragon Legend | Par de carpas · roda do dragão | ~97,2% | 3.000x |
+| Espada Salvadora de Gemas | Gem Saviour Sword | 1 linha · roda da espada | ~95,5% | 300x |
+| Favor do Imperador | Emperor's Favour | Símbolos 3×3 garantidos nas grátis | ~96% | 639x |
+| Tumba do Tesouro | Tomb of Treasure | Rolos expandem para 6 linhas | ~96,5% | 8.137x |
+| Três Macacos | Three Monkeys | Respins com multiplicador até x5 | ~96,1% | 1.800x |
+| Engrenagens do Destino | Steampunk: Wheel of Destiny | Embaralhadores dão respin e bônus | ~95,6% | 2.000x |
+| Símbolos do Egito | Symbols of Egypt | Linhas de bônus até x30 | ~95,7% | 1.080x |
+| Panela Quente | Hotpot | Pote de pimentas · 3 jackpots | ~95,8% | 15.000x |
+| Panda Hip Hop | Hip Hop Panda | Combos em 8 direções · até x50 | ~95,8% | 572x |
+| Senhor Hallow-Win | Mr. Hallow-Win | Assombração surpresa · coringas que andam | ~95,9% | 1.964x |
+| Restaurante Maluco | Restaurant Craze | Pedido certo vira rolo coringa | ~97,4% | 2.000x |
+| A Armadilha de Diao Chan | Honey Trap of Diao Chan | Escolha a volatilidade do bônus | ~97% | 20.230x |
+| Livro dos Mistérios do Egito | Egypt's Book of Mystery | Escolha: 15 giros x1 a 5 giros x10 | ~96,8% | 100.000x |
+| Sonhos de Macau | Dreams of Macau | Coringas viajantes · mult. sem zerar | ~96,7% | 6.160x |
 
 **Estilo Hacksaw Gaming**
 
