@@ -693,7 +693,7 @@ const SlotKit = (() => {
           // marca se o giro entrou no bônus (missões)
           const ob = game.bonus;
           let trig = false;
-          game.bonus = function (...a) { trig = true; return ob.apply(this, a); };
+          game.bonus = function (...a) { trig = true; return Speed.bonus(() => ob.apply(this, a)); };
           try { await game.spin(rt); } catch (e) { console.error(e); } finally { game.bonus = ob; }
           const pay = round2(Math.min(rt.total * K, cfg.maxWin) * bet);
           if (!pay && ctx.alive) rt.msg('Não foi dessa vez...');
@@ -713,7 +713,7 @@ const SlotKit = (() => {
           rt.reset();
           rt.clear();
           setWin(0);
-          try { await game.bonus(rt, { buy: true }); } catch (e) { console.error(e); }
+          try { await Speed.bonus(() => game.bonus(rt, { buy: true })); } catch (e) { console.error(e); }
           const pay = round2(Math.min(rt.total * K, cfg.maxWin) * bet);
           finish(price, pay, price, { buy: true });
         }

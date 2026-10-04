@@ -260,7 +260,7 @@
           $$('.scatter', gridEl).forEach(x => x.classList.add('win'));
           msg(`${r.scatters} foguetes! Rodadas grátis 🚀`);
           await wait(1200);
-          pay = round2(pay + await freeSpins(bet, FS_TABLE[Math.min(7, r.scatters)]));
+          pay = round2(pay + await Speed.bonus(() => freeSpins(bet, FS_TABLE[Math.min(7, r.scatters)])));
         } else {
           spots = new Array(N * N).fill(0);
           await wait(pay > 0 ? 300 : 0);
@@ -285,7 +285,7 @@
         render();
         $$('.scatter', gridEl).forEach(x => x.classList.add('win'));
         await wait(1200);
-        const total = await freeSpins(bet, 10);
+        const total = await Speed.bonus(() => freeSpins(bet, 10));
         finish(price, total, price, { buy: true });
       }
 

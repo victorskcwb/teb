@@ -287,7 +287,7 @@
 
           const isFeature = cfg.featureChance && RNG.float() < cfg.featureChance;
           const features = { mouse: mouseFeature, rabbit: rabbitFeature, ox: lockFeature, tiger: lockFeature };
-          const res = isFeature ? await features[cfg.feature || 'tiger'](bet) : await normalSpin();
+          const res = isFeature ? await Speed.bonus(() => features[cfg.feature || 'tiger'](bet)) : await normalSpin();
 
           const wins = evaluate(res.grid);
           const prizes = prize && !res.bonus ? res.grid.map((x, i) => (x.prize ? i : -1)).filter(i => i >= 0) : [];
