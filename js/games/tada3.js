@@ -588,4 +588,85 @@
     how: '<p>Grade 5×3 que paga por caminhos. O dragão (rolos 2 a 4) é coringa.</p>',
     features: '<p>🪙 <b>3 ou mais moedas do dragão</b> dão <b>8 rodadas grátis</b> com todos os ganhos triplicados. Nelas as moedas aparecem mais e 3 moedas dão +8 giros.</p>',
   }));
+
+  /* 41. Mega Ás (Mega Ace) — Transformação Dourada em 6×4 (4.096 caminhos) */
+  (() => {
+    const JOKER = () => W('joker', 'Coringa', { fresh: true });
+    App.register(T.pg({
+      studio: STUDIO, id: 'megaas', name: 'Mega Ás', art: 'spadesuit', mascot: 'jester', tag: '4.096 caminhos · cartas douradas viram coringa',
+      colors: ['#ca8a04', '#1d4ed8'], bg: 'linear-gradient(180deg,#0c4a6e,#1e1b4b 55%,#422006)', maxWin: 10000, vol: 4, rtp: '~96,5%', target: 0.965, cols: 6, rows: 4, cellH: 1.2,
+      intro: 'Inspirado no "Mega Ace" (TaDa Gaming).', hello: 'Cartas douradas viram coringas!',
+      syms: [S('as_e', 'spadesuit', 'Ás de espadas', [0.5, 1, 2, 4], 4), S('as_c', 'heartsuit', 'Ás de copas', [0.4, 0.8, 1.6, 3], 4), S('as_o', 'diamondsuit', 'Ás de ouros', [0.3, 0.6, 1.2, 2.5], 5), S('as_p', 'clubsuit', 'Ás de paus', [0.25, 0.5, 1, 2], 5),
+        ...['A', 'K', 'Q', 'J'].map((l, i) => K.L(l, [[0.15, 0.3, 0.6, 1.2], [0.12, 0.25, 0.5, 1], [0.1, 0.2, 0.4, 0.8], [0.1, 0.2, 0.4, 0.8]][i], 7 + i))],
+      wildImg: 'joker', wildName: 'Coringa', wildW: 0.2, scImg: 'cards', scName: 'Scatter', scW: 0.55, scFW: 0.4,
+      heights: () => [4, 4, 4, 4, 4, 4], gold: [0.05, 0.1], frameReels: [1, 2, 3, 4], stack: 0.2,
+      baseM: { ladder: [1, 2, 3, 4, 5] }, fsM: { ladder: [2, 4, 6, 8, 10] }, fsCount: s => 10 + (s - 3) * 2, retrig: () => 5,
+      // carta dourada vencedora vira Coringa pequeno ou (20%) Coringa grande, que se copia em 2 ou 3 vizinhas
+      convert: x => {
+        if (x.frame !== 'gold') return null;
+        const w = JOKER();
+        if (RNG.float() < 0.2) Object.assign(w, { big: true, c: 'giant', name: 'Coringa grande' });
+        return w;
+      },
+      onStep: async (rt, gg) => { if (spreadBig(gg, JOKER)) rt.msg('🃏 O Coringa grande se copiou nas casas vizinhas!'); },
+      highlights: ['🂡 6×4 com <b>4.096 caminhos</b> e cascata', '🔥 Escada por cascata <b>x1 → x2 → x3 → x4 → x5</b> (nas grátis <b>x2 → x10</b>)', '✨ Cartas douradas (rolos 2 a 5) que ganham viram <b>Coringa</b> no lugar; o <b>Coringa grande</b> se copia em 2 ou 3 casas vizinhas', '🃏 3+ scatters = <b>10 rodadas grátis</b> (+2 por extra), +5 com 3 nelas', 'Prêmio máximo: <b>10.000x</b>'],
+      how: '<p>Grade 6×4 com 4.096 caminhos e cascata. O multiplicador sobe a cada cascata do mesmo giro: x1, x2, x3, x4 e x5.</p><p>Cartas com <b>moldura dourada</b> (rolos 2 a 5) que fazem parte de um ganho não somem: viram <b>Coringa</b> no mesmo lugar para a próxima cascata. Às vezes vira o <b>Coringa grande</b>, que se copia em 2 ou 3 casas vizinhas.</p>',
+      features: '<p>🃏 <b>3 ou mais scatters</b> dão <b>10 rodadas grátis</b> (+2 por scatter extra) com a escada <b>x2, x4, x6, x8 e x10</b>. 3 scatters nas grátis dão <b>+5 giros</b>.</p>',
+    }));
+  })();
+
+  /* 42. Dinheiro Chegando (Money Coming) — Montagem de Números com rolo especial e Roda da Sorte */
+  (() => {
+    const N = (n, w) => ({ id: 'n' + n, letter: n, name: n, num: n, noPay: true, w });
+    const BLANK = { id: 'vazio', img: null, name: 'Vazio', c: 'empty', noPay: true, noBlur: true };
+    const R1 = [N('1', 1.6), N('5', 1), N('10', 0.45), { ...BLANK, w: 2 }];
+    const R23 = [N('0', 2), N('1', 1), N('5', 0.8), N('00', 0.12), { ...BLANK, w: 2 }];
+    const SP = [{ k: 'x2', m: 2, w: 9 }, { k: 'x5', m: 5, w: 3 }, { k: 'x10', m: 10, w: 1 }, { k: 'respin', w: 5 }, { k: 'roda', w: 1.2 }, { k: 'nada', w: 75 }];
+    const WHEEL = [{ v: 2, w: 30 }, { v: 3, w: 25 }, { v: 5, w: 20 }, { v: 10, w: 12 }, { v: 20, w: 7 }, { v: 50, w: 4 }, { v: 100, w: 2 }];
+    const d1 = pool(R1), d23 = pool(R23);
+    const scell = () => { const o = RNG.weighted(SP); return o.k === 'nada' ? { id: 'rv', img: null, c: 'mreel empty', t: '', sp: o } : { id: 'rv', img: o.k === 'respin' ? 'counterclockwise' : o.k === 'roda' ? 'dizzystar' : null, c: 'mreel', t: o.m ? o.k : o.k === 'roda' ? 'RODA' : 'RESPIN', sp: o }; };
+    const make = () => [...grid([3, 3, 3], c => (c === 0 ? d1(c) : d23(c))), [scell(), scell(), scell()]];
+    const number = g => { const xs = [g[0][1], g[1][1], g[2][1]]; if (xs.some(x => !x.num)) return 0; return Number(xs.map(x => x.num).join('')); };
+    const DIV = 100;
+    App.register(K.create({
+      id: 'dinheirochegando', name: 'Dinheiro Chegando', studio: STUDIO, art: 'moneybag', mascot: 'moneybag',
+      tag: 'Monte o número · Roda da Sorte até x100', colors: ['#16a34a', '#ca8a04'], bg: 'radial-gradient(circle at 50% 30%,#14532d,#052e16 70%)',
+      cols: 4, rows: 3, maxWin: 10000, vol: 4, rtp: '~96%', target: 0.96, buy: false,
+      intro: 'Inspirado no "Money Coming" (TaDa Gaming).', hello: 'Monte o número e gire a Roda da Sorte!',
+      symbols: [...R1, ...R23.filter(x => x.id === 'n00' || x.id === 'n0'), { img: 'counterclockwise', noBlur: true }, { img: 'dizzystar', noBlur: true }],
+      lineList: { cols: 3, rows: 3, list: [[1, 1, 1]], text: 'Uma única linha, no meio; o 4º rolo é o rolo especial.' },
+      tables: [{ title: 'Exemplos de números montados', raw: true, head: ['prêmio'], rows: [['1', '0', '0', 1], ['5', '1', '0', 5.1], ['10', '0', '5', 10.05], ['5', '00', '00', 500], ['10', '00', '00', 1000]].map(([a, b2, c, v]) => ({ name: `${a} | ${b2} | ${c}`, pays: [v + 'x'] })) }],
+      highlights: ['🔢 <b>Montagem de números:</b> 3 rolos com <b>0, 1, 5, 10 e 00</b> numa linha só', 'Prêmio = número formado da esquerda para a direita: <b>10 | 0 | 5 = 1005</b>', '🎰 Rolo especial: <b>x2, x5, x10</b>, <b>respin</b> ou a <b>Roda da Sorte</b>', '🎡 <b>Roda da Sorte:</b> multiplica o número montado por <b>x2 até x100</b>', 'Prêmio máximo: <b>10.000x</b>'],
+      how: '<p>Três rolos de números e uma linha no meio. Se os três mostrarem números, os dígitos são <b>juntados como texto</b>, da esquerda para a direita: 100 no visor valem 1x a aposta (ex.: 5 | 1 | 0 = 510 = 5,1x).</p>',
+      features: '<p>🎰 <b>Rolo especial (4º rolo):</b> <b>x2, x5 ou x10</b> multiplicam o número montado; <b>RESPIN</b> dá um giro grátis; <b>RODA</b> gira a Roda da Sorte, que multiplica o número por <b>x2 a x100</b> (se não houver número, paga 1x a aposta vezes o valor da roda).</p>',
+      make,
+      async spin(rt) {
+        for (let i = 0; i < 5 && !rt.capped; i++) {
+          const g = make();
+          await rt.spin(g, { tease: false });
+          const v = number(g), sp = g[3][1].sp;
+          let m = sp.m || 1;
+          if (sp.k === 'roda') {
+            rt.mark([key(3, 1)], 'hl');
+            const wi = WHEEL.indexOf(RNG.weighted(WHEEL));
+            await rt.reveal('RODA DA SORTE', WHEEL.map(o => ({ img: 'dizzystar', t: 'x' + o.v })), wi);
+            m = WHEEL[wi].v;
+          }
+          const x = v ? (v / DIV) * m : sp.k === 'roda' ? m : 0;
+          if (x) {
+            rt.mark([...(v ? [key(0, 1), key(1, 1), key(2, 1)] : []), ...(m > 1 ? [key(3, 1)] : [])]);
+            rt.win(x);
+            rt.msg(`🔢 ${v || '—'}${m > 1 ? ` · x${m}` : ''} = ${rt.coins(x)}`);
+            rt.fx(x >= 50 ? 'jackpot' : m > 1 ? 'big' : 'win');
+            await rt.wait(900);
+          }
+          if (sp.k !== 'respin') break;
+          rt.mark([key(3, 1)], 'hl');
+          rt.msg('🎰 RESPIN grátis!'); rt.fx('rise');
+          await rt.wait(700);
+        }
+      },
+      async bonus() {},
+    }));
+  })();
 })();

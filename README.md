@@ -260,6 +260,8 @@ Recriações com nomes e artes próprios dos slots mais jogados de cada estúdio
 | Festival da Lua | Moon Festival | 243 caminhos · luas colantes | ~97% | 2.000x |
 | Feng Shen | Feng Shen | 4.096 caminhos · coringas somam no multiplicador | ~96% | 1.000x |
 | Dragão da Sorte | Lucky Dragon | 243 caminhos · grátis x3 que se renovam | ~97% | 3.000x |
+| Mega Ás | Mega Ace | 6×4, 4.096 caminhos · cartas douradas viram coringa (grande se copia) · escada x1–x5 / x2–x10 | ~96,5% | 10.000x |
+| Dinheiro Chegando | Money Coming | Montagem de números · rolo especial x2/x5/x10, respin e Roda da Sorte até x100 | ~96% | 10.000x |
 
 **Estilo Nolimit City**
 
@@ -354,7 +356,7 @@ js/progress.js      XP/passe, missões, check-in, roda, anúncios fictícios, ro
 js/history.js       histórico de giros dos slots (localStorage) e o modal de histórico
 js/games/kit.js     SlotKit: motor dos slots de estúdio (tela, giro, cascata, ways/linhas/grupos, hold & spin, rodadas grátis)
 js/games/calib.js   calibração gerada (escala de prêmios, preço do bônus, chance de ganho, frequência do bônus)
-js/games/pragmatic*.js, pgsoft*.js, hacksaw*.js, tada*.js, nolimit*.js   os 248 slots de estúdio
+js/games/pragmatic*.js, pgsoft*.js, hacksaw*.js, tada*.js, nolimit*.js, remakes.js   os 252 slots de estúdio
 js/games/templates.js  modelos reaproveitados (paga em qualquer lugar, grupos, PG Soft)
 tools/calibrate.js  simulador que calibra o RTP dos slots de estúdio
 js/slotinfo.js      painel "Prêmios" dos slots (prêmio máximo, tabela, bônus, linhas)
