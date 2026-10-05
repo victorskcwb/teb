@@ -531,7 +531,7 @@
       tables: [table('Pagamento por caminho', heads(3, 3, ' rolos'), SY, '5×4 = 1.024 caminhos com cascata (5×5 = 3.125 nos giros amaldiçoados).')],
       highlights: ['🕯️ 5×4 com <b>1.024 caminhos</b> e cascata', '🕸️ 3+ scatters = <b>6 Candle Spins</b>', '🩸 Cada ganho enche a <b>Barra do Ritual</b>: a cada nível um símbolo baixo vira <b>alto amaldiçoado</b> e você ganha <b>+2 giros</b>', 'No nível 5: <b>+6 Giros Amaldiçoados</b> na grade 5×5 só com símbolos altos e <b>coringas presos</b>', 'Prêmio máximo: <b>6.666x</b>'],
       how: '<p>Grade <b>5×4</b> com <b>1.024 caminhos</b>. Os vencedores somem e novos caem (<b>cascata</b>). 🩸 é coringa.</p>',
-      features: '<p>🕸️ <b>3 ou mais scatters</b> dão <b>6 Candle Spins</b>. Cada símbolo eliminado enche a <b>Barra do Ritual</b> (20 por nível). A cada nível, o símbolo baixo mais fraco que restar é <b>trocado por um alto</b> e você ganha <b>+2 giros</b> (até o nível 4).</p><p>No <b>nível 5</b> o ritual se completa: você ganha <b>+6 giros</b> e todos os que sobram viram <b>Giros Amaldiçoados</b>, com uma linha extra (5×5, 3.125 caminhos), só símbolos altos e <b>coringas presos</b>: todo coringa que cair fica no lugar até o fim do bônus.</p>',
+      features: '<p>🕸️ <b>3 ou mais scatters</b> dão <b>6 Candle Spins</b>. Cada símbolo eliminado enche a <b>Barra do Ritual</b> (30 por nível). A cada nível, o símbolo baixo mais fraco que restar é <b>trocado por um alto</b> e você ganha <b>+2 giros</b> (até o nível 4).</p><p>No <b>nível 5</b> o ritual se completa: você ganha <b>+6 giros</b> e todos os que sobram viram <b>Giros Amaldiçoados</b>, com uma linha extra (5×5, 3.125 caminhos), só símbolos altos e <b>coringas presos</b>: todo coringa que cair fica no lugar até o fim do bônus.</p>',
       make: () => make(),
       async spin(rt) {
         const g = make();
@@ -556,14 +556,14 @@
             keep: cursed ? (x => !!x.wild) : null,
             onStep: async (s, gg, res) => {
               bar += res.cells.size;
-              while (bar >= 20 && level < 5) {
-                bar -= 20;
+              while (bar >= 30 && level < 5) {
+                bar -= 30;
                 level++;
                 if (level <= 4 && lows.length) { const gone = lows.pop(); lows = lows.slice(); d = mkPool([...HI, ...lows]); rt.msg(`🩸 Ritual nível ${level}: ${gone.name} sai das fitas! +2 giros`); api.add(2, true); }
                 if (level === 5) { rt.msg('🩸 RITUAL COMPLETO! +6 giros amaldiçoados com coringas presos'); api.add(6, true); }
                 rt.fx('big');
               }
-              rt.chip('ritual', 'RITUAL', `Nv ${level} · ${bar}/20`);
+              rt.chip('ritual', 'RITUAL', `Nv ${level} · ${bar}/30`);
             },
           });
           if (cursed) cells(g, x => x.wild).forEach(([c, r]) => stuck.set(key(c, r), { ...g[c][r], c: 'sticky', fresh: false }));
@@ -583,8 +583,11 @@
     const SC = { id: 'sc', img: 'ice', name: 'Scatter', sc: true, reels: [0, 1, 2, 3], w: 0.95 };
     const all = [...SY, WILD, SC];
     const draw = pool(all);
-    const make = (open = 4) => grid([4, 4, 4, 4, 4, 4], c => (c >= open ? LOCK() : draw(c)));
-    const TIERS = { 3: { s: [6, 8, 10], m: [3, 5, 8] }, 4: { s: [8, 10, 12], m: [5, 8, 12] }, 5: { s: [10, 12, 15], m: [8, 12, 20] } };
+    // nas rodadas grátis os personagens caem o dobro
+    CH.forEach(x => { x.fw = x.w * 2; });
+    const make = (open = 4, wk = 'w') => grid([4, 4, 4, 4, 4, 4], c => (c >= open ? LOCK() : draw(c, wk)));
+    // Gulag: 1 personagem sorteado · All Aboard: os 4 · Double Vodka: os 4 com o multiplicador dobrado
+    const TIERS = { 3: { s: [10, 12, 15], m: [5, 10, 20], all: false }, 4: { s: [10, 12, 15], m: [3, 5, 8], all: true }, 5: { s: [10, 12, 15], m: [6, 10, 16], all: true } };
     App.register(K.create({
       id: 'gulaggelado', name: 'Gulag Gelado', studio: STUDIO, art: 'snowflake', mascot: 'bear',
       tag: 'Scatters destrancam rolos', colors: ['#0284c7', '#b91c1c'], bg: 'linear-gradient(180deg,#e0f2fe,#7dd3fc 40%,#0c4a6e)',
@@ -592,9 +595,9 @@
       intro: 'Inspirado no "Remember Gulag" (Nolimit City).', hello: 'Rolos 5 e 6 estão trancados...',
       symbols: all,
       tables: [table('Pagamento por caminho', heads(3, 4, ' rolos'), SY, '6×4 = até 4.096 caminhos com os rolos 5 e 6 abertos.')],
-      highlights: ['🧊 6 rolos, mas os <b>rolos 5 e 6 começam trancados</b>', '❄️ 1 scatter destranca o rolo 5; 2 destrancam o rolo 6', '3/4/5 scatters = <b>Gulag Spins</b>: um giro de preparação define os giros e um <b>multiplicador</b> para os 4 personagens', 'Prêmio máximo: <b>30.000x</b>'],
+      highlights: ['🧊 6 rolos, mas os <b>rolos 5 e 6 começam trancados</b>', '❄️ 1 scatter destranca o rolo 5; 2 destrancam o rolo 6', '3 scatters = <b>Gulag</b> (1 personagem sorteado multiplicado) · 4 = <b>All Aboard</b> (os 4) · 5 = <b>Double Vodka</b> (os 4 com multiplicador dobrado)', 'Prêmio máximo: <b>30.000x</b>'],
       how: '<p>Grade <b>6×4</b>, com os <b>rolos 5 e 6 trancados</b>. Cada scatter (só cai nos rolos 1 a 4) <b>destranca</b> um rolo: 1 scatter abre o 5º, 2 abrem o 6º. ❄️ é coringa.</p>',
-      features: '<p>🧊 <b>3, 4 ou 5 scatters</b> abrem os <b>Gulag Spins</b> (normal, All Aboard e Double Vodka). Uma roda de preparação sorteia os <b>giros</b> e um <b>multiplicador</b> que vale para os 4 personagens (General, Urso, Prisioneiro e Guarda). Todos os rolos ficam abertos.</p><table class="paytable"><tr class="si-head"><td>Scatters</td><td>Giros</td><td>Multiplicador</td></tr>' + Object.entries(TIERS).map(([k, t]) => `<tr><td>${k}</td><td>${t.s.join(' / ')}</td><td>${t.m.map(m => 'x' + m).join(' / ')}</td></tr>`).join('') + '</table>',
+      features: '<p>🧊 <b>3, 4 ou 5 scatters</b> abrem os <b>Gulag Spins</b>, com todos os rolos abertos. Os personagens caem <b>o dobro</b> e uma roda de preparação sorteia os <b>giros</b> e um <b>multiplicador</b> para os personagens (Boneco de neve, Urso, Prisioneiro e Matrioska):</p><ul class="si-list"><li><b>3 — Gulag:</b> só <b>um personagem sorteado</b> recebe o multiplicador.</li><li><b>4 — All Aboard:</b> os <b>4 personagens</b> recebem o multiplicador.</li><li><b>5 — Double Vodka:</b> os 4 personagens com o multiplicador <b>dobrado</b>.</li></ul><p class="muted small">A compra do bônus sorteia o nível com as mesmas chances do jogo normal.</p><table class="paytable"><tr class="si-head"><td>Scatters</td><td>Giros</td><td>Multiplicador</td></tr>' + Object.entries(TIERS).map(([k, t]) => `<tr><td>${k}</td><td>${t.s.join(' / ')}</td><td>${t.m.map(m => 'x' + m).join(' / ')}</td></tr>`).join('') + '</table>',
       make: () => make(),
       async spin(rt) {
         const g = make(6);
@@ -606,19 +609,23 @@
         await pay(rt, ways(g, SY));
         if (sc >= 3) { rt.mark(scatters(g)); await rt.wait(1000); await this.bonus(rt, { sc }); }
       },
-      async bonus(rt, { sc = 3 } = {}) {
+      async bonus(rt, { sc = 3, buy = false } = {}) {
+        if (buy) sc = RNG.weighted([{ v: 3, w: 88 }, { v: 4, w: 10 }, { v: 5, w: 2 }]).v;
         const T = TIERS[Math.min(5, sc)];
         const si = RNG.int(0, 2), mi = RNG.int(0, 2);
         await rt.reveal('GULAG SPINS: GIROS', T.s.map(s => ({ img: 'ice', t: s + ' giros' })), si);
-        await rt.reveal('MULTIPLICADOR DOS PERSONAGENS', T.m.map(m => ({ img: 'bear', t: 'x' + m })), mi);
+        await rt.reveal(T.all ? 'MULTIPLICADOR DOS PERSONAGENS' : 'MULTIPLICADOR DO PERSONAGEM', T.m.map(m => ({ img: 'bear', t: 'x' + m })), mi);
         const M = T.m[mi];
-        const boosted = SY.map(s => (CH.includes(s) ? { ...s, pays: s.pays.map(p => p * M) } : s));
-        rt.chip('mult', 'PERSON.', 'x' + M);
+        // no Gulag só um personagem sorteado é promovido
+        let up = CH;
+        if (!T.all) { const ci = RNG.int(0, CH.length - 1); await rt.reveal('PERSONAGEM PROMOVIDO', CH.map(c => ({ img: c.img, t: c.name })), ci); up = [CH[ci]]; }
+        const boosted = SY.map(s => (up.includes(s) ? { ...s, pays: s.pays.map(p => p * M) } : s));
+        rt.chip('mult', T.all ? 'PERSON.' : up[0].name.toUpperCase(), 'x' + M);
         await rt.fsLoop(T.s[si], async () => {
-          const g = make(6).map(col => col.map(x => (x.sc ? RNG.pick(SY) : x)));
+          const g = make(6, 'fw').map(col => col.map(x => (x.sc ? RNG.pick(SY) : x)));
           await rt.spin(g, { tease: false });
           await pay(rt, ways(g, boosted));
-        }, { title: sc >= 5 ? 'DOUBLE VODKA' : sc === 4 ? 'ALL ABOARD' : 'GULAG SPINS', sub: `${T.s[si]} giros · personagens x${M}` });
+        }, { title: sc >= 5 ? 'DOUBLE VODKA' : sc === 4 ? 'ALL ABOARD' : 'GULAG SPINS', sub: `${T.s[si]} giros · ${T.all ? 'personagens' : up[0].name} x${M}` });
         rt.chip('mult', null);
       },
     }));
