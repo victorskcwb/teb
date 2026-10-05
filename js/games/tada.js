@@ -33,12 +33,12 @@
       S('vaso', 'volcano', 'Vulcão', [0.5, 1, 2, 4], 5), ...SUITS([[0.2, 0.4, 0.8, 1.5], [0.2, 0.4, 0.8, 1.5], [0.15, 0.3, 0.6, 1.2], [0.15, 0.3, 0.6, 1.2]]),
     ];
     const WILD = { id: 'w', img: 'militarymedal', name: 'Coringa', wild: true, w: 0 };
-    const SC = { id: 'sc', img: 'hut', name: 'Cabana', sc: true, w: 0.55 };
+    const SC = { id: 'sc', img: 'hut', name: 'Cabana', sc: true, w: 0.7, fw: 0.5 };
     const all = [...SY, SC];
     // nas grátis as cartas caem mais (cascatas mais longas)
-    SY.forEach(x => { if (x.letter) x.fw = x.w * 1.8; });
+    SY.forEach(x => { if (x.letter) x.fw = x.w * 2.2; });
     const draw = pool(all);
-    const cell = (c, fs) => { const x = draw(c, fs ? 'fw' : 'w'); if (!x.sc && c >= 1 && c <= 4 && RNG.float() < (fs ? 0.16 : 0.07)) x.gold = true; return x; };
+    const cell = (c, fs) => { const x = draw(c, fs ? 'fw' : 'w'); if (!x.sc && c >= 1 && c <= 4 && RNG.float() < (fs ? 0.26 : 0.05)) x.gold = true; return x; };
     const make = fs => K.stack(grid([5, 6, 6, 6, 6, 5], c => cell(c, fs)), 0.45);
     // moldura dourada que ganha não explode: vira coringa pequeno ou (20%) coringa grande
     const SMALL = () => ({ ...WILD, fresh: true });
