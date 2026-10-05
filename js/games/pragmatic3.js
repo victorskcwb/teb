@@ -1009,7 +1009,7 @@
   /* 39. Riquezas de Loki — símbolo especial que expande */
   (() => {
     const SY = rushSyms([['loki', 'trident', 'Cetro de Loki'], ['elmo', 'helmet', 'Elmo'], ['serpente', 'snake', 'Serpente'], ['runa', 'runestone', 'Runa'], ['esmeralda', 'greenheart', 'Esmeralda'], ['ouro', 'yellowheart', 'Ouro'], ['safira', 'blueheart', 'Safira']]);
-    const SC = { id: 'sc', img: 'magicwand', name: 'Bônus', sc: true, w: 0.64, fw: 0.4 };
+    const SC = { id: 'sc', img: 'magicwand', name: 'Bônus', sc: true, w: 0.7, fw: 0.3 };
     const draw = pool([...SY, SC]);
     const make = (wk = 'w') => grid([7, 7, 7, 7, 7, 7, 7], c => draw(c, wk));
     async function play(rt, g, sp) {
@@ -1021,7 +1021,7 @@
           // o símbolo especial expande pelas colunas onde aparece e paga como grupo
           cols.forEach(c => { g[c] = g[c].map(() => ({ ...sp, c: 'gold', fresh: true })); });
           await rt.drop(g);
-          const v = sp.pays[Math.min(5, cols.length - 2)] * (cols.length >= 6 ? 2 : 1);
+          const v = sp.pays[Math.min(5, cols.length - 3)] * (cols.length >= 6 ? 2 : 1);
           rt.mark(cells(g, x => x.id === sp.id).map(([c, r]) => key(c, r)));
           rt.win(v);
           rt.msg(`🐍 ${sp.name} expandiu em ${cols.length} colunas = ${rt.coins(v)}`);
