@@ -26,6 +26,8 @@
   const xways = (g, SY, rt) => { if (!g.flat().some(x => x.xw)) return; const s = RNG.pick(SY); g.forEach((col, c) => col.forEach((x, r) => { if (x.xw) { const n = RNG.int(2, 4); g[c][r] = { ...s, n, t: '×' + n, c: 'gold', fresh: true }; } })); if (rt) rt.msg(`❓ xWays: ${s.name}!`); };
   /** xSplit: o símbolo dividido conta em dobro */
   const xsplit = (g, c, r) => { const x = g[c][r]; g[c][r] = { ...x, n: (x.n || 1) * 2, t: '×' + (x.n || 1) * 2, c: 'gold' }; };
+  /** Nível do bônus: pelo número de scatters ou, na compra, sorteado com as chances naturais (3, 4, 5...) */
+  const tierSc = (o = {}, ws = [80, 17, 3], def = 3) => (o.buy ? def + RNG.weighted(ws.map((w, i) => ({ i, w }))).i : o.sc || def);
   const ENH = [{ e: null, w: 55 }, { e: 'wild', w: 18 }, { e: 'xways', w: 12 }, { e: 'split', w: 10 }, { e: 'high', w: 5 }];
 
   /* 21. Gênio Dourado e os Coringas Andantes */
@@ -52,22 +54,33 @@
       symbols: [...SY, GENIE],
       lineList: { cols: 5, rows: 3, list: L20, text: '20 linhas fixas.' },
       tables: [table('Pagamento por linha', heads(3, 3), SY, 'Iguais seguidos a partir da esquerda.')],
-      highlights: ['🧞 O <b>Gênio</b> é coringa e scatter', '✨ <b>Desejo:</b> Aladim logo à esquerda da lâmpada transforma as cartas num símbolo alto', '🪔 <b>Lâmpadas:</b> rolos 2 e 4 viram coringa e o giro paga <b>dos dois lados</b>', '3+ Gênios = <b>Desfile do Gênio</b>: os gênios <b>andam</b> um rolo para a esquerda a cada giro, ganham <b>+1 de multiplicador</b> a cada passo (até x10), novos gênios entram pelo rolo 5 e o bônus dura enquanto houver gênio (mínimo 8 giros)', 'Prêmio máximo: <b>9.583x</b>'],
+      highlights: ['🧞 O <b>Gênio</b> é coringa e scatter', '✨ <b>Desejo:</b> Aladim logo à esquerda da lâmpada transforma as cartas num símbolo alto', '🪔 <b>Lâmpadas:</b> rolos 2 e 4 viram coringa e o giro paga <b>dos dois lados</b>', '3+ Gênios = <b>Desfile do Gênio</b>: cada gênio <b>anda</b> um rolo para a esquerda por giro e ganha <b>+1 no próprio multiplicador</b> a cada passo; ao sair da tela, <b>passa o multiplicador</b> para o gênio mais próximo. O bônus dura enquanto houver gênio', 'Prêmio máximo: <b>9.583x</b>'],
       how: '<p>Grade 5×3 com 20 linhas. Dois recursos podem aparecer no jogo base: o Desejo e as Lâmpadas do Gênio.</p>',
-      features: '<p>🧞 <b>3 ou mais Gênios</b> começam o <b>Desfile</b>: não há número fixo de giros; os gênios ficam e andam uma casa para a esquerda a cada giro, com multiplicador que cresce a cada passo (até x10), e novos gênios entram no desfile pelo último rolo. O bônus dura pelo menos 8 giros e acaba quando não sobrar nenhum.</p>',
+      features: '<p>🧞 <b>3 ou mais Gênios</b> começam o <b>Desfile</b>: não há número fixo de giros. Cada gênio fica na tela e anda uma casa para a esquerda a cada giro, somando <b>+1 no seu multiplicador</b> a cada passo. Quando um gênio sai pela esquerda, o multiplicador dele <b>vai para o gênio mais próximo</b>, que continua crescendo. Novos gênios entram no desfile pelo último rolo, e o bônus acaba quando não sobrar nenhum.</p>',
       make: () => make('w'),
       async spin(rt) { const g = make('w'); if (await play(rt, g) >= 3) { rt.mark(scatters(g)); await rt.wait(1000); await this.bonus(rt, { g }); } },
       async bonus(rt, { g } = {}) {
-        let walk = g ? cells(g, x => x.wild).map(([c, r]) => [c, r]) : [[4, 0], [4, 1], [4, 2]];
+        // cada gênio guarda o próprio multiplicador (m), que cresce +1 a cada passo
+        let walk = (g ? cells(g, x => x.wild) : [[4, 0], [4, 1], [4, 2]]).map(([c, r]) => ({ c, r, m: 1 }));
         await rt.fsLoop(1, async api => {
-          walk = walk.map(([c, r]) => [c - 1, r]).filter(([c]) => c >= 0);
+          walk.forEach(w => { w.c--; w.m++; });
+          const out = walk.filter(w => w.c < 0);
+          walk = walk.filter(w => w.c >= 0);
+          // quem sai da tela passa o multiplicador para o gênio mais próximo
+          out.forEach(o => {
+            const t = walk.slice().sort((a, b) => (a.c + Math.abs(a.r - o.r)) - (b.c + Math.abs(b.r - o.r)))[0];
+            if (t) { t.m += o.m; rt.msg(`🧞 Um gênio saiu e passou x${o.m} adiante: x${t.m}!`); }
+          });
+          // dois gênios na mesma casa viram um só, somando os multiplicadores
+          const at = {};
+          walk = walk.filter(w => { const k = key(w.c, w.r); if (at[k]) { at[k].m += w.m; return false; } at[k] = w; return true; });
           const gg = make('fw');
-          if (RNG.float() < 0.2) walk.push([4, RNG.int(0, 2)]);
-          walk.forEach(([c, r]) => { gg[c][r] = mult({ ...GENIE, sc: false, c: 'sticky' }, Math.min(10, api.i + 1)); });
+          if (RNG.float() < 0.2) { const r = RNG.int(0, 2); if (!at[key(4, r)]) walk.push({ c: 4, r, m: 1 }); }
+          walk.forEach(w => { gg[w.c][w.r] = mult({ ...GENIE, sc: false, c: 'sticky' }, w.m); });
           await rt.spin(gg, { tease: false });
-          cells(gg, x => x.wild && x.sc).forEach(([c, r]) => walk.push([c, r]));
+          cells(gg, x => x.wild && x.sc).forEach(([c, r]) => walk.push({ c, r, m: 1 }));
           await pay(rt, lines(gg, L20, SY, { mult: 'add' }));
-          if ((walk.length || api.i < 7) && api.left === 0 && api.i < 40) api.add(1, true);
+          if (walk.length && api.left === 0 && api.i < 60) api.add(1, true);
         }, { title: 'DESFILE DO GÊNIO', sub: 'Dura enquanto houver gênio', label: 'DESFILE' });
       },
     }));
@@ -88,19 +101,21 @@
       intro: 'Inspirado no "Milky Ways" (Nolimit City).', hello: 'Coringas solares se multiplicam!',
       symbols: [...SY, WILD, SC],
       tables: [table('Pagamento por caminho', heads(3, 3, ' rolos'), SY, 'De 243 (5×3) até 3.125 (5×5) caminhos.')],
-      highlights: ['🌌 5×3 com 243 caminhos', '☀️ <b>Coringas solares</b> com x1 a x3 que <b>se multiplicam</b>', '3 galáxias = <b>3 giros</b> numa grade <b>5×5</b> (3.125 caminhos) com <b>1 coringa garantido</b>', '🔗 <b>Giros de Fusão:</b> cada ganho nas grátis prende os vencedores e gira o resto mais uma vez', 'Prêmio máximo: <b>5.664x</b>'],
+      highlights: ['🌌 5×3 com 243 caminhos', '☀️ <b>Coringas solares</b> com x1 a x3 que <b>se multiplicam</b>', '3 galáxias = <b>3 giros</b> numa grade <b>5×5</b> (3.125 caminhos) com <b>2 coringas garantidos</b> nos rolos do meio', '🔗 <b>Giros de Fusão:</b> cada ganho nas grátis prende os vencedores e gira o resto de novo, <b>enquanto o ganho melhorar</b>', 'Prêmio máximo: <b>5.664x</b>'],
       how: '<p>Grade 5×3 que paga por caminhos. Coringas solares podem vir com multiplicador, e os multiplicadores de coringas no mesmo caminho se multiplicam.</p>',
-      features: '<p>🌌 <b>3 galáxias</b> dão <b>3 rodadas grátis</b> numa grade 5×5 com um coringa garantido. Sempre que houver ganho, começa a <b>Fusão</b>: os símbolos vencedores ficam presos e o resto gira mais uma vez. 3 galáxias nas grátis dão +3.</p>',
+      features: '<p>🌌 <b>3 galáxias</b> dão <b>3 rodadas grátis</b> numa grade 5×5 com <b>dois coringas garantidos</b> nos rolos do meio. Sempre que houver ganho, começa a <b>Fusão</b>: os símbolos vencedores ficam presos e o resto gira de novo. Se o ganho melhorar, a fusão se repete; se não melhorar, ela termina. 3 galáxias nas grátis dão +3.</p>',
       make: () => make(3, 'w'),
       async spin(rt) { rt.layout(3); const g = make(3, 'w'); await rt.spin(g); await pay(rt, ways(g, SY)); if (count(g, x => x.sc) >= 3) { rt.mark(scatters(g)); await rt.wait(1000); await this.bonus(rt, {}); } },
       async bonus(rt) {
         rt.layout(5);
         await rt.fsLoop(3, async api => {
           let g = make(5, 'fw');
-          g[RNG.int(0, 4)][RNG.int(0, 4)] = { ...WILD };
+          // 2 coringas garantidos nos rolos do meio (2 a 4), em rolos diferentes
+          RNG.shuffle([1, 2, 3]).slice(0, 2).forEach(c => { g[c][RNG.int(0, 4)] = { ...WILD }; });
           await rt.spin(g, { tease: false });
           let res = ways(g, SY); await pay(rt, res);
-          for (let guard = 0; guard < 1 && res.total && !rt.capped; guard++) {
+          // a fusão se repete enquanto o ganho melhorar
+          for (let guard = 0; guard < 12 && res.total && !rt.capped; guard++) {
             const ng = make(5, 'fw'); res.cells.forEach(k => { const [c, r] = unkey(k); ng[c][r] = { ...g[c][r], c: 'sticky' }; });
             g = ng; rt.msg('🔗 Fusão: vencedores presos!'); await rt.spin(g, { tease: false });
             const nr = ways(g, SY);

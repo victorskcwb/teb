@@ -155,7 +155,7 @@
   (() => {
     const SY = [S('estrela', 'microphone', 'Microfone', [1, 2.5, 6, 15], 3), S('oculos', 'sunglasses', 'Óculos', [0.8, 2, 5, 12], 4), S('camera', 'camera', 'Câmera', [0.6, 1.5, 4, 9], 5), S('bolsa', 'handbag', 'Bolsa', [0.5, 1.2, 3, 7], 5), S('salto', 'highheel', 'Salto', [0.4, 1, 2.5, 5], 6), ...R([[0.15, 0.3, 0.6, 1.2], [0.15, 0.3, 0.6, 1.2], [0.1, 0.2, 0.5, 1], [0.1, 0.2, 0.5, 1]])];
     const WILD = { id: 'w', img: 'bus', name: 'Ônibus', wild: true, reels: [1, 2, 3, 4], w: 0.55 };
-    const SC = { id: 'sc', img: 'glowstar', name: 'Estrela', sc: true, w: 0.85 };
+    const SC = { id: 'sc', img: 'glowstar', name: 'Estrela', sc: true, w: 0.88 };
     const draw = pool([...SY, WILD, SC]);
     const heights = () => Array.from({ length: 6 }, () => RNG.int(2, 7));
     const make = (hs = heights()) => K.stack(hs.map((hh, c) => Array.from({ length: hh }, () => draw(c))), 0.3);
@@ -463,12 +463,12 @@
     const PINT = S('caneca', 'beers', 'Canecas', [1, 3, 10], 5);
     const SY = [...KINGS, PINT, ...R([[0.4, 1.2, 4], [0.4, 1.2, 4], [0.3, 1, 3], [0.3, 1, 3]])];
     const WILD = { id: 'w', img: 'castlejp', name: 'Coringa', wild: true, reels: [1, 2, 3, 4], w: 0.8 };
-    const SC = { id: 'sc', img: 'beer', name: 'Barril', sc: true, reels: [0, 2, 4], w: 1.3, fw: 0.5 };
+    const SC = { id: 'sc', img: 'beer', name: 'Barril', sc: true, reels: [0, 2, 4], w: 1.3, fw: 0.4 };
     const draw = pool([...SY, WILD, SC]);
     const PV = [{ v: 0.1, w: 40 }, { v: 0.2, w: 30 }, { v: 0.5, w: 18 }, { v: 1, w: 8 }, { v: 2, w: 3 }, { v: 5, w: 1 }];
     const make = fs => grid([4, 4, 4, 4, 4], c => { const x = draw(c); if (fs && x.id === PINT.id) { x.v = RNG.weighted(PV).v; x.t = K.short(x.v) + 'x'; } return x; });
     // escada de prêmios de cada rei: 6 reis abrem o nível 1 e cada 3 a mais sobem um degrau
-    const LADDER = [{ p: 1 }, { s: 2 }, { p: 2 }, { p: 4 }, { s: 1 }, { p: 8 }, { p: 20 }];
+    const LADDER = [{ p: 1 }, { s: 2 }, { p: 2 }, { p: 4 }, { s: 1 }, { p: 8 }, { p: 12 }];
     const KF = [1.6, 1.3, 1, 0.8];
     const lvOf = n => (n < 6 ? 0 : Math.min(LADDER.length, 1 + Math.floor((n - 6) / 3)));
     const ladderTxt = LADDER.map((x, i) => `<tr><td>${6 + 3 * i}</td><td>${x.p ? `prêmio ${x.p}x × rei` : `+${x.s} giros`}</td></tr>`).join('');
@@ -722,7 +722,7 @@
   (() => {
     const SY = [S('lenhador', 'lumberjack', 'Lenhador', [0.5, 1.5, 5], 3), S('machado', 'axe', 'Machado', [0.4, 1.2, 4], 4), S('tronco', 'wood', 'Tronco', [0.3, 1, 3], 4), S('pinha', 'pinecone', 'Pinha', [0.25, 0.8, 2.5], 5), ...R([[0.1, 0.25, 0.8], [0.1, 0.25, 0.8], [0.08, 0.2, 0.6], [0.08, 0.2, 0.6]])];
     const WILD = { id: 'w', img: 'beaver', name: 'Coringa', wild: true, reels: [1, 2, 3, 4], w: 0.6 };
-    const SC = { id: 'sc', img: 'evergreen', name: 'Pinheiro', sc: true, w: 0.13, fw: 0.04 };
+    const SC = { id: 'sc', img: 'evergreen', name: 'Pinheiro', sc: true, w: 0.14, fw: 0.04 };
     const draw = pool([...SY, WILD, SC]);
     const make = rows => K.stack(grid([rows, rows, rows, rows, rows], c => draw(c)), 0.25);
     async function play(rt, g, st) {
@@ -1009,7 +1009,7 @@
   /* 39. Riquezas de Loki — símbolo especial que expande */
   (() => {
     const SY = rushSyms([['loki', 'trident', 'Cetro de Loki'], ['elmo', 'helmet', 'Elmo'], ['serpente', 'snake', 'Serpente'], ['runa', 'runestone', 'Runa'], ['esmeralda', 'greenheart', 'Esmeralda'], ['ouro', 'yellowheart', 'Ouro'], ['safira', 'blueheart', 'Safira']]);
-    const SC = { id: 'sc', img: 'magicwand', name: 'Bônus', sc: true, w: 0.66, fw: 0.45 };
+    const SC = { id: 'sc', img: 'magicwand', name: 'Bônus', sc: true, w: 0.64, fw: 0.4 };
     const draw = pool([...SY, SC]);
     const make = (wk = 'w') => grid([7, 7, 7, 7, 7, 7, 7], c => draw(c, wk));
     async function play(rt, g, sp) {
