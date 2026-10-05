@@ -16,6 +16,9 @@
   const mult = (x, m) => { x.m = m; x.t = 'x' + m; return x; };
   const L3 = [[1, 1, 1], [0, 0, 0], [2, 2, 2], [0, 1, 2], [2, 1, 0], [0, 1, 0], [2, 1, 2], [1, 0, 1], [1, 2, 1]];
   const L30 = K.linesFor(4, 30);
+  /** compra de bônus: sorteia uma contagem natural de scatters (condicionada ao mínimo do gatilho) */
+  const natSc = (mk, min) => { for (let i = 0; i < 50000; i++) { const n = count(mk(), x => x.sc); if (n >= min) return n; } return min; };
+  const buyNat = (G, min) => { const cfg = G.logic, orig = cfg.bonus; cfg.bonus = function (rt, opts = {}) { return orig.call(this, rt, opts.buy ? { ...opts, sc: natSc(cfg.make, min) } : opts); }; return G; };
 
   /* 21. Espíritos Místicos — três medidores que se multiplicam */
   (() => {
@@ -477,9 +480,10 @@
   /* 35. Panda Hip Hop — combos em qualquer direção */
   (() => {
     const SY = [S('sete', 'seven', 'Sete', [5, 15, 40], 3), S('sino', 'bell2', 'Sino', [3, 8, 25], 4), S('macarrao', 'ramen', 'Lámen', [2, 5, 15], 5), S('melancia', 'watermelon', 'Melancia', [1.5, 4, 10], 5), S('cereja', 'cherries', 'Cereja', [1, 3, 8], 6), ...R([[0.4, 1, 3], [0.4, 1, 3], [0.3, 0.8, 2.5], [0.3, 0.8, 2.5]])];
-    const WILD = { id: 'w', img: 'pandaface', name: 'Coringa', wild: true, w: 0.6 };
+    SY.forEach((s, i) => { s.fw = i >= 5 ? 2.5 : s.w; }); // nas grátis as letras caem menos
+    const WILD = { id: 'w', img: 'pandaface', name: 'Coringa', wild: true, w: 0.6, fw: 2.2 };
     const BOMB = { id: 'bomba', img: 'bomb', name: 'Bomba', bomb: true, noPay: true, w: 0.25, fw: 0.4 };
-    const SC = { id: 'sc', img: 'headphone', name: 'Fone', sc: true, w: 1.5, fw: 0.8 };
+    const SC = { id: 'sc', img: 'headphone', name: 'Fone', sc: true, w: 0.014, fw: 0.03 };
     const draw = pool([...SY, WILD, BOMB, SC]);
     const make = wk => grid([3, 3, 3], c => draw(c, wk));
     /** combos de 3+ iguais ligados na horizontal, vertical ou diagonal */
@@ -496,20 +500,22 @@
       }
       return { total, wins, cells: hit };
     }
-    const REEL = [1, 2, 3, 5, 10];
+    // rolo de multiplicador: no jogo base x1 → x10; nas grátis volta a x5 em todo giro e chega a x50
+    const REEL = [1, 2, 3, 5, 10], REEL_FS = [5, 10, 15, 25, 50];
+    const mOf = (fs, i) => (fs ? REEL_FS : REEL)[Math.min(i, 4)];
     async function play(rt, g, fs, st) {
-      if (!fs) st.i = 0;
-      rt.head(REEL.slice(0, 3).map((m, j) => (j === Math.min(2, st.i % 3) ? `<b>x${fs ? Math.min(50, (st.base || 1) * m) : m}</b>` : '')));
+      st.i = 0;
+      rt.head((fs ? REEL_FS : REEL).slice(0, 3).map((m, j) => (j === 0 ? `<b>x${m}</b>` : `x${m}`)));
+      rt.chip('mult', 'MULT.', 'x' + mOf(fs, 0));
       await rt.spin(g, { tease: !fs });
       // bomba explode a linha e a coluna dela
       cells(g, x => x.bomb).forEach(([c, r]) => { g.forEach((col, a) => { if (col[r] && !col[r].sc) col[r] = { ...draw(a), fresh: true }; }); g[c] = g[c].map((x, b) => (x.sc ? x : { ...draw(c), fresh: true })); rt.msg('💣 Bomba! Linha e coluna explodiram'); });
       await rt.drop(g);
       await tumble(rt, g, {
         draw: c => draw(c, fs ? 'fw' : 'w'), evaluate: chains,
-        mult: () => (fs ? Math.min(50, st.base * REEL[Math.min(st.i, 4)]) : REEL[Math.min(st.i, 4)]),
-        onStep: async () => { st.i++; rt.chip('mult', 'MULT.', 'x' + (fs ? Math.min(50, st.base * REEL[Math.min(st.i, 4)]) : REEL[Math.min(st.i, 4)])); },
+        mult: () => mOf(fs, st.i),
+        onStep: async () => { st.i++; rt.chip('mult', 'MULT.', 'x' + mOf(fs, st.i)); },
       });
-      if (fs) { st.base = Math.min(10, st.base + (st.i ? 1 : 0)); st.i = 0; }
       rt.head(null);
       if (!fs) rt.chip('mult', null);
       return count(g, x => x.sc);
@@ -521,22 +527,32 @@
       intro: 'Inspirado no "Hip Hop Panda" (PG Soft).', hello: 'Combos valem até na diagonal!',
       symbols: [...SY, WILD, BOMB, SC],
       tables: [table('Pagamento por combo', ['3', '4', '5+'], SY, '3+ iguais ligados na horizontal, vertical ou diagonal.')],
-      highlights: ['🐼 3×3 com <b>combos em corrente</b>: 3+ iguais ligados em qualquer direção (até diagonal), com cascata', 'Rolo de multiplicador no topo: <b>x1, x2, x3, x5, x10</b> conforme as cascatas', '💣 Bombas explodem a linha e a coluna', '🎧 3 fones = <b>10 rodadas grátis</b> com o multiplicador subindo até <b>x50</b>', 'Prêmio máximo: <b>572x</b>'],
+      highlights: ['🐼 3×3 com <b>combos em corrente</b>: 3+ iguais ligados em qualquer direção (até diagonal), com cascata', 'Rolo de multiplicador no topo: <b>x1, x2, x3, x5, x10</b> conforme as cascatas', '💣 Bombas explodem a linha e a coluna', '🎧 <b>Um fone já basta</b>: <b>3 rodadas grátis por fone</b>, com o rolo começando em <b>x5</b> a cada giro e chegando a <b>x50</b>', 'Prêmio máximo: <b>572x</b>'],
       how: '<p>Grade 3×3: iguais ligados (encostados em qualquer uma das 8 direções) formam combos de 3 ou mais, que pagam e somem. Cada cascata avança o rolo de multiplicador: x1, x2, x3, x5 e x10.</p>',
-      features: '<p>🎧 <b>3 fones</b> dão <b>10 rodadas grátis</b>. O rolo de multiplicador é multiplicado por um valor base que sobe +1 a cada giro com cascata (máximo x50).</p>',
+      features: '<p>🎧 <b>1 ou mais fones</b> dão <b>3 rodadas grátis por fone</b>, e cada fone que cair durante elas dá <b>+3 giros</b>. Em todo giro grátis o rolo de multiplicador volta para <b>x5</b> e avança a cada cascata: x5, x10, x15, x25 e <b>x50</b>.</p>',
       make: () => make('w'),
-      async spin(rt) { const st = {}; const g = make('w'); if (await play(rt, g, false, st) >= 3) { rt.mark(scatters(g)); await rt.wait(1000); await this.bonus(rt, {}); } },
-      async bonus(rt) { const st = { base: 1, i: 0 }; await rt.fsLoop(10, async api => { if (await play(rt, make('fw'), true, st) >= 3) api.add(5); }, { sub: 'Multiplicador sobe até x50' }); rt.chip('mult', null); },
+      async spin(rt) { const st = {}; const g = make('w'); const sc = await play(rt, g, false, st); if (sc >= 1) { rt.mark(scatters(g)); await rt.wait(1000); await this.bonus(rt, { sc }); } },
+      async bonus(rt, { sc = 1, buy } = {}) {
+        if (buy) sc = natSc(() => make('w'), 1);
+        const st = { i: 0 };
+        await rt.fsLoop(3 * sc, async api => { const s = await play(rt, make('fw'), true, st); if (s) api.add(3 * s); }, { sub: 'O rolo começa em x5 a cada giro' });
+        rt.chip('mult', null);
+      },
     }));
   })();
 
   /* 36. Senhor Hallow-Win — assombração surpresa e coringas que andam */
   (() => {
     const SY = [S('vampiro', 'vampire', 'Vampiro', [3, 10, 50], 3), S('bruxa', 'mage', 'Bruxa', [2.5, 8, 40], 3), S('fantasma', 'ghost', 'Fantasma', [2, 6, 30], 4), S('caveira', 'skull', 'Caveira', [1.5, 5, 20], 4), S('vela', 'candle', 'Vela', [1, 3, 10], 5), ...R([[0.3, 1, 3], [0.3, 1, 3], [0.2, 0.8, 2], [0.2, 0.8, 2]])];
-    const WILD = { id: 'w', img: 'pumpkin', name: 'Abóbora', wild: true, reels: [1, 2, 3, 4], w: 0.7, fw: 1.3 };
+    const WILD = { id: 'w', img: 'pumpkin', name: 'Abóbora', wild: true, reels: [1, 2, 3, 4], w: 0.2, fw: 1.8 };
     const SC = { id: 'sc', img: 'house', name: 'Casa assombrada', sc: true, w: 0.7 };
     const draw = pool([...SY, WILD, SC]);
     const make = () => grid([4, 4, 4, 4, 4], c => draw(c));
+    const FSN = { 3: 8, 4: 12 };
+    /** abóboras grudam e andam um rolo para a esquerda; as que saem da grade somem */
+    const walkLeft = w => w.map(([c, r]) => [c - 1, r]).filter(([c]) => c >= 0);
+    const addWilds = (g, w) => { cells(g, x => x.wild).forEach(([c, r]) => { if (!w.some(([a, b]) => a === c && b === r)) w.push([c, r]); }); return w; };
+    const place = (g, w) => w.forEach(([c, r]) => { g[c][r] = { ...WILD, c: 'sticky' }; });
     App.register(K.create({
       id: 'senhorhallow', name: 'Senhor Hallow-Win', studio: STUDIO, art: 'pumpkin', mascot: 'ghost',
       tag: 'Assombração surpresa · coringas que andam', colors: ['#f97316', '#4c1d95'], bg: 'linear-gradient(180deg,#1e1b4b,#4c1d95 50%,#7c2d12)',
@@ -545,9 +561,9 @@
       symbols: [...SY, WILD, SC],
       lineList: { cols: 5, rows: 4, list: L30, text: '30 linhas fixas.' },
       tables: [table('Pagamento por linha', heads(3, 3), SY, 'Iguais seguidos a partir da esquerda.')],
-      highlights: ['🎃 5×4 com 30 linhas', '👻 <b>Mini Assombração</b>: de surpresa, abóboras invadem a tela e garantem um ganho', '🏚️ 3+ casas = <b>10 rodadas grátis</b>: toda abóbora <b>gruda</b> e <b>anda uma casa para a esquerda</b> a cada giro', 'Prêmio máximo: <b>1.964x</b>'],
-      how: '<p>Grade 5×4 com 30 linhas. A abóbora é coringa nos rolos 2 a 5.</p><p>👻 Em qualquer giro sem ganho, a <b>Mini Assombração</b> pode aparecer e espalhar abóboras até sair um ganho.</p>',
-      features: '<p>🏚️ <b>3 ou mais casas assombradas</b> dão <b>10 rodadas grátis</b>. As abóboras ficam na tela e, a cada giro, andam uma casa para a esquerda até sair da grade.</p>',
+      highlights: ['🎃 5×4 com 30 linhas', '🚶 Toda abóbora que cai <b>gruda</b> e dá um <b>respin</b>, andando <b>um rolo para a esquerda</b> a cada vez', '👻 <b>Mini Assombração</b>: de surpresa, abóboras invadem a tela e garantem um ganho', '🏚️ 3/4/5 casas = <b>8/12/20 rodadas grátis</b> com as abóboras andando entre os giros', 'Prêmio máximo: <b>1.964x</b>'],
+      how: '<p>Grade 5×4 com 30 linhas. A abóbora é coringa nos rolos 2 a 5.</p><p>🚶 <b>Abóboras que andam:</b> quando uma abóbora cai, ela gruda na tela e você ganha um <b>respin</b>. A cada respin ela anda um rolo para a esquerda, até sair da grade; abóboras novas que caírem também grudam.</p><p>👻 Em qualquer giro sem ganho, a <b>Mini Assombração</b> pode aparecer e espalhar abóboras até sair um ganho.</p>',
+      features: '<p>🏚️ <b>3, 4 ou 5 casas assombradas</b> dão <b>8, 12 ou 20 rodadas grátis</b> (3+ casas nelas dão +5). As abóboras ficam na tela e, a cada giro, andam uma casa para a esquerda até sair da grade.</p>',
       make,
       async spin(rt) {
         const g = make(); await rt.spin(g);
@@ -558,16 +574,32 @@
           await rt.drop(g);
         }
         await pay(rt, res);
-        if (count(g, x => x.sc) >= 3) { rt.mark(scatters(g)); await rt.wait(1000); await this.bonus(rt, {}); }
+        let sc = count(g, x => x.sc);
+        // respins enquanto houver abóbora andando na grade
+        let walk = addWilds(g, []);
+        for (let guard = 0; guard < 12 && walk.length && !rt.capped; guard++) {
+          walk = walkLeft(walk);
+          if (!walk.length) break;
+          if (guard === 0) rt.msg('🎃 As abóboras andam: respin!');
+          const g2 = make();
+          place(g2, walk);
+          await rt.spin(g2, { tease: false });
+          addWilds(g2, walk);
+          await pay(rt, lines(g2, L30, SY));
+          sc = Math.max(sc, count(g2, x => x.sc));
+          if (sc >= 3) { rt.mark(scatters(g2)); break; }
+        }
+        if (sc >= 3) { if (sc === count(g, x => x.sc)) rt.mark(scatters(g)); await rt.wait(1000); await this.bonus(rt, { sc }); }
       },
-      async bonus(rt) {
+      async bonus(rt, { sc = 3, buy } = {}) {
+        if (buy) sc = natSc(make, 3);
         let walk = [];
-        await rt.fsLoop(10, async api => {
+        await rt.fsLoop(FSN[sc] || 20, async api => {
           const g = grid([4, 4, 4, 4, 4], c => draw(c, 'fw'));
-          walk = walk.map(([c, r]) => [c - 1, r]).filter(([c]) => c >= 0);
-          walk.forEach(([c, r]) => { g[c][r] = { ...WILD, c: 'sticky' }; });
+          walk = walkLeft(walk);
+          place(g, walk);
           await rt.spin(g, { tease: false });
-          cells(g, x => x.wild).forEach(([c, r]) => { if (!walk.some(([a, b]) => a === c && b === r)) walk.push([c, r]); });
+          addWilds(g, walk);
           await pay(rt, lines(g, L30, SY));
           if (count(g, x => x.sc) >= 3) api.add(5);
         }, { sub: 'Abóboras colantes que andam' });

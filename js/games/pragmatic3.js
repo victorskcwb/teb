@@ -20,6 +20,8 @@
   /** 50 linhas para grades de 6 colunas: desenhos 5×3 estendidos em cada faixa de 3 linhas. */
   const lines6 = (rows, n) => K.linesFor(rows, 200).map(L => [...L, L[4]]).slice(0, n);
   const mult = (x, m) => { x.m = m; x.t = 'x' + m; return x; };
+  /** compra de bônus: sorteia uma quantidade natural de scatters (mín. 80%, +1 17%, +2 3%) */
+  const natSc = min => min + RNG.weighted([{ n: 0, w: 80 }, { n: 1, w: 17 }, { n: 2, w: 3 }]).n;
 
   /* 21. Mochimon — posições multiplicadoras até x128 */
   App.register(T.clusterSpots({
@@ -35,19 +37,28 @@
   (() => {
     // nas grátis os símbolos baixos caem mais (grupos maiores)
     const SY = rushSyms([['cenoura', 'carrot', 'Cenoura'], ['rabanete', 'radish', 'Rabanete'], ['repolho', 'leafygreen', 'Repolho'], ['brocolis', 'broccoli', 'Brócolis'], ['ervilha', 'peapod', 'Ervilha'], ['cogumelo', 'mushroom', 'Cogumelo'], ['flor', 'tulip', 'Tulipa']]).map((x, i) => ({ ...x, fw: x.w * (i >= 4 ? 2 : 1) }));
-    const SC = { id: 'sc', img: 'rabbitface', name: 'Coelho', sc: true, w: 0.38, fw: 0 };
-    const COIN = { id: 'moeda', img: 'coin', name: 'Moeda', coin: true, noPay: true, w: 1, fw: 4.5 };
+    const SC = { id: 'sc', img: 'rabbitface', name: 'Coelho', sc: true, w: 0.8, fw: 0 };
+    const COIN = { id: 'moeda', img: 'coin', name: 'Moeda', coin: true, noPay: true, w: 1, fw: 0.6 };
     const draw = pool([...SY, SC, COIN]);
     const VALS = [{ v: 0.2, w: 40 }, { v: 0.5, w: 30 }, { v: 1, w: 18 }, { v: 2, w: 8 }, { v: 5, w: 3 }, { v: 10, w: 1 }, { v: 25, w: 0.25 }];
+    const coin = () => { const v = RNG.weighted(VALS).v; return { ...COIN, v, t: K.short(v) + 'x', fresh: true }; };
     const cell = (c, wk) => { const x = draw(c, wk); if (x.coin) { x.v = RNG.weighted(VALS).v; x.t = K.short(x.v) + 'x'; } return x; };
     const make = wk => grid([7, 7, 7, 7, 7, 7, 7], c => cell(c, wk));
-    const LV = [{ at: 0, m: 1 }, { at: 15, m: 2 }, { at: 30, m: 3 }, { at: 45, m: 5 }, { at: 70, m: 10 }];
+    // medidor de pontos: cada nível dá +5 giros e o multiplicador
+    const LV = [{ at: 0, m: 1 }, { at: 30, m: 2 }, { at: 45, m: 3 }, { at: 60, m: 5 }, { at: 90, m: 10 }];
+    // padrão de moedas garantido em cada giro grátis (cresce a cada giro)
+    const PATTERN = [4, 6, 8, 10, 12];
     async function play(rt, g, st) {
+      if (st) {
+        const n = PATTERN[Math.min(PATTERN.length - 1, st.spin)];
+        RNG.shuffle(cells(g, x => !x.coin)).slice(0, n).forEach(([c, r]) => { g[c][r] = coin(); });
+      }
       await rt.drop(g);
+      if (st) { rt.msg(`🪙 Padrão de ${PATTERN[Math.min(PATTERN.length - 1, st.spin)]} moedas!`); await rt.wait(400); }
       // coelho do jogo base: às vezes derruba um bloco 3×3 de moedas
       if (!st && RNG.float() < 0.012) {
         const c0 = RNG.int(0, 4), r0 = RNG.int(0, 4);
-        for (let a = 0; a < 3; a++) for (let b = 0; b < 3; b++) { const v = RNG.weighted(VALS).v; g[c0 + a][r0 + b] = { ...COIN, v, t: K.short(v) + 'x', fresh: true }; }
+        for (let a = 0; a < 3; a++) for (let b = 0; b < 3; b++) g[c0 + a][r0 + b] = coin();
         rt.msg('🐇 O coelho derrubou um monte de moedas!'); rt.fx('boom'); await rt.drop(g);
       }
       const m = () => (st ? LV.filter(l => st.pts >= l.at).pop().m : 1);
@@ -55,12 +66,14 @@
         draw: c => cell(c, st ? 'fw' : 'w'),
         evaluate: gg => {
           const res = payClusters(clusters(gg, 5), TT);
+          const syms = res.cells.size;
           // moedas encostadas em grupos vencedores são coletadas
           const got = new Set();
           res.cells.forEach(kk => { const [c, r] = unkey(kk); near(c, r).forEach(([a, b]) => { const y = gg[a] && gg[a][b]; if (y && y.coin) got.add(key(a, b)); }); });
           got.forEach(kk => { const [c, r] = unkey(kk); res.total += gg[c][r].v; res.cells.add(kk); });
           if (got.size) res.wins.push({ sym: { name: 'Moedas' }, n: got.size, pay: 0 });
-          if (st && res.total) { st.pts += res.cells.size + got.size; rt.chip('pts', 'PONTOS', st.pts); }
+          // 1 ponto por símbolo vencedor e 3 por moeda coletada
+          if (st && res.total) { st.pts += syms + 3 * got.size; rt.chip('pts', 'PONTOS', st.pts); }
           return res;
         },
         mult: () => m(),
@@ -74,19 +87,20 @@
       intro: 'Inspirado no "Rabbit Garden" (Pragmatic Play).', hello: 'Grupos vencedores coletam as moedas encostadas!',
       symbols: [...SY, SC, COIN],
       tables: [table('Pagamento por tamanho do grupo', CLH, SY, 'Grupos de 5+ iguais encostados, com cascata.')],
-      highlights: ['🥕 7×7 com grupos e cascata', '🪙 Moedas <b>encostadas num grupo vencedor</b> são coletadas (até 25x cada)', '🐇 O coelho pode derrubar um <b>bloco 3×3 de moedas</b>', '3+ coelhos = <b>5 rodadas grátis</b> com medidor de pontos: <b>x2, x3, x5 e x10</b>', 'Prêmio máximo: <b>5.000x</b>'],
+      highlights: ['🥕 7×7 com grupos e cascata', '🪙 Moedas <b>encostadas num grupo vencedor</b> são coletadas (até 25x cada)', '🐇 O coelho pode derrubar um <b>bloco 3×3 de moedas</b>', '4+ coelhos = <b>5 rodadas grátis</b> com moedas garantidas e medidor de pontos: <b>x2, x3, x5 e x10</b>', 'Prêmio máximo: <b>5.000x</b>'],
       how: '<p>Grade 7×7: grupos de 5+ iguais encostados pagam e somem (cascata). As <b>moedas</b> encostadas (horizontal/vertical) num grupo vencedor são pagas e também somem.</p>',
-      features: '<p>🐇 <b>3 ou mais coelhos</b> dão <b>5 rodadas grátis</b>. Cada símbolo vencedor soma pontos no medidor; com <b>15, 30, 45 e 70</b> pontos o multiplicador vira <b>x2, x3, x5 e x10</b> e você ganha <b>+2 giros</b> em cada nível. O medidor não zera.</p>',
+      features: '<p>🐇 <b>4 ou mais coelhos</b> dão <b>5 rodadas grátis</b>. Todo giro grátis traz um <b>padrão garantido de moedas</b> que cresce: 4, 6, 8, 10 e depois 12 moedas por giro.</p><p>🥕 <b>Medidor de pontos:</b> cada símbolo vencedor vale <b>1 ponto</b> e cada moeda coletada vale <b>3</b>. Com <b>30, 45, 60 e 90</b> pontos o multiplicador vira <b>x2, x3, x5 e x10</b> e cada nível dá <b>+5 giros</b>. O medidor não zera.</p>',
       make: () => make('w'),
-      async spin(rt) { const g = make('w'); const sc = await play(rt, g, null); if (sc >= 3) { rt.mark(scatters(g)); await rt.wait(1000); await this.bonus(rt, {}); } },
+      async spin(rt) { const g = make('w'); const sc = await play(rt, g, null); if (sc >= 4) { rt.mark(scatters(g)); await rt.wait(1000); await this.bonus(rt, {}); } },
       async bonus(rt) {
-        const st = { pts: 0, lv: 0 };
+        const st = { pts: 0, lv: 0, spin: 0 };
         rt.chip('pts', 'PONTOS', 0);
         await rt.fsLoop(5, async api => {
+          st.spin = api.i;
           await play(rt, make('fw'), st);
           const lv = LV.filter(l => st.pts >= l.at).length - 1;
-          if (lv > st.lv) { api.add(2 * (lv - st.lv)); st.lv = lv; rt.msg(`🥕 Medidor x${LV[lv].m}!`); rt.fx('rise'); }
-        }, { sub: 'Medidor de pontos: x2 · x3 · x5 · x10' });
+          if (lv > st.lv) { api.add(5 * (lv - st.lv)); st.lv = lv; rt.msg(`🥕 Medidor x${LV[lv].m}! +5 giros`); rt.fx('rise'); }
+        }, { sub: 'Moedas garantidas · medidor x2 · x3 · x5 · x10' });
         rt.chip('pts', null);
       },
     }));
@@ -95,7 +109,7 @@
   /* 23. Abelhas Grudentas (Sticky Bees) — super coringas colantes */
   (() => {
     const SY = rushSyms([['mel', 'honeypot', 'Pote de mel'], ['flor', 'hibiscus', 'Hibisco'], ['girassol', 'sunflower', 'Girassol'], ['joaninha', 'ladybug', 'Joaninha'], ['folha', 'leaf', 'Folha'], ['trevo', 'shamrock', 'Trevo'], ['margarida', 'blossom', 'Flor']]);
-    const SC = { id: 'sc', img: 'beehive', name: 'Colmeia', sc: true, w: 0.34, fw: 0.3 };
+    const SC = { id: 'sc', img: 'beehive', name: 'Colmeia', sc: true, w: 0.75, fw: 0.3 };
     const BEE = { id: 'w', img: 'bee', name: 'Abelha coringa', wild: true, w: 0.35, fw: 0 };
     const draw = pool([...SY, SC, BEE]);
     const make = wk => grid([7, 7, 7, 7, 7, 7, 7], c => { const x = draw(c, wk); if (x.wild) mult(x, RNG.pick([1, 2, 2, 3])); return x; });
@@ -103,7 +117,7 @@
       if (st) {
         // 1 a 3 super abelhas novas por giro; as antigas ficam
         const n = RNG.weighted([{ n: 0, w: 55 }, { n: 1, w: 35 }, { n: 2, w: 8 }, { n: 3, w: 2 }]).n;
-        for (let i = 0; i < n; i++) st.bees.set(key(RNG.int(0, 6), RNG.int(0, 6)), 1);
+        for (let i = 0; i < n; i++) { const kk = key(RNG.int(0, 6), RNG.int(0, 6)); if (!st.bees.has(kk)) st.bees.set(kk, RNG.pick([1, 2, 2, 3])); }
         st.bees.forEach((m, kk) => { const [c, r] = unkey(kk); g[c][r] = mult({ ...BEE, c: 'sticky gold' }, m); });
         if (n) rt.msg(`🐝 +${n} super abelha${n > 1 ? 's' : ''} colante${n > 1 ? 's' : ''}!`);
       }
@@ -112,8 +126,6 @@
         draw: c => draw(c, st ? 'fw' : 'w'),
         evaluate: gg => payClusters(clusters(gg, 5), TT, k => {
           const ws = k.cells.filter(kk => { const [c, r] = unkey(kk); return gg[c][r].wild; });
-          // super abelhas que ganham sobem +1 no multiplicador
-          if (st) ws.forEach(kk => { if (st.bees.has(kk)) { const v = Math.min(5, st.bees.get(kk) + 1); st.bees.set(kk, v); const [c, r] = unkey(kk); mult(gg[c][r], v); } });
           return ws.reduce((s, kk) => { const [c, r] = unkey(kk); return s + (gg[c][r].m || 1); }, 0) || 1;
         }),
       });
@@ -126,14 +138,15 @@
       intro: 'Inspirado no "Sticky Bees" (Pragmatic Play).', hello: 'Abelhas coringa entram em qualquer grupo!',
       symbols: [...SY, SC, BEE],
       tables: [table('Pagamento por tamanho do grupo', CLH, SY, 'Grupos de 5+ iguais encostados, com cascata.')],
-      highlights: ['🐝 7×7 com grupos; abelhas são <b>coringas com multiplicador</b> que se somam', '3+ colmeias = <b>7 rodadas grátis</b> (+1 por colmeia extra)', 'Nas grátis caem <b>1 a 3 super abelhas por giro</b> que <b>grudam</b> até o fim e sobem +1 a cada ganho (até x5)', 'Prêmio máximo: <b>5.000x</b>'],
+      highlights: ['🐝 7×7 com grupos; abelhas são <b>coringas com multiplicador</b> que se somam', '4+ colmeias = <b>7 rodadas grátis</b> (+1 por colmeia extra)', 'Nas grátis caem até <b>3 super abelhas por giro</b> (x1 a x3) que <b>grudam</b> até o fim', 'Prêmio máximo: <b>5.000x</b>'],
       how: '<p>Grade 7×7: grupos de 5+ iguais encostados pagam (cascata). 🐝 Abelhas são coringas com x1 a x3; várias no mesmo grupo <b>se somam</b>.</p>',
-      features: '<p>🏠 <b>3 ou mais colmeias</b> dão <b>7 rodadas grátis</b> +1 por colmeia além de 3 (3 durante o bônus dão +3). A cada giro podem cair de 1 a 3 <b>super abelhas</b> que ficam grudadas até o fim; cada ganho com elas soma <b>+1</b> no multiplicador delas (até x5).</p>',
+      features: '<p>🏠 <b>4 ou mais colmeias</b> dão <b>7 rodadas grátis</b> +1 por colmeia além de 4 (3 durante o bônus dão +3). A cada giro podem cair até 3 <b>super abelhas</b> coringa (x1 a x3) que ficam <b>grudadas no lugar até o fim</b> do bônus.</p>',
       make: () => make('w'),
-      async spin(rt) { const g = make('w'); const sc = await play(rt, g, null); if (sc >= 3) { rt.mark(scatters(g)); await rt.wait(1000); await this.bonus(rt, { sc }); } },
-      async bonus(rt, { sc = 3 } = {}) {
+      async spin(rt) { const g = make('w'); const sc = await play(rt, g, null); if (sc >= 4) { rt.mark(scatters(g)); await rt.wait(1000); await this.bonus(rt, { sc }); } },
+      async bonus(rt, opts = {}) {
+        const sc = opts.buy ? natSc(4) : opts.sc || 4;
         const st = { bees: new Map() };
-        await rt.fsLoop(7 + Math.max(0, sc - 3), async api => { const s = await play(rt, make('fw'), st); if (s >= 3) api.add(3); }, { sub: 'Super abelhas colantes!' });
+        await rt.fsLoop(7 + Math.max(0, sc - 4), async api => { const s = await play(rt, make('fw'), st); if (s >= 3) api.add(3); }, { sub: 'Super abelhas colantes!' });
       },
     }));
   })();
@@ -142,23 +155,23 @@
   (() => {
     const SY = [S('estrela', 'microphone', 'Microfone', [1, 2.5, 6, 15], 3), S('oculos', 'sunglasses', 'Óculos', [0.8, 2, 5, 12], 4), S('camera', 'camera', 'Câmera', [0.6, 1.5, 4, 9], 5), S('bolsa', 'handbag', 'Bolsa', [0.5, 1.2, 3, 7], 5), S('salto', 'highheel', 'Salto', [0.4, 1, 2.5, 5], 6), ...R([[0.15, 0.3, 0.6, 1.2], [0.15, 0.3, 0.6, 1.2], [0.1, 0.2, 0.5, 1], [0.1, 0.2, 0.5, 1]])];
     const WILD = { id: 'w', img: 'bus', name: 'Ônibus', wild: true, reels: [1, 2, 3, 4], w: 0.55 };
-    const SC = { id: 'sc', img: 'glowstar', name: 'Estrela', sc: true, w: 0.78 };
+    const SC = { id: 'sc', img: 'glowstar', name: 'Estrela', sc: true, w: 0.85 };
     const draw = pool([...SY, WILD, SC]);
     const heights = () => Array.from({ length: 6 }, () => RNG.int(2, 7));
     const make = (hs = heights()) => K.stack(hs.map((hh, c) => Array.from({ length: hh }, () => draw(c))), 0.3);
     async function play(rt, g, st) {
-      await tumble(rt, g, { draw: c => draw(c), evaluate: gg => ways(gg, SY), mult: () => (st ? st.m : 1), onStep: async () => { if (st) { st.m++; rt.chip('mult', 'MULT.', 'x' + st.m); } } });
+      await tumble(rt, g, { draw: c => draw(c), evaluate: gg => ways(gg, SY), mult: () => (st ? st.m : 1), onStep: async () => { if (st && st.m < 50) { st.m++; rt.chip('mult', 'MULT.', 'x' + st.m); } } });
     }
     App.register(K.create({
       id: 'onibuscelebridades', name: 'Ônibus das Celebridades Megaways', studio: STUDIO, art: 'bus', mascot: 'glowstar',
-      tag: 'Respin de estrelas · mult. sem teto', colors: ['#db2777', '#fbbf24'], bg: 'linear-gradient(180deg,#831843,#be185d 50%,#1e1b4b)',
+      tag: 'Respin de estrelas · mult. até x50', colors: ['#db2777', '#fbbf24'], bg: 'linear-gradient(180deg,#831843,#be185d 50%,#1e1b4b)',
       cols: 6, rows: 7, maxWin: 10000, vol: 5, rtp: '~96,5%', target: 0.965,
       intro: 'Inspirado no "Wild Celebrity Bus Megaways" (Pragmatic Play).', hello: '3 estrelas dão respin!',
       symbols: [...SY, WILD, SC],
       tables: [table('Pagamento por caminho', heads(3, 4, ' rolos'), SY, 'Megaways com cascata.')],
-      highlights: ['🚌 Megaways (até 117.649 caminhos) com cascata', '⭐ 3 estrelas = <b>respin</b> com as estrelas colantes até parar de cair estrela', '4+ estrelas = <b>10 rodadas grátis</b> (+2 por estrela extra) com multiplicador <b>+1 por cascata sem zerar</b>', 'Prêmio máximo: <b>10.000x</b>'],
+      highlights: ['🚌 Megaways (até 117.649 caminhos) com cascata', '⭐ 3 estrelas = <b>respin</b> com as estrelas colantes até parar de cair estrela', '4/5/6 estrelas = <b>8/10/12 rodadas grátis</b> com multiplicador <b>+1 por cascata sem zerar</b> (até x50)', 'Prêmio máximo: <b>10.000x</b>'],
       how: '<p>Megaways (2 a 7 símbolos por rolo) com cascata. O ônibus é coringa nos rolos 2 a 5.</p>',
-      features: '<p>⭐ Com <b>3 estrelas</b>, elas grudam e os rolos giram de novo; cada estrela nova dá outro respin. Com <b>4 ou mais</b>, você ganha <b>10 rodadas grátis</b> (+2 por estrela além de 4). Nelas o multiplicador sobe <b>+1 a cada cascata</b> e nunca zera.</p>',
+      features: '<p>⭐ Com <b>3 estrelas</b>, elas grudam e os rolos giram de novo; cada estrela nova dá outro respin. Com <b>4, 5 ou 6 estrelas</b>, você ganha <b>8, 10 ou 12 rodadas grátis</b>. Nelas o multiplicador sobe <b>+1 a cada cascata</b> e nunca zera, até <b>x50</b>. 3 estrelas durante o bônus dão <b>+5 giros</b>.</p>',
       make: () => make(),
       async spin(rt) {
         const g = make();
@@ -181,61 +194,83 @@
         sc = Math.max(sc, count(g, x => x.sc));
         if (sc >= 4) { rt.mark(scatters(g)); await rt.wait(1000); await this.bonus(rt, { sc }); }
       },
-      async bonus(rt, { sc = 4 } = {}) {
+      async bonus(rt, opts = {}) {
+        const sc = opts.buy ? natSc(4) : opts.sc || 4;
         const st = { m: 1 };
         rt.chip('mult', 'MULT.', 'x1');
-        await rt.fsLoop(10 + 2 * Math.max(0, sc - 4), async api => { const g = make(); await rt.spin(g, { tease: false }); await play(rt, g, st); if (count(g, x => x.sc) >= 3) api.add(4); }, { sub: 'Multiplicador +1 por cascata' });
+        await rt.fsLoop({ 4: 8, 5: 10 }[sc] || 12, async api => { const g = make(); await rt.spin(g, { tease: false }); await play(rt, g, st); if (count(g, x => x.sc) >= 3) api.add(5); }, { sub: 'Multiplicador +1 por cascata (até x50)' });
         rt.chip('mult', null);
       },
     }));
   })();
 
-  /* 25. Assalto às Pepitas (Heist for the Golden Nuggets) */
+  /* 25. Assalto às Pepitas (Heist for the Golden Nuggets) — medidor de pepitas e símbolo do dinheiro */
   (() => {
     const L20 = K.LINES_5x3.slice(0, 20);
     const SY = [S('ladrao', 'detective', 'Ladrão', [5, 20, 100], 3), S('carrinho', 'minecart', 'Carrinho', [3, 10, 50], 4), S('picareta', 'pick', 'Picareta', [2, 6, 30], 4), S('lanterna', 'lantern', 'Lanterna', [1.5, 4, 20], 5), ...R([[0.5, 1.5, 5], [0.5, 1.5, 5], [0.3, 1, 3], [0.3, 1, 3]])];
-    const WILD = { id: 'w', img: 'moneywings', name: 'Coringa coletor', wild: true, reels: [1, 2, 3, 4], w: 0.8, fw: 1.9 };
-    const GOLD = { id: 'pepita', img: 'goldnugget', name: 'Pepita', gold2: true, w: 1.6, fw: 3.2 };
-    const SC = { id: 'sc', img: 'dynamite', name: 'Dinamite', sc: true, reels: [0, 2, 4], w: 2.1, fw: 0 };
-    const draw = pool([...SY, WILD, GOLD, SC]);
-    const VALS = [{ v: 0.5, w: 30 }, { v: 1, w: 30 }, { v: 2, w: 18 }, { v: 3, w: 10 }, { v: 5, w: 7 }, { v: 10, w: 3 }, { v: 25, w: 1.2 }, { v: 50, w: 0.4 }, { v: 250, w: 0.04 }];
-    const WM = [{ m: 1, w: 60 }, { m: 2, w: 20 }, { m: 3, w: 10 }, { m: 5, w: 6 }, { m: 10, w: 3 }, { m: 16, w: 1 }];
-    const cell = (c, wk) => { const x = draw(c, wk); if (x.gold2) { x.v = RNG.weighted(VALS).v; x.t = K.short(x.v) + 'x'; x.noPay = true; } if (x.wild) { const m = RNG.weighted(WM).m; if (m > 1) mult(x, m); } return x; };
+    const CHARS = SY.slice(0, 4);
+    // coringas nos rolos 2 a 4 com x2 ou x3; na mesma linha os multiplicadores se somam
+    const WILD = { id: 'w', img: 'moneywings', name: 'Coringa', wild: true, reels: [1, 2, 3], w: 0.9, fw: 0.45 };
+    // pepitas (rolos 1, 3 e 5) funcionam como scatter e trazem valor
+    const NUG = { id: 'sc', img: 'goldnugget', name: 'Pepita', sc: true, reels: [0, 2, 4], w: 1.85, fw: 1.6 };
+    const draw = pool([...SY, WILD, NUG]);
+    const VALS = [{ v: 1, w: 40 }, { v: 2, w: 25 }, { v: 3, w: 15 }, { v: 5, w: 10 }, { v: 10, w: 6 }, { v: 25, w: 3 }, { v: 50, w: 0.8 }, { v: 100, w: 0.2 }];
+    const cell = (c, wk) => {
+      const x = draw(c, wk);
+      if (x.sc) { x.v = RNG.weighted(VALS).v; x.t = K.short(x.v) + 'x'; }
+      if (x.wild) mult(x, RNG.pick([2, 3]));
+      return x;
+    };
     const make = wk => grid([3, 3, 3, 3, 3], c => cell(c, wk));
-    async function play(rt, g, st) {
-      await pay(rt, lines(g, L20, SY));
-      const ws = g.flat().filter(x => x.wild), golds = g.flat().filter(x => x.gold2);
-      if (!ws.length || !golds.length) return;
-      const v = golds.reduce((s, x) => s + x.v, 0);
-      const m = ws.reduce((s, x) => s + (x.m || 1), 0) * (st ? st.mul : 1);
-      rt.mark(cells(g, x => x.wild || x.gold2).map(([c, r]) => key(c, r)));
-      rt.win(v * m);
-      rt.msg(`💰 Coringa coletou ${rt.coins(v)}${m > 1 ? ` × ${m}` : ''} = ${rt.coins(v * m)}`);
-      rt.fx('coin');
-      await rt.wait(900);
-      if (st) st.got += ws.length;
-    }
-    const LVL = [{ at: 4, m: 2 }, { at: 8, m: 3 }, { at: 12, m: 10 }];
+    const nugs = g => g.flat().filter(x => x.sc);
     App.register(K.create({
       id: 'assaltopepitas', name: 'Assalto às Pepitas', studio: STUDIO, art: 'goldnugget', mascot: 'detective',
-      tag: 'Coringas coletores até x16', colors: ['#ca8a04', '#44403c'], bg: 'linear-gradient(180deg,#78350f,#44403c 60%,#1c1917)',
+      tag: 'Medidor de pepitas · símbolo do dinheiro', colors: ['#ca8a04', '#44403c'], bg: 'linear-gradient(180deg,#78350f,#44403c 60%,#1c1917)',
       cols: 5, rows: 3, maxWin: 5000, vol: 4, rtp: '~96,5%', target: 0.965,
-      intro: 'Inspirado no "Heist for the Golden Nuggets" (Pragmatic Play).', hello: 'Coringas coletam as pepitas!',
-      symbols: [...SY, WILD, GOLD, SC],
+      intro: 'Inspirado no "Heist for the Golden Nuggets" (Pragmatic Play).', hello: '3 pepitas abrem o assalto!',
+      symbols: [...SY, WILD, NUG], extraSprites: ['pistol'],
       lineList: { cols: 5, rows: 3, list: L20, text: '20 linhas fixas.' },
       tables: [table('Pagamento por linha', heads(3, 3), SY, 'Iguais seguidos a partir da esquerda.')],
-      highlights: ['⛏️ Pepitas valem de <b>0,5x a 250x</b>', '💸 Coringas (x1 a <b>x16</b>) coletam todas as pepitas da tela; vários coringas somam o multiplicador', '🧨 3 dinamites = <b>10 rodadas grátis</b>: a cada 4 coringas coletados, +10 giros e coleta x2, x3 e x10', 'Prêmio máximo: <b>5.000x</b>'],
-      how: '<p>Grade 5×3 com 20 linhas. Quando há <b>coringa</b> e <b>pepitas</b> na tela, o coringa coleta o valor de todas, vezes o multiplicador dele.</p>',
-      features: '<p>🧨 <b>3 dinamites</b> (rolos 1, 3 e 5) dão <b>10 rodadas grátis</b>. Cada coringa que coleta conta; com 4, 8 e 12 coringas você ganha <b>+10 giros</b> e as coletas passam a valer <b>x2, x3 e x10</b>.</p>',
+      highlights: ['💸 Coringas nos rolos 2 a 4 com <b>x2 ou x3</b>; dois na mesma linha <b>somam</b> os multiplicadores', '⛏️ 3 pepitas (rolos 1, 3 e 5) = <b>5 rodadas grátis</b>; os valores delas (1x a 100x) enchem o <b>medidor de pepitas</b>', '🔫 O revólver escolhe um personagem que vira o <b>símbolo do dinheiro</b>: cada vez que cai paga o medidor', 'Nas grátis os coringas <b>grudam</b> e 3 pepitas dão <b>+5 giros</b>', 'Prêmio máximo: <b>5.000x</b>'],
+      how: '<p>Grade 5×3 com 20 linhas. A carteira voadora é coringa nos rolos 2 a 4 e vem com <b>x2 ou x3</b>; se houver dois coringas na mesma linha, os multiplicadores <b>se somam</b>.</p><p>⛏️ As <b>pepitas</b> só caem nos rolos 1, 3 e 5 e cada uma traz um valor.</p>',
+      features: '<p>⛏️ <b>3 pepitas</b> dão <b>5 rodadas grátis</b>. Os valores delas vão para o <b>medidor de pepitas</b>. Antes de começar, o <b>revólver</b> sorteia um dos personagens (Ladrão, Carrinho, Picareta ou Lanterna): nas grátis ele vira o <b>símbolo do dinheiro</b> e, além de pagar normalmente nas linhas, <b>cada um que cair paga o valor do medidor</b>.</p><p>Toda pepita que cair nas grátis <b>soma o valor dela ao medidor</b>; 3 pepitas no mesmo giro dão <b>+5 giros</b>. Todo coringa que cair nas grátis <b>gruda</b> no lugar até o fim.</p>',
       make: () => make('w'),
-      async spin(rt) { const g = make('w'); await rt.spin(g); await play(rt, g, null); if (count(g, x => x.sc) >= 3) { rt.mark(scatters(g)); await rt.wait(1000); await this.bonus(rt, {}); } },
-      async bonus(rt) {
-        const st = { mul: 1, got: 0, lv: 0 };
-        await rt.fsLoop(10, async api => {
-          const g = make('fw'); await rt.spin(g, { tease: false }); await play(rt, g, st);
-          while (st.lv < LVL.length && st.got >= LVL[st.lv].at) { st.mul = LVL[st.lv].m; st.lv++; api.add(10); rt.chip('mult', 'COLETA', 'x' + st.mul); rt.msg(`💰 Nível ${st.lv}: coletas x${st.mul} e +10 giros!`); rt.fx('rise'); await rt.wait(700); }
-        }, { sub: 'Coringas coletam · níveis x2/x3/x10' });
-        rt.chip('mult', null);
+      async spin(rt) {
+        const g = make('w');
+        await rt.spin(g);
+        await pay(rt, lines(g, L20, SY, { mult: 'add' }));
+        const ns = nugs(g);
+        if (ns.length >= 3) { rt.mark(scatters(g)); await rt.wait(1000); await this.bonus(rt, { meter: ns.reduce((s, x) => s + x.v, 0) }); }
+      },
+      async bonus(rt, opts = {}) {
+        // na compra o medidor começa com 3 pepitas sorteadas
+        let meter = opts.meter || [0, 1, 2].reduce(s => s + RNG.weighted(VALS).v, 0);
+        const idx = RNG.int(0, CHARS.length - 1), money = CHARS[idx];
+        await rt.reveal('O REVÓLVER ESCOLHE', CHARS.map(s => ({ img: s.img, t: s.name })), idx);
+        rt.chip('meter', 'MEDIDOR', K.short(meter) + 'x');
+        const sticky = new Map();
+        await rt.fsLoop(5, async api => {
+          const g = make('fw');
+          sticky.forEach((m, kk) => { const [c, r] = unkey(kk); g[c][r] = mult({ ...WILD, c: 'sticky' }, m); });
+          g.forEach(col => col.forEach(x => { if (x.id === money.id) { x.c = 'gold'; x.t = '$'; } }));
+          await rt.spin(g, { tease: false });
+          cells(g, x => x.wild).forEach(([c, r]) => { if (!sticky.has(key(c, r))) sticky.set(key(c, r), g[c][r].m); });
+          // pepitas novas enchem o medidor antes do pagamento
+          const ns = nugs(g);
+          if (ns.length) { meter += ns.reduce((s, x) => s + x.v, 0); rt.chip('meter', 'MEDIDOR', K.short(meter) + 'x'); rt.mark(scatters(g), 'hl'); rt.msg(`⛏️ Medidor de pepitas: ${rt.coins(meter)}`); rt.fx('coin'); await rt.wait(600); }
+          await pay(rt, lines(g, L20, SY, { mult: 'add' }));
+          const ms = cells(g, x => x.id === money.id);
+          if (ms.length && !rt.capped) {
+            const v = ms.length * meter;
+            rt.mark(ms.map(([c, r]) => key(c, r)));
+            rt.win(v);
+            rt.msg(`💰 ${ms.length}× ${money.name} do dinheiro × ${rt.coins(meter)} = ${rt.coins(v)}`);
+            rt.fx('big');
+            await rt.wait(900);
+          }
+          if (ns.length >= 3) api.add(5);
+        }, { sub: `${money.name} paga o medidor · coringas colantes` });
+        rt.chip('meter', null);
       },
     }));
   })();
@@ -293,7 +328,7 @@
     const SC = { id: 'sc', img: 'beekeeper', name: 'Apicultor', sc: true, reels: [0, 2, 4], w: 1.25, fw: 0.9 };
     const draw = pool([...SY, WILD, SC]);
     const make = () => grid([4, 4, 4, 4, 4], c => draw(c));
-    const TYPES = { rand: { n: 'Coringas aleatórios', d: '2 a 6 coringas por giro' }, exp: { n: 'Coringa que expande', d: 'enche o rolo inteiro' }, sur: { n: 'Coringa que cerca', d: 'vira coringa em 3×3' } };
+    const TYPES = { rand: { n: 'Coringas aleatórios', d: '10 giros · 2 a 6 coringas', s: 10 }, exp: { n: 'Coringa que expande', d: '8 giros · enche o rolo inteiro', s: 8 }, sur: { n: 'Coringa que cerca', d: '6 giros · vira coringa em 3×3', s: 6 } };
     function apply(g, type, rt) {
       if (type === 'rand') { const n = RNG.int(2, 6); for (let i = 0; i < n; i++) g[RNG.int(1, 4)][RNG.int(0, 3)] = { ...WILD, fresh: true }; return n; }
       const c = RNG.int(1, 3), r = RNG.int(0, 3);
@@ -309,9 +344,9 @@
       symbols: [...SY, WILD, SC],
       lineList: { cols: 5, rows: 4, list: L20, text: '20 linhas fixas.' },
       tables: [table('Pagamento por linha', heads(3, 3), SY, 'Iguais seguidos a partir da esquerda.')],
-      highlights: ['🐝 Recursos aleatórios: <b>coringas aleatórios</b>, <b>coringa que expande</b> e <b>coringa que cerca (3×3)</b>', '🧑‍🌾 3 apicultores = <b>10 rodadas grátis</b>: escolha o tipo de coringa, que fica <b>colante</b>', 'Prêmio máximo: <b>5.000x</b>'],
+      highlights: ['🐝 Recursos aleatórios: <b>coringas aleatórios</b>, <b>coringa que expande</b> e <b>coringa que cerca (3×3)</b>', '🧑‍🌾 3 apicultores = rodadas grátis: escolha <b>10 giros</b> com coringas aleatórios, <b>8</b> com coringa que expande ou <b>6</b> com coringa que cerca; todo coringa fica <b>colante</b>', 'Prêmio máximo: <b>5.000x</b>'],
       how: '<p>Grade 5×4 com 20 linhas. Em qualquer giro uma abelha pode ativar um dos três recursos de coringa.</p>',
-      features: '<p>🧑‍🌾 <b>3 apicultores</b> (rolos 1, 3 e 5) dão <b>10 rodadas grátis</b>. Antes, você escolhe o tipo de coringa: ele aparece com mais frequência e todo coringa criado <b>gruda</b> até o fim.</p>',
+      features: '<p>🧑‍🌾 <b>3 apicultores</b> (rolos 1, 3 e 5) abrem as rodadas grátis. Antes, você escolhe o tipo de coringa: <b>coringas aleatórios com 10 giros</b>, <b>coringa que expande com 8 giros</b> ou <b>coringa que cerca com 6 giros</b>. O escolhido aparece com mais frequência e todo coringa criado <b>gruda</b> até o fim. 3 apicultores durante o bônus dão +5 giros.</p>',
       make,
       async spin(rt) {
         const g = make();
@@ -323,7 +358,7 @@
       async bonus(rt) {
         const t = await rt.choose('ESCOLHA SUA ABELHA', Object.entries(TYPES).map(([id, x]) => ({ id, img: 'bee', label: x.n, desc: x.d })));
         const sticky = new Set();
-        await rt.fsLoop(10, async api => {
+        await rt.fsLoop(TYPES[t].s, async api => {
           const g = make();
           if (RNG.float() < 0.35) apply(g, t, rt);
           sticky.forEach(kk => { const [c, r] = unkey(kk); g[c][r] = { ...WILD, c: 'sticky' }; });
@@ -340,47 +375,83 @@
   (() => {
     const L50 = lines6(6, 50);
     const SY = [S('capita', 'pilot', 'Capitã', [2, 5, 20, 60], 3), S('balao', 'balloon', 'Balão', [1.5, 4, 15, 40], 4), S('helice', 'helicopter', 'Hélice', [1, 3, 10, 30], 4), S('bussola', 'compass', 'Bússola', [0.8, 2, 7, 20], 5), ...R([[0.2, 0.6, 2, 5], [0.2, 0.6, 2, 5], [0.15, 0.5, 1.5, 4], [0.15, 0.5, 1.5, 4]])];
-    const WILD = { id: 'w', img: 'parachute', name: 'Coringa', wild: true, w: 0.5 };
-    const SC = { id: 'sc', img: 'airplane', name: 'Avião', sc: true, w: 0.55, fw: 0.45 };
+    const WILD = { id: 'w', img: 'parachute', name: 'Coringa', wild: true, w: 0.5, fw: 5 };
+    const SC = { id: 'sc', img: 'airplane', name: 'Avião', sc: true, w: 0.42, fw: 1.2 };
     const draw = pool([...SY, WILD, SC]);
-    const make = () => grid([6, 6, 6, 6, 6, 6], c => draw(c));
+    const make = (wk = 'w') => grid([6, 6, 6, 6, 6, 6], c => draw(c, wk));
+    const SIZES = [{ s: 2, w: 40 }, { s: 3, w: 32 }, { s: 4, w: 18 }, { s: 5, w: 8 }, { s: 6, w: 2 }];
+    /**
+     * Moldura s×s em (c0, r0): só se cair coringa dentro dela, ela expande e vira toda coringa,
+     * com multiplicador = quantos coringas havia dentro. Devolve as chaves e o multiplicador (ou null).
+     */
     function frame(g, c0, r0, s) {
-      let n = 0;
-      for (let a = c0; a < c0 + s; a++) for (let b = r0; b < r0 + s; b++) if (g[a] && g[a][b]) { g[a][b] = { ...WILD, c: 'gold', fresh: true }; n++; }
-      g.forEach(col => col.forEach(x => { if (x.wild && x.c === 'gold') mult(x, s); }));
-      return n;
+      const ks = [];
+      for (let a = c0; a < c0 + s; a++) for (let b = r0; b < r0 + s; b++) ks.push([a, b]);
+      const n = ks.filter(([a, b]) => g[a][b].wild).length;
+      if (!n) { ks.forEach(([a, b]) => { g[a][b] = { ...g[a][b], c: 'mark' }; }); return null; }
+      ks.forEach(([a, b]) => { g[a][b] = mult({ ...WILD, c: 'gold', fresh: true }, n); });
+      return { keys: new Set(ks.map(([a, b]) => key(a, b))), m: n };
+    }
+    /** Linhas que passam pela moldura expandida são multiplicadas pelo multiplicador dela (uma vez por linha). */
+    function evalLines(g, fr) {
+      const plain = g.map(col => col.map(x => (x.wild ? { ...x, m: 1 } : x)));
+      const res = lines(plain, L50, SY);
+      if (!fr) return res;
+      let total = 0;
+      res.wins.forEach(w => {
+        const line = L50[w.line];
+        const inside = line.slice(0, w.n).some((r, c) => fr.keys.has(key(c, r)));
+        if (inside) { w.pay *= fr.m; w.mult = fr.m; }
+        total += w.pay;
+      });
+      res.total = total;
+      return res;
     }
     App.register(K.create({
       id: 'recompensaceu', name: 'Recompensa do Céu', studio: STUDIO, art: 'airplane', mascot: 'pilot',
       tag: 'Molduras de coringa até 6×6', colors: ['#0ea5e9', '#f97316'], bg: 'linear-gradient(180deg,#e0f2fe,#7dd3fc 50%,#0369a1)',
       cols: 6, rows: 6, maxWin: 5000, vol: 4, rtp: '~96,5%', target: 0.965,
-      intro: 'Inspirado no "Sky Bounty" (Pragmatic Play).', hello: 'Coringas abrem molduras gigantes!',
+      intro: 'Inspirado no "Sky Bounty" (Pragmatic Play).', hello: 'Coringas dentro da moldura enchem ela inteira!',
       symbols: [...SY, WILD, SC],
       lineList: { cols: 6, rows: 6, list: L50, text: '50 linhas fixas.' },
       tables: [table('Pagamento por linha', heads(3, 4), SY, '50 linhas, da esquerda para a direita.')],
-      highlights: ['🪂 Um coringa pode abrir uma <b>moldura de coringas de 2×2 até 6×6</b>', 'Os coringas da moldura valem <b>x2 a x6</b> (o lado dela); na linha eles se somam', '✈️ 3+ aviões = <b>6 rodadas grátis</b> com uma moldura 2×2 que <b>anda e cresce</b>', 'Prêmio máximo: <b>5.000x</b>'],
-      how: '<p>Grade 6×6 com 50 linhas. Quando cai um coringa, ele pode abrir uma <b>moldura quadrada</b> de coringas (2×2 a 6×6) com multiplicador igual ao lado da moldura.</p>',
-      features: '<p>✈️ <b>3 ou mais aviões</b> dão <b>6 rodadas grátis</b> (+2 por avião extra). Uma moldura 2×2 de coringas aparece e <b>muda de lugar a cada giro</b>; cada avião que cair aumenta o lado dela em 1 (até 6×6) e dá +1 giro.</p>',
+      highlights: ['🖼️ Uma <b>moldura</b> de 2×2 até 6×6 pode aparecer em qualquer giro', '🪂 Se cair coringa <b>dentro dela</b>, a moldura inteira vira coringa com multiplicador igual ao <b>número de coringas que havia dentro</b>', '✈️ 3+ aviões = <b>6 rodadas grátis</b> com uma moldura 2×2 que <b>muda de lugar</b> a cada giro; cada 3 aviões coletados aumentam a moldura e dão <b>+2 giros</b>', 'Prêmio máximo: <b>5.000x</b>'],
+      how: '<p>Grade 6×6 com 50 linhas. Às vezes uma <b>moldura quadrada</b> (2×2 a 6×6) aparece num lugar aleatório. Ela só se ativa se cair pelo menos um <b>coringa dentro dela</b>: aí todas as casas da moldura viram coringa e as linhas que passam por ela são multiplicadas pelo <b>número de coringas que havia dentro</b>.</p>',
+      features: '<p>✈️ <b>3 ou mais aviões</b> dão <b>6 rodadas grátis</b> (+2 por avião extra). Uma moldura começa em <b>2×2</b> e <b>muda de lugar a cada giro</b>, com a mesma regra: coringa dentro faz ela encher de coringas. Os aviões são coletados num medidor e <b>a cada 3</b> a moldura cresce um tamanho (até 6×6) e você ganha <b>+2 giros</b>.</p>',
       make,
       async spin(rt) {
         const g = make();
-        const w = cells(g, x => x.wild);
-        if (w.length && RNG.float() < 0.25) { const s = RNG.weighted([{ s: 2, w: 60 }, { s: 3, w: 28 }, { s: 4, w: 9 }, { s: 5, w: 1.2 }, { s: 6, w: 0.15 }]).s; const [c, r] = w[0]; frame(g, Math.min(c, 6 - s), Math.min(r, 6 - s), s); rt.msg(`🪂 Moldura ${s}×${s} de coringas x${s}!`); }
+        let fr = null;
+        if (RNG.float() < 0.4) {
+          const s = RNG.weighted(SIZES).s, c0 = RNG.int(0, 6 - s), r0 = RNG.int(0, 6 - s);
+          fr = frame(g, c0, r0, s);
+          if (fr) rt.msg(`🪂 Coringa na moldura ${s}×${s}: tudo coringa x${fr.m}!`);
+        }
         await rt.spin(g);
-        await pay(rt, lines(g, L50, SY, { mult: 'add' }));
+        await pay(rt, evalLines(g, fr));
         const sc = count(g, x => x.sc);
         if (sc >= 3) { rt.mark(scatters(g)); await rt.wait(1000); await this.bonus(rt, { sc }); }
       },
-      async bonus(rt, { sc = 3 } = {}) {
-        let s = 2;
+      async bonus(rt, opts = {}) {
+        const sc = opts.buy ? natSc(3) : opts.sc || 3;
+        let s = 2, got = 0;
+        rt.chip('frame', 'MOLDURA', '2×2');
         await rt.fsLoop(6 + 2 * Math.max(0, sc - 3), async api => {
-          const g = make();
-          const n = count(g, x => x.sc);
-          if (n) { s = Math.min(6, s + n); api.add(n, true); rt.msg(`✈️ Moldura cresceu para ${s}×${s}! +${n} giro${n > 1 ? 's' : ''}`); }
-          frame(g, RNG.int(0, 6 - s), RNG.int(0, 6 - s), s);
+          const g = make('fw');
+          const fr = frame(g, RNG.int(0, 6 - s), RNG.int(0, 6 - s), s);
           await rt.spin(g, { tease: false });
-          await pay(rt, lines(g, L50, SY, { mult: 'add' }));
-        }, { sub: 'Moldura de coringas que anda e cresce' });
+          if (fr) rt.msg(`🪂 Moldura ${s}×${s} cheia de coringas x${fr.m}!`);
+          await pay(rt, evalLines(g, fr));
+          const n = count(g, x => x.sc);
+          if (n) {
+            const before = Math.floor(got / 3);
+            got += n;
+            const ups = Math.floor(got / 3) - before;
+            rt.chip('frame', 'MOLDURA', `${s}×${s} · ✈️${got % 3}/3`);
+            if (ups) { s = Math.min(6, s + ups); api.add(2 * ups, true); rt.chip('frame', 'MOLDURA', `${s}×${s} · ✈️${got % 3}/3`); rt.msg(`✈️ Moldura cresceu para ${s}×${s}! +${2 * ups} giros`); rt.fx('rise'); await rt.wait(700); }
+          }
+        }, { sub: 'Moldura que anda · 3 aviões = maior e +2 giros' });
+        rt.chip('frame', null);
       },
     }));
   })();
