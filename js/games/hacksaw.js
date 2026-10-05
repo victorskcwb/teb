@@ -354,22 +354,86 @@
     const BLUE = { id: 'azul', img: 'bluecircle', name: 'Orbe azul', wild: true, orb: 'blue', w: 0.3, fw: 0.4 };
     const RED = { id: 'verm', img: 'redcircle', name: 'Orbe vermelho', wild: true, orb: 'red', w: 0.14, fw: 0.2 };
     const SC = { id: 'sc', img: 'hand', name: 'Mão de Anúbis', sc: true, w: 0.42, fw: 0 };
-    const all = [...SY, BLUE, RED, SC];
+    const GREEN = { id: 'verde', img: 'crystalball', name: 'Orbe da Alma verde', green: true, noPay: true, w: 0, fw: 0.2 };
+    const all = [...SY, BLUE, RED, SC, GREEN];
     const draw = pool(all);
     const cellOf = (c, wk) => { const x = draw(c, wk); if (x.orb) x.m = 1; return x; };
     const make = (wk = 'w') => grid([6, 6, 6, 6, 6], c => cellOf(c, wk));
-    async function play(rt, g, wk) {
+    const RCAP = 100;
+    /** reel (só no Submundo): { m: [mult por rolo], awake: [rolo desperto?] } */
+    async function play(rt, g, wk, reel) {
       return tumble(rt, g, {
         draw: c => cellOf(c, wk),
         evaluate: gg => {
           const cl = clusters(gg, 5);
-          return payClusters(cl, T, k => {
+          const res = payClusters(cl, T, k => {
             const orbs = k.cells.map(kk => { const [c, r] = K.unkey(kk); return gg[c][r]; }).filter(x => x.orb);
             orbs.forEach(o => { o.m = Math.min(25, o.m + (o.orb === 'blue' ? 1 : Math.floor(k.n / 2))); });
-            return Math.min(100, orbs.reduce((s, o) => s * o.m, 1));
+            const om = Math.min(100, orbs.reduce((s, o) => s * o.m, 1));
+            if (!reel) return om;
+            // multiplicadores despertos dos rolos que o grupo toca se somam
+            const cs = new Set(k.cells.map(kk => K.unkey(kk)[0]));
+            const rm = [...cs].reduce((s, c) => s + (reel.awake[c] ? reel.m[c] : 0), 0);
+            return om * (rm || 1);
           });
+          // cada símbolo vencedor soma +1 no multiplicador do rolo dele (mesmo adormecido)
+          if (reel && res.total) { res.cells.forEach(kk => { const c = K.unkey(kk)[0]; reel.m[c] = Math.min(RCAP, reel.m[c] + 1); }); }
+          return res;
         },
+        onStep: reel ? async (st, gg) => { await wake(rt, gg, reel); showReels(rt, reel); } : null,
       });
+    }
+    const showReels = (rt, reel) => rt.head(reel.m.map((m, c) => (reel.awake[c] ? 'x' + m : '💤x' + m)));
+    /** Orbe verde: desperta o multiplicador do rolo e dá +3 giros. */
+    async function wake(rt, g, reel) {
+      for (const [c, r] of cells(g, x => x.green && !x.used)) {
+        g[c][r].used = true;
+        reel.awake[c] = true;
+        if (reel.api) reel.api.add(3, true);
+        rt.msg(`🟢 Orbe verde! Rolo ${c + 1} desperta (x${reel.m[c]}) e +3 giros`);
+        rt.fx('big');
+        await rt.wait(600);
+      }
+    }
+    const COINV = [{ v: 0.2, w: 30 }, { v: 0.5, w: 30 }, { v: 1, w: 20 }, { v: 2, w: 10 }, { v: 5, w: 6 }, { v: 10, w: 3 }, { v: 25, w: 0.8 }, { v: 50, w: 0.2 }];
+    const SKULLS = [{ k: '+', a: 1, w: 35 }, { k: '+', a: 2, w: 20 }, { k: '+', a: 3, w: 10 }, { k: 'x', a: 2, w: 25 }, { k: 'x', a: 3, w: 10 }];
+    const PCOIN = 0.04, PSKULL = 0.02;
+    /** Julgamento: moedas + caveiras que somam/multiplicam o multiplicador do rolo, 3 giros que reiniciam. */
+    async function judgment(rt) {
+      const mult = [1, 1, 1, 1, 1];
+      const EMPTY = () => ({ id: 'vazio', img: null, c: 'empty', noPay: true });
+      const g = grid([6, 6, 6, 6, 6], () => EMPTY());
+      const coin = () => { const v = RNG.weighted(COINV).v; return { id: 'moeda', img: 'coin', coin: true, v, c: 'sticky', fresh: true }; };
+      // as 4 mãos viram as primeiras moedas
+      for (let i = 0; i < 4;) { const c = RNG.int(0, 4), r = RNG.int(0, 5); if (!g[c][r].coin) { g[c][r] = coin(); i++; } }
+      rt.head(mult.map(m => 'x' + m));
+      await rt.fsLoop(3, async api => {
+        let got = 0;
+        g.forEach(col => col.forEach(x => { x.fresh = false; }));
+        for (let c = 0; c < 5; c++) for (let r = 0; r < 6; r++) {
+          if (g[c][r].id !== 'vazio') continue;
+          const p = RNG.float();
+          if (p < PCOIN) { g[c][r] = coin(); got++; }
+          else if (p < PCOIN + PSKULL) {
+            const s = RNG.weighted(SKULLS);
+            mult[c] = Math.min(RCAP, s.k === '+' ? mult[c] + s.a : mult[c] * s.a);
+            g[c][r] = { id: 'cav', img: 'skull', skull: true, t: s.k === '+' ? '+' + s.a : 'x' + s.a, c: 'sticky gsq', noPay: true, fresh: true };
+            got++;
+          }
+        }
+        rt.head(mult.map(m => 'x' + m));
+        await rt.drop(g);
+        if (got && api.left < 3) { api.add(3 - api.left, true); rt.msg('⚖️ Novo símbolo! Giros de volta a 3'); }
+        if (g.every(col => col.every(x => x.id !== 'vazio'))) api.add(-api.left, true);
+      }, { title: 'JULGAMENTO', sub: '3 giros · moedas e caveiras reiniciam', label: 'GIROS' });
+      let w = 0;
+      g.forEach((col, c) => col.forEach(x => { if (x.coin) w += x.v * mult[c]; }));
+      rt.mark(cells(g, x => x.coin).map(([c, r]) => key(c, r)));
+      rt.win(w);
+      rt.msg(`⚖️ Julgamento: moedas × multiplicadores = ${rt.coins(w)}`);
+      rt.fx('big');
+      await rt.wait(1000);
+      rt.head(null);
     }
     App.register(K.create({
       id: 'maoanubis', name: 'Mão de Anúbis', studio: STUDIO, art: 'eye', mascot: 'skull',
@@ -378,27 +442,33 @@
       intro: 'Inspirado no "Hand of Anubis" (Hacksaw Gaming).', hello: 'Orbes crescem a cada vitória!',
       symbols: all,
       tables: [table('Pagamento por tamanho do grupo', ['5–6', '7–8', '9–10', '11–12', '13+'], SY, 'Grupos de 5+ iguais encostados, com cascata.')],
-      highlights: ['⚫ Grade 5×6 com grupos e cascata', '🔵 <b>Orbe azul</b>: coringa que soma <b>+1</b> por grupo vencedor', '🔴 <b>Orbe vermelho</b>: coringa que soma <b>+1 por símbolo</b> do grupo', 'Os orbes ficam na grade durante as cascatas e, no mesmo grupo, <b>se multiplicam</b>', 'Prêmio máximo: <b>10.000x</b>'],
+      highlights: ['⚫ Grade 5×6 com grupos e cascata', '🔵 <b>Orbe azul</b>: coringa que soma <b>+1</b> por grupo vencedor', '🔴 <b>Orbe vermelho</b>: coringa que soma <b>+1 por símbolo</b> do grupo', 'Os orbes ficam na grade durante as cascatas e, no mesmo grupo, <b>se multiplicam</b>', '💀 3 scatters = <b>Submundo</b> (multiplicadores adormecidos nos rolos) · 4 = <b>Julgamento</b> (moedas e caveiras que somam ou multiplicam)', 'Prêmio máximo: <b>10.000x</b>'],
       how: '<p>Grade <b>5×6</b>: grupos de <b>5+</b> iguais encostados pagam, com cascata.</p><p>Os <b>Orbes da Alma</b> são coringas que <b>não somem</b> nas cascatas. Cada vez que um orbe entra num grupo vencedor, o multiplicador dele cresce: o 🔵 azul soma +1 por grupo e o 🔴 vermelho soma +1 por símbolo do grupo. O grupo paga × o produto dos orbes que tocou.</p>',
-      features: '<p>💀 <b>3 scatters</b> dão <b>10 rodadas grátis</b> no Submundo: orbes muito mais frequentes e eles <b>ficam presos</b> com seus multiplicadores a rodada inteira.</p>',
+      features: `<ul class="si-list"><li>💀 <b>3 scatters — Submundo:</b> 10 rodadas grátis com um <b>multiplicador adormecido</b> acima de cada rolo. Cada símbolo vencedor soma <b>+1</b> no multiplicador do rolo dele (até x${RCAP}), mas ele só vale depois de despertar. Um ${ico('crystalball')} <b>Orbe da Alma verde</b> desperta o multiplicador do rolo onde cair e dá <b>+3 rodadas</b>. Um grupo paga × a <b>soma</b> dos multiplicadores despertos dos rolos que toca.</li>
+        <li>💀 <b>4 scatters — Julgamento:</b> uma fase de moedas com <b>3 giros que reiniciam</b> a cada moeda ou caveira nova. As ${ico('skull')} <b>caveiras</b> somam (+1 a +3) ou multiplicam (x2 ou x3) o multiplicador acima do rolo delas; no fim, cada moeda paga seu valor × o multiplicador do rolo.</li></ul><p class="muted small">A compra de bônus dá um bônus aleatório: Submundo (85%) ou Julgamento (15%).</p>`,
       make: () => make(),
       async spin(rt) {
         const g = make();
         await rt.drop(g);
         await play(rt, g, 'w');
-        if (count(g, x => x.sc) >= 3) { rt.mark(scatters(g)); await rt.wait(1000); await this.bonus(rt, {}); }
+        const sc = count(g, x => x.sc);
+        if (sc >= 3) { rt.mark(scatters(g)); await rt.wait(1000); await this.bonus(rt, { sc }); }
       },
-      async bonus(rt) {
-        const held = new Map();
-        await rt.fsLoop(10, async () => {
+      async bonus(rt, { sc = 3, buy = false } = {}) {
+        if (buy) sc = tier([{ v: 3, w: 85 }, { v: 4, w: 15 }]);
+        if (sc >= 4) return judgment(rt);
+        const reel = { m: [1, 1, 1, 1, 1], awake: [false, false, false, false, false], api: null };
+        showReels(rt, reel);
+        let n = 0;
+        await rt.fsLoop(10, async api => {
+          reel.api = ++n < 40 ? api : null; // trava de segurança no total de giros
           const g = make('fw');
-          held.forEach((x, k) => { const [c, r] = K.unkey(k); g[c][r] = x; });
-          // os orbes que caíram ficam presos nesta posição, com o valor que acumularem
-          g.forEach((col, c) => col.forEach((x, r) => { if (x.orb && !held.has(key(c, r)) && held.size < 6) { x.c = 'sticky'; held.set(key(c, r), x); } }));
           await rt.drop(g);
-          await play(rt, g, 'fw');
-          held.forEach(x => { x.fresh = false; });
-        }, { title: 'SUBMUNDO', sub: 'Orbes ficam presos' });
+          await wake(rt, g, reel);
+          showReels(rt, reel);
+          await play(rt, g, 'fw', reel);
+        }, { title: 'SUBMUNDO', sub: 'Orbes verdes despertam os rolos' });
+        rt.head(null);
       },
     }));
   })();
@@ -413,9 +483,10 @@
       S('templo', 'stadium', 'Coliseu', [1, 3, 8], 5), ...SUITS([[0.4, 1, 3], [0.4, 1, 3], [0.3, 0.8, 2], [0.3, 0.8, 2]]),
     ];
     const WILD = { id: 'w', img: 'trophy', name: 'Coringa', wild: true, w: 0.8 };
-    const VS = { id: 'vs', img: 'vs', name: 'VS', t: 'VS', vs: true, reels: [1, 2, 3], w: 0.4, fw: 0.9 };
-    const SC = { id: 'sc', img: 'ticket', name: 'Arena', sc: true, w: 0.68, c: 'gsq' };
-    const all = [...SY, WILD, VS, SC];
+    const VS = { id: 'vs', img: 'vs', name: 'VS', t: 'VS', vs: true, reels: [1, 2, 3], w: 0.4, fw: 0.9, bw: 1.7 };
+    const SC = { id: 'sc', img: 'ticket', name: 'Arena', sc: true, kind: 'arena', w: 0.58, fw: 0, bw: 0, c: 'gsq' };
+    const SCB = { id: 'scb', img: 'lionface', name: 'Fera', sc: true, kind: 'beast', w: 0.58, fw: 0, bw: 0, c: 'gsq' };
+    const all = [...SY, WILD, VS, SC, SCB];
     const draw = pool(all);
     const make = (wk = 'w') => grid([4, 4, 4, 4, 4], c => draw(c, wk));
     const FSM = [{ m: 1, w: 35 }, { m: 2, w: 25 }, { m: 3, w: 15 }, { m: 5, w: 12 }, { m: 10, w: 8 }, { m: 25, w: 3 }, { m: 50, w: 1.2 }, { m: 100, w: 0.5 }, { m: 250, w: 0.1 }, { m: 1000, w: 0.02 }];
@@ -427,9 +498,10 @@
       symbols: all,
       lineList: { cols: 5, rows: 4, list: L, text: '10 linhas fixas, da esquerda para a direita.' },
       tables: [table('Pagamento por linha', heads(3, 3), SY, 'Iguais seguidos a partir do rolo da esquerda.')],
-      highlights: ['⚔️ <b>DuelReels:</b> o VS mostra dois multiplicadores (x2 a x100); o vencedor do duelo vale para o rolo inteiro de coringa', '🏛️ 3 arenas = <b>Campeões da Arena</b>: respins que reiniciam a cada VS', 'Na arena os multiplicadores ficam <b>acima dos rolos</b> e se acumulam (até x1.000 por duelo)', 'Prêmio máximo: <b>10.000x</b>'],
-      how: '<p>Grade <b>5×4</b> com <b>10 linhas</b>.</p><p>⚔️ Um <b>VS</b> nos rolos 2 a 4 que ajude num ganho vira um <b>rolo inteiro de coringa</b>. Ele mostra dois gladiadores com multiplicadores diferentes; o vencedor do duelo define o multiplicador. Rolos de duelo na mesma linha se multiplicam.</p>',
-      features: '<p>🏛️ <b>3 arenas</b> abrem os <b>Campeões da Arena</b>: você tem <b>3 giros</b> e cada VS que cair <b>reinicia para 3</b>. Cada VS soma seu multiplicador (x1 a x1.000) no medidor <b>acima do rolo</b>, que não zera; o rolo vira coringa com esse valor.</p>',
+      highlights: ['⚔️ <b>DuelReels:</b> o VS mostra dois multiplicadores (x2 a x100); o vencedor do duelo vale para o rolo inteiro de coringa', 'Rolos de duelo na mesma linha <b>somam</b> seus multiplicadores', '🏛️ 3 arenas = <b>Campeões da Arena</b>: respins que reiniciam a cada VS, com multiplicadores acumulando <b>acima dos rolos</b> (até x1.000 por duelo)', '🦁 3 feras = <b>Solte a Fera</b>: respins que reiniciam e um <b>multiplicador da fera</b> que vale para todo rolo de duelo', 'Prêmio máximo: <b>10.000x</b>'],
+      how: '<p>Grade <b>5×4</b> com <b>10 linhas</b>.</p><p>⚔️ Um <b>VS</b> nos rolos 2 a 4 que ajude num ganho vira um <b>rolo inteiro de coringa</b>. Ele mostra dois gladiadores com multiplicadores diferentes; o vencedor do duelo define o multiplicador. Rolos de duelo na mesma linha <b>somam</b> seus multiplicadores.</p>',
+      features: `<ul class="si-list"><li>${ico('ticket')} <b>3 arenas — Campeões da Arena:</b> você tem <b>3 giros</b> e cada VS que cair <b>reinicia para 3</b>. Cada VS soma seu multiplicador (x1 a x1.000) no medidor <b>acima do rolo</b>, que não zera; o rolo vira coringa com esse valor.</li>
+        <li>${ico('lionface')} <b>3 feras — Solte a Fera:</b> também são <b>3 giros que reiniciam</b> a cada VS. Todo VS vira rolo de coringa com o multiplicador do duelo (x2 a x100) e ainda soma <b>+1</b> no <b>multiplicador da fera</b>, que não zera e multiplica <b>todos</b> os rolos de duelo.</li></ul><p class="muted small">A compra de bônus dá um bônus aleatório: Campeões da Arena ou Solte a Fera (50% cada).</p>`,
       make,
       async spin(rt) {
         const g = make();
@@ -439,7 +511,7 @@
           const a = wmult(BIG), b = wmult(BIG), m = RNG.float() < 0.5 ? a : b;
           const test = g.map(col => col.slice());
           test[c] = Array.from({ length: 4 }, () => ({ ...WILD, m }));
-          if (lines(test, L, SY).total > lines(g, L, SY).total) {
+          if (lines(test, L, SY, { mult: 'add' }).total > lines(g, L, SY, { mult: 'add' }).total) {
             rt.msg(`⚔️ Duelo: x${a} contra x${b}... vence x${m}!`);
             rt.fx('boom');
             g[c] = Array.from({ length: 4 }, () => ({ ...WILD, m, c: 'duel', fresh: true }));
@@ -447,10 +519,35 @@
             await rt.wait(500);
           }
         }
-        await pay(rt, lines(g, L, SY));
-        if (count(g, x => x.sc) >= 3) { rt.mark(scatters(g)); await rt.wait(1000); await this.bonus(rt, {}); }
+        await pay(rt, lines(g, L, SY, { mult: 'add' }));
+        for (const kind of ['arena', 'beast']) {
+          if (count(g, x => x.kind === kind) >= 3) { rt.mark(cells(g, x => x.kind === kind).map(([c, r]) => key(c, r))); await rt.wait(1000); await this.bonus(rt, { kind }); break; }
+        }
       },
-      async bonus(rt) {
+      async bonus(rt, { kind = 'arena', buy = false } = {}) {
+        if (buy) kind = tier([{ v: 'arena', w: 50 }, { v: 'beast', w: 50 }]);
+        if (kind === 'beast') {
+          let beast = 1;
+          rt.chip('fera', 'FERA', 'x1');
+          await rt.fsLoop(3, async api => {
+            const g = make('bw');
+            await rt.spin(g, { tease: false });
+            const hit = [1, 2, 3].filter(c => g[c].some(x => x.vs));
+            for (const c of hit) {
+              const a = wmult(BIG), b = wmult(BIG), m = RNG.float() < 0.5 ? a : b;
+              beast++;
+              g[c] = Array.from({ length: 4 }, () => ({ ...WILD, m, c: 'duel', fresh: true }));
+              rt.msg(`🦁 Duelo: x${a} contra x${b}... vence x${m}! Fera x${beast}`);
+            }
+            // o multiplicador da fera vale para todo rolo de duelo
+            for (const c of hit) g[c].forEach(x => { x.m *= beast; });
+            rt.chip('fera', 'FERA', 'x' + beast);
+            if (hit.length) { rt.fx('boom'); await rt.drop(g); if (api.left < 3) api.add(3 - api.left, true); }
+            await pay(rt, lines(g, L, SY, { mult: 'add' }));
+          }, { title: 'SOLTE A FERA', sub: '3 giros · cada VS reinicia e alimenta a fera', label: 'GIROS' });
+          rt.chip('fera', null);
+          return;
+        }
         const above = [0, 0, 0, 0, 0];
         rt.head(above.map(() => ''));
         await rt.fsLoop(3, async api => {
@@ -592,9 +689,12 @@
       S('aranha', 'spider', 'Aranha', [1, 3, 8], 5), ...SUITS([[0.3, 0.8, 2], [0.3, 0.8, 2], [0.2, 0.6, 1.5], [0.2, 0.6, 1.5]]),
     ];
     const WILD = { id: 'w', img: 'bat', name: 'Morcego', wild: true, w: 0.8 };
-    const WALK = { id: 'walk', img: 'troll', name: 'Walk VS', t: 'VS', walk: true, reels: [1, 2, 3, 4], w: 0.28, fw: 0.7 };
-    const SC = { id: 'sc', img: 'castle', name: 'Cripta', sc: true, reels: [0, 2, 4], w: 1.0, fw: 0 };
-    const all = [...SY, WILD, WALK, SC];
+    // fw = A Maldição (mais Walk VS), tw = A Tumba (VS em todos os rolos)
+    const WALK = { id: 'walk', img: 'troll', name: 'Walk VS', t: 'VS', walk: true, reels: [1, 2, 3, 4], w: 0.28, fw: 1.0, tw: 0 };
+    const TVS = { id: 'tvs', img: 'troll', name: 'VS da Tumba', t: 'VS', walk: true, w: 0, fw: 0, tw: 2.5 };
+    const SCC = { id: 'scc', img: 'crossbones', name: 'Maldição', sc: true, kind: 'curse', reels: [0, 2, 4], w: 0.85, fw: 0, tw: 0 };
+    const SCT = { id: 'sct', img: 'headstone', name: 'Tumba', sc: true, kind: 'tomb', reels: [0, 2, 4], w: 0.72, fw: 0, tw: 0 };
+    const all = [...SY, WILD, WALK, TVS, SCC, SCT];
     const draw = pool(all);
     const make = (wk = 'w') => grid([5, 5, 5, 5, 5], c => draw(c, wk));
     const WM = [{ m: 2, w: 40 }, { m: 3, w: 25 }, { m: 5, w: 15 }, { m: 10, w: 10 }, { m: 25, w: 6 }, { m: 50, w: 2.5 }, { m: 100, w: 1 }, { m: 200, w: 0.4 }];
@@ -622,6 +722,36 @@
         await pay(rt, lines(ng, L, SY));
       }
     }
+    /** A Tumba: VS trava o rolo e soma x2–x200 no multiplicador acima dele; acaba quando os 5 rolos travam. */
+    async function tomb(rt) {
+      const mult = [0, 0, 0, 0, 0], locked = [null, null, null, null, null];
+      rt.head(mult.map(() => ''));
+      let n = 0;
+      await rt.fsLoop(1, async api => {
+        const g = make('tw');
+        locked.forEach((col, c) => { if (col) g[c] = col.map(x => ({ ...x, fresh: false })); });
+        await rt.spin(g, { tease: false });
+        for (let c = 0; c < 5; c++) {
+          if (locked[c] || !g[c].some(x => x.walk)) continue;
+          const m = wmult(WM);
+          mult[c] += m;
+          g[c] = g[c].map(x => (x.walk ? { ...WILD, fresh: true } : x)).map(x => ({ ...x, c: 'sticky' }));
+          locked[c] = g[c];
+          rt.msg(`🪦 Duelo na tumba! Rolo ${c + 1} trava com x${mult[c]}`);
+          rt.fx('boom');
+        }
+        rt.head(mult.map(m => (m ? 'x' + m : '')));
+        await rt.drop(g);
+        // cada linha paga × a soma dos multiplicadores dos rolos que ela cobre
+        const res = lines(g, L, SY);
+        let total = 0;
+        res.wins.forEach(w => { const m = mult.slice(0, w.n).reduce((a, b) => a + b, 0) || 1; w.pay *= m; total += w.pay; });
+        await pay(rt, { ...res, total });
+        if (locked.every(Boolean) || ++n >= 60) rt.msg('🪦 Os 5 rolos travaram!');
+        else api.add(1, true);
+      }, { title: 'A TUMBA', sub: 'Até os 5 rolos travarem', label: 'TUMBA' });
+      rt.head(null);
+    }
     App.register(K.create({
       id: 'mortosvivos', name: 'Fortuna dos Mortos-Vivos', studio: STUDIO, art: 'zombie', mascot: 'zombie',
       tag: 'Coringas que andam até x200', colors: ['#4d7c0f', '#581c87'], bg: 'linear-gradient(180deg,#1a2e05,#14532d 50%,#2e1065)',
@@ -630,22 +760,27 @@
       symbols: all,
       lineList: { cols: 5, rows: 5, list: L, text: '15 linhas fixas, da esquerda para a direita.' },
       tables: [table('Pagamento por linha', heads(3, 3), SY, 'Iguais seguidos a partir do rolo da esquerda.')],
-      highlights: ['🪦 <b>Walk VS</b> (rolos 2 a 5): derrote o monstro e o rolo vira coringa com <b>x2 a x200</b>', '🧟 O coringa <b>anda um rolo para a esquerda</b> a cada respin, pagando de novo', '💀 3 tumbas (rolos 1, 3 e 5) = <b>10 rodadas grátis</b> com mais Walk VS e multiplicador <b>+1 a cada passo</b>', 'Prêmio máximo: <b>10.000x</b>'],
+      highlights: ['🪦 <b>Walk VS</b> (rolos 2 a 5): derrote o monstro e o rolo vira coringa com <b>x2 a x200</b>', '🧟 O coringa <b>anda um rolo para a esquerda</b> a cada respin, pagando de novo', '☠️ 3 maldições = <b>A Maldição</b>: 10 rodadas grátis com muito mais Walk VS', '🪦 3 tumbas = <b>A Tumba</b>: cada VS trava o rolo e soma x2 a x200 no multiplicador acima dele, até os 5 rolos travarem', 'Prêmio máximo: <b>10.000x</b>'],
       how: '<p>Grade <b>5×5</b> com <b>15 linhas</b>. 🦇 é coringa.</p><p>🪦 <b>Walking Duels:</b> o Walk VS revela um monstro. Vencendo o duelo, o rolo inteiro vira coringa com multiplicador e, a cada respin, <b>anda um rolo para a esquerda</b> até sair da grade.</p>',
-      features: '<p>💀 <b>3 tumbas</b> (rolos 1, 3 e 5) dão <b>10 rodadas grátis</b>: o Walk VS aparece bem mais e cada passo do coringa <b>soma +1</b> no multiplicador dele.</p>',
+      features: `<p>Os scatters só caem nos rolos 1, 3 e 5.</p><ul class="si-list"><li>${ico('crossbones')} <b>3 maldições — A Maldição:</b> 10 rodadas grátis em que o Walk VS aparece <b>bem mais</b>. Os coringas andam como no jogo base, sem somar nada no multiplicador.</li>
+        <li>${ico('headstone')} <b>3 tumbas — A Tumba:</b> o VS pode cair em qualquer rolo. Onde ele cair, o rolo <b>trava</b> (o VS vira coringa) e o duelo soma <b>x2 a x200</b> no multiplicador acima desse rolo. Cada linha paga × a <b>soma</b> dos multiplicadores dos rolos que ela cobre. O bônus segue até os <b>5 rolos travarem</b>.</li></ul><p class="muted small">A compra de bônus dá um bônus aleatório: A Maldição (60%) ou A Tumba (40%).</p>`,
       make: () => make(),
       async spin(rt) {
         const g = make();
         await rt.spin(g);
         await walkers(rt, g, 'w', false);
-        if (count(g, x => x.sc) >= 3) { rt.mark(scatters(g)); await rt.wait(1000); await this.bonus(rt, {}); }
+        for (const kind of ['curse', 'tomb']) {
+          if (count(g, x => x.kind === kind) >= 3) { rt.mark(cells(g, x => x.kind === kind).map(([c, r]) => key(c, r))); await rt.wait(1000); await this.bonus(rt, { kind }); break; }
+        }
       },
-      async bonus(rt) {
+      async bonus(rt, { kind = 'curse', buy = false } = {}) {
+        if (buy) kind = tier([{ v: 'curse', w: 60 }, { v: 'tomb', w: 40 }]);
+        if (kind === 'tomb') return tomb(rt);
         await rt.fsLoop(10, async () => {
           const g = make('fw');
           await rt.spin(g, { tease: false });
-          await walkers(rt, g, 'fw', true);
-        }, { title: 'BÔNUS DA TUMBA', sub: 'Coringas crescem ao andar' });
+          await walkers(rt, g, 'fw', false);
+        }, { title: 'A MALDIÇÃO', sub: 'Muito mais Walk VS' });
       },
     }));
   })();
