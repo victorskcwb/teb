@@ -580,38 +580,63 @@
     ];
     const GIFT = { id: 'w', img: 'gift', name: 'Presente', wild: true, w: 0.9, fw: 0.9 };
     const SC = { id: 'sc', img: 'balloon', name: 'Lenny', sc: true, w: 0.6, fw: 0 };
-    const all = [...SY, GIFT, SC];
+    // nos Giros Dork o Lenny cai nos rolos 2 a 4 e vira rolo de coringa
+    const LEN = { id: 'len', img: 'balloon', name: 'Lenny', lenny: true, reels: [1, 2, 3], w: 0, fw: 1.0 };
+    const BOX = { id: 'box', img: 'ribbon', name: 'Caixa-surpresa', box: true, noPay: true, w: 0.36, fw: 0 };
+    const all = [...SY, GIFT, SC, LEN, BOX];
     const draw = pool(all);
+    const BOXV = [{ v: 1, w: 30 }, { v: 2, w: 25 }, { v: 3, w: 18 }, { v: 5, w: 10 }, { v: 10, w: 8 }, { v: 15, w: 5 }, { v: 25, w: 2.5 }, { v: 50, w: 1 }, { v: 100, w: 0.4 }];
+    const box = () => ({ ...BOX, v: RNG.weighted(BOXV).v, c: 'gsq' });
     const BASEM = [{ m: 2, w: 60 }, { m: 3, w: 28 }, { m: 4, w: 12 }];
     const FSM = [{ m: 2, w: 30 }, { m: 3, w: 22 }, { m: 4, w: 16 }, { m: 5, w: 10 }, { m: 10, w: 8 }, { m: 15, w: 5 }, { m: 20, w: 4 }, { m: 25, w: 2 }, { m: 50, w: 1.5 }, { m: 75, w: 0.7 }, { m: 100, w: 0.5 }, { m: 150, w: 0.2 }, { m: 200, w: 0.1 }];
-    const make = (fs = false) => grid([4, 4, 4, 4, 4], c => { const x = draw(c, fs ? 'fw' : 'w'); if (x.wild) x.m = wmult(fs ? FSM : BASEM); return x; });
+    const make = (fs = false) => grid([4, 4, 4, 4, 4], c => { const x = draw(c, fs ? 'fw' : 'w'); if (x.wild) x.m = wmult(BASEM); return x.box ? box() : x; });
     App.register(K.create({
       id: 'unidadedork', name: 'Unidade Dork', studio: STUDIO, art: 'gift', mascot: 'robot',
-      tag: 'Presentes até x200 nas grátis', colors: ['#16a34a', '#db2777'], bg: 'linear-gradient(180deg,#86efac,#22c55e 50%,#166534)',
+      tag: 'Rolos do Lenny até x200 · chuva de presentes', colors: ['#16a34a', '#db2777'], bg: 'linear-gradient(180deg,#86efac,#22c55e 50%,#166534)',
       cols: 5, rows: 4, maxWin: 10000, vol: 4, rtp: '~96,3%', target: 0.963,
       intro: 'Inspirado no "Dork Unit" (Hacksaw Gaming).', hello: 'Presentes são coringas multiplicadores!',
       symbols: all,
       lineList: { cols: 5, rows: 4, list: L, text: '16 linhas fixas, da esquerda para a direita.' },
       tables: [table('Pagamento por linha', heads(3, 3), SY, 'Iguais seguidos a partir do rolo da esquerda.')],
-      highlights: ['🎁 Presentes são coringas com <b>x2, x3 ou x4</b> (na linha, se multiplicam)', '🎈 3 Lennys = <b>10 Giros Dork</b>', 'Nos Giros Dork os presentes <b>grudam</b> e podem valer <b>até x200</b>', 'Prêmio máximo: <b>10.000x</b>'],
+      highlights: ['🎁 Presentes são coringas com <b>x2, x3 ou x4</b> (na linha, se multiplicam)', '🎈 3 Lennys = <b>10 Giros Dork</b>: o Lenny que cair nos rolos 2 a 4 vira um <b>rolo inteiro de coringa</b> com <b>x2 a x200</b>', '🎀 3 caixas-surpresa = <b>Chuva de Presentes</b>: 3 respins que reiniciam a cada caixa nova', 'Prêmio máximo: <b>10.000x</b>'],
       how: `<p>Grade <b>5×4</b> com <b>16 linhas</b>. ${ico('gift')} <b>Presentes</b> são coringas com multiplicador; numa linha, os multiplicadores se multiplicam.</p>`,
-      features: '<p>🎈 <b>3 scatters (Lenny)</b> dão <b>10 Giros Dork</b>. Os presentes vêm maiores — Pequeno Timmy (x2–x4), Hector Pesado (x5–x20) e Lenny Longo (x25–x200) — e <b>ficam presos</b> até o fim.</p>',
+      features: `<ul class="si-list"><li>${ico('balloon')} <b>3 scatters (Lenny) — Giros Dork:</b> 10 rodadas grátis. Todo Lenny que cair nos rolos 2, 3 ou 4 <b>expande</b> e vira um rolo inteiro de coringa com multiplicador de <b>x2 a x200</b>. Numa linha, os multiplicadores <b>se somam</b>.</li>
+        <li>${ico('ribbon')} <b>3 caixas-surpresa — Chuva de Presentes:</b> as caixas ficam presas e você ganha <b>3 respins</b>; cada caixa nova trava e reinicia os respins. Cada caixa traz um prêmio de <b>1x a 100x</b>, e encher a grade paga mais <b>500x</b>.</li></ul><p class="muted small">A compra de bônus dá um bônus aleatório: Giros Dork ou Chuva de Presentes (50% cada).</p>`,
       make: () => make(),
       async spin(rt) {
         const g = make();
         await rt.spin(g);
         await pay(rt, lines(g, L, SY));
-        if (count(g, x => x.sc) >= 3) { rt.mark(scatters(g)); await rt.wait(1000); await this.bonus(rt, {}); }
+        if (count(g, x => x.sc) >= 3) { rt.mark(scatters(g)); await rt.wait(1000); await this.bonus(rt, { kind: 'dork' }); }
+        else if (count(g, x => x.box) >= 3) { rt.mark(cells(g, x => x.box).map(([c, r]) => key(c, r))); await rt.wait(1000); await this.bonus(rt, { kind: 'gift', g }); }
       },
-      async bonus(rt) {
-        const held = new Map();
+      async bonus(rt, { kind = 'dork', g = null, buy = false } = {}) {
+        if (buy) kind = tier([{ v: 'dork', w: 50 }, { v: 'gift', w: 50 }]);
+        if (kind === 'gift') {
+          let hg = g;
+          if (!hg) {
+            // compra: 3 caixas em casas aleatórias
+            hg = make();
+            hg.forEach((col, c) => col.forEach((x, r) => { if (x.box) hg[c][r] = draw(c); }));
+            for (let i = 0; i < 3;) { const c = RNG.int(0, 4), r = RNG.int(0, 3); if (!hg[c][r].box) { hg[c][r] = box(); i++; } }
+          }
+          await K.holdSpin(rt, hg, { isCoin: x => !!x.box, newCoin: box, pCoin: 0.075, full: { v: 500, name: 'Grade cheia' }, title: 'CHUVA DE PRESENTES', sub: '3 respins · cada caixa nova reinicia' });
+          return;
+        }
         await rt.fsLoop(10, async () => {
-          const g = make(true);
-          held.forEach((x, k) => { const [c, r] = K.unkey(k); g[c][r] = x; });
-          await rt.spin(g, { tease: false });
-          cells(g, x => x.wild).forEach(([c, r]) => held.set(key(c, r), { ...g[c][r], c: 'sticky', fresh: false }));
-          await pay(rt, lines(g, L, SY, { mult: 'add' }));
-        }, { title: 'GIROS DORK', sub: 'Presentes colantes até x200' });
+          const gg = make(true);
+          await rt.spin(gg, { tease: false });
+          let got = false;
+          for (const c of [1, 2, 3]) {
+            if (!gg[c].some(x => x.lenny)) continue;
+            const m = wmult(FSM);
+            gg[c] = Array.from({ length: 4 }, () => ({ ...GIFT, img: 'balloon', name: 'Lenny', m, t: 'x' + m, c: 'duel', fresh: true }));
+            rt.msg(`🎈 Lenny expande! Rolo ${c + 1} vira coringa x${m}`);
+            got = true;
+          }
+          if (got) { rt.fx('boom'); await rt.drop(gg); }
+          await pay(rt, lines(gg, L, SY, { mult: 'add' }));
+        }, { title: 'GIROS DORK', sub: 'Lenny vira rolo de coringa até x200' });
       },
     }));
   })();
@@ -627,11 +652,28 @@
       S('caixa', 'toolbox', 'Caixa', [0.15, 0.4, 1, 2.5, 6], 10),
     ];
     const SC = { id: 'sc', img: 'lightbulb', name: 'Bônus', sc: true, w: 0.42, fw: 0 };
-    const XS = { id: 'x', img: 'cross', name: 'X', t: 'X', noPay: true, w: 0, fw: 0.25 };
+    const XS = { id: 'x', img: 'cross', name: 'X', t: 'X', noPay: true, w: 0, fw: 0.18 };
     const QS = { id: 'q', img: 'question', name: '?', t: '?', noPay: true, w: 0, fw: 0.25 };
-    const all = [...SY, SC, XS, QS];
+    // Stack: o contrário do Drop — apaga tudo ACIMA dele na coluna
+    const STK = { id: 'stk', img: 'up', name: 'Stack', stk: true, noPay: true, w: 0.3, fw: 0.4 };
+    const all = [...SY, SC, XS, QS, STK];
     const draw = pool(all);
     const make = (wk = 'w') => K.stack(grid([6, 6, 6, 6, 6], c => draw(c, wk)), 0.25);
+    /** nas cascatas não caem Stacks novos */
+    const refill = wk => c => { let x = draw(c, wk); while (x.stk) x = draw(c, wk); return x; };
+    const MCAP = 250;
+    /** Stack: em cada coluna com Stack, ele e tudo acima dele somem; todos os buracos viram o mesmo símbolo sorteado. */
+    async function stackUp(rt, g) {
+      const holes = [];
+      g.forEach((col, c) => { let r1 = -1; col.forEach((x, r) => { if (x.stk) r1 = r; }); for (let r = 0; r <= r1; r++) holes.push([c, r]); });
+      if (!holes.length) return;
+      const fill = RNG.pick(SY);
+      rt.msg(`⬆️ Stack! Tudo acima vira ${fill.name}`);
+      rt.fx('boom');
+      await rt.wait(500);
+      holes.forEach(([c, r]) => { g[c][r] = { ...fill, fresh: true }; });
+      await rt.drop(g);
+    }
     /** Multiplicador da pilha: maior número de símbolos do grupo numa mesma coluna. */
     const stackMult = k => { const per = {}; k.cells.forEach(kk => { const c = kk.split(':')[0]; per[c] = (per[c] || 0) + 1; }); return Math.max(...Object.values(per)); };
     App.register(K.create({
@@ -641,14 +683,15 @@
       intro: 'Inspirado no "Stack \'Em" (Hacksaw Gaming).', hello: 'Empilhe iguais na mesma coluna!',
       symbols: all,
       tables: [table('Pagamento por tamanho do grupo', ['5–6', '7–8', '9–10', '11–12', '13+'], SY, 'Grupos de 5+ iguais encostados, com cascata. O grupo ainda é multiplicado pela altura da pilha.')],
-      highlights: ['🥫 Grade 5×6 com grupos e cascata', '📏 Cada grupo paga × a <b>altura da maior pilha</b> dele numa coluna (ex.: 4 iguais na mesma coluna = x4)', '💡 3 scatters = rodadas grátis com <b>5 vidas</b>: giro sem ganho tira uma vida', 'Nas grátis o multiplicador sobe a cada grupo; <b>X</b> multiplica o giro e <b>?</b> dá vidas ou multiplicador', 'Prêmio máximo: <b>10.000x</b>'],
-      how: '<p>Grade <b>5×6</b>: grupos de <b>5+</b> iguais encostados pagam, com cascata.</p><p>📏 <b>Pilhas:</b> embaixo de cada coluna aparece quantos símbolos do grupo estão nela; o grupo paga × a <b>maior pilha</b>.</p>',
-      features: '<p>💡 <b>3 scatters</b> abrem as rodadas grátis com <b>5 vidas</b> ❤️. Cada giro sem ganho custa uma vida; com ganho, a vida volta. Cada grupo vencedor soma <b>+1 no multiplicador global</b>, que não zera.</p><ul class="si-list"><li><b>X</b>: multiplica o ganho do giro pelo multiplicador global.</li><li><b>?</b>: dá +1 vida, +2 no multiplicador ou dobra o multiplicador.</li></ul>',
+      highlights: ['🥫 Grade 5×6 com grupos e cascata', '📏 Cada grupo paga × a <b>altura da maior pilha</b> dele numa coluna (ex.: 4 iguais na mesma coluna = x4)', '💡 3 scatters = rodadas grátis com <b>5 vidas</b>: giro sem ganho tira uma vida', '⬆️ <b>Stack</b> apaga tudo acima dele na coluna e os buracos viram <b>um único símbolo</b>', 'Nas grátis cada grupo soma o <b>seu tamanho</b> no multiplicador; <b>X</b> multiplica o giro e <b>?</b> dá vidas ou multiplicador', 'Prêmio máximo: <b>10.000x</b>'],
+      how: '<p>Grade <b>5×6</b>: grupos de <b>5+</b> iguais encostados pagam, com cascata.</p><p>📏 <b>Pilhas:</b> embaixo de cada coluna aparece quantos símbolos do grupo estão nela; o grupo paga × a <b>maior pilha</b>.</p><p>⬆️ <b>Stack:</b> quando cai, ele e todos os símbolos <b>acima dele</b> na coluna somem. Um símbolo pagante é sorteado e <b>todos</b> os buracos abertos são preenchidos com ele — ótimo para formar pilhas altas.</p>',
+      features: `<p>💡 <b>3 scatters</b> abrem as rodadas grátis com <b>5 vidas</b> ❤️. Cada giro sem ganho custa uma vida; com ganho, a vida volta. Cada grupo vencedor soma <b>o seu tamanho</b> no multiplicador global (um grupo de 7 soma +7), que não zera e vai até <b>x${MCAP}</b>.</p><ul class="si-list"><li><b>X</b>: multiplica o ganho do giro pelo multiplicador global.</li><li><b>?</b>: dá +1 vida, +5 no multiplicador ou dobra o multiplicador.</li></ul>`,
       make: () => make(),
       async spin(rt) {
         const g = make();
         await rt.drop(g);
-        await tumble(rt, g, { draw: c => draw(c), evaluate: gg => payClusters(clusters(gg, 5), T, stackMult) });
+        await stackUp(rt, g);
+        await tumble(rt, g, { draw: refill('w'), evaluate: gg => payClusters(clusters(gg, 5), T, stackMult) });
         if (count(g, x => x.sc) >= 3) { rt.mark(scatters(g)); await rt.wait(1000); await this.bonus(rt, {}); }
       },
       async bonus(rt) {
@@ -658,17 +701,19 @@
           if (++spins > 60) return;
           const g = make('fw');
           await rt.drop(g);
+          await stackUp(rt, g);
           const t0 = rt.total;
           const r = await tumble(rt, g, {
-            draw: c => draw(c, 'fw'),
+            draw: refill('fw'),
             evaluate: gg => payClusters(clusters(gg, 5), T, stackMult),
-            onStep: async (s, gg, res) => { M += res.wins.length; rt.chip('mult', 'MULT.', 'x' + M); },
+            // cada grupo soma o seu tamanho no multiplicador global
+            onStep: async (s, gg, res) => { M = Math.min(MCAP, M + res.wins.reduce((t, w) => t + w.n, 0)); rt.chip('mult', 'MULT.', 'x' + M); },
           });
           const won = rt.total - t0;
           if (count(g, x => x.id === 'x') && won > 0 && M > 1) { rt.win(won * (M - 1)); rt.msg(`✖️ X multiplica o giro por x${M}!`); rt.fx('big'); await rt.wait(900); }
           for (let i = count(g, x => x.id === 'q'); i > 0; i--) {
             const q = RNG.weighted([{ q: 'vida', w: 40 }, { q: 'mais', w: 40 }, { q: 'dobro', w: 20 }]).q;
-            if (q === 'vida') { api.add(1, true); rt.msg('❓ +1 vida!'); } else if (q === 'mais') { M += 2; rt.msg('❓ +2 no multiplicador'); } else { M *= 2; rt.msg('❓ Multiplicador dobrou!'); }
+            if (q === 'vida') { api.add(1, true); rt.msg('❓ +1 vida!'); } else if (q === 'mais') { M = Math.min(MCAP, M + 5); rt.msg('❓ +5 no multiplicador'); } else { M = Math.min(MCAP, M * 2); rt.msg('❓ Multiplicador dobrou!'); }
             rt.chip('mult', 'MULT.', 'x' + M);
             await rt.wait(600);
           }
