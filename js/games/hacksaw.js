@@ -24,7 +24,7 @@
       S('whisky', 'tumbler', 'Whisky', [0.8, 2, 5], 5), ...SUITS([[0.3, 0.8, 2], [0.3, 0.8, 2], [0.2, 0.6, 1.5], [0.2, 0.6, 1.5]]),
     ];
     const WILD = { id: 'w', img: 'star', name: 'Estrela de xerife', wild: true, w: 0.9, tw: 1.6 };
-    const VS = { id: 'vs', img: 'vs', name: 'VS', t: 'VS', reels: [1, 2, 3], w: 0.2, dw: 1.4, tw: 0.2, vs: true };
+    const VS = { id: 'vs', img: 'vs', name: 'VS', t: 'VS', reels: [1, 2, 3], w: 0.2, dw: 2.2, tw: 0.2, vs: true };
     const SCD = { id: 'scd', img: 'hourglass', name: 'Duelo', sc: true, kind: 'duel', w: 0.47, dw: 0, tw: 0 };
     const SCM = { id: 'scm', img: 'cards', name: 'Mão do Morto', sc: true, kind: 'dead', w: 0.39, dw: 0, tw: 0 };
     const SCT = { id: 'sct', img: 'locomotive', name: 'Trem', sc: true, kind: 'train', w: 0.39, dw: 0, tw: 0 };
@@ -36,12 +36,12 @@
       const vs = cells(g, x => x.vs);
       for (const [c] of vs) {
         if (!g[c].some(x => x.vs)) continue;
-        const m = wmult(BIG);
+        const a = wmult(BIG), b = wmult(BIG), m = RNG.float() < 0.5 ? a : b; // dois pistoleiros duelam; vale o multiplicador do vencedor
         const test = g.map(col => col.slice());
         test[c] = Array.from({ length: 5 }, () => ({ ...WILD, m, c: 'duel' }));
-        if (lines(test, L, SY).total > lines(g, L, SY).total) {
+        if (lines(test, L, SY, { mult: 'add' }).total > lines(g, L, SY, { mult: 'add' }).total) {
           g[c] = Array.from({ length: 5 }, () => ({ ...WILD, m, c: 'duel', fresh: true }));
-          rt.msg(`🤠 DUELO! Rolo ${c + 1} vira coringa x${m}`);
+          rt.msg(`🤠 DUELO: x${a} contra x${b}... rolo ${c + 1} vira coringa x${m}`);
           rt.fx('boom');
           await rt.drop(g);
           await rt.wait(400);
@@ -55,9 +55,9 @@
       intro: 'Inspirado no "Wanted Dead or a Wild" (Hacksaw Gaming).', hello: 'Símbolos VS viram rolos de coringa!',
       symbols: all,
       lineList: { cols: 5, rows: 5, list: L, text: '15 linhas fixas, da esquerda para a direita.' },
-      tables: [table('Pagamento por linha', heads(3, 3), SY, 'Iguais seguidos a partir do rolo da esquerda. Rolos de duelo se multiplicam entre si.')],
-      highlights: ['⚔️ <b>VS</b> (rolos 2 a 4) vira rolo inteiro de coringa com <b>x2 a x100</b> — vários rolos <b>se multiplicam</b>', '🌅 3 Duelos = <b>Duelo ao Amanhecer</b>: 10 giros com muito mais VS', '🃏 3 Mãos do Morto = coleta de coringas multiplicadores que <b>ficam presos</b>', '💰 3 Trens = <b>Assalto ao Trem</b>: 10 giros com coringas colantes', 'Prêmio máximo: <b>12.500x</b>'],
-      how: `<p>Grade <b>5×5</b> com <b>15 linhas</b>. ${ico('star')} é coringa.</p><p>⚔️ <b>DuelReels:</b> um símbolo VS nos rolos 2, 3 ou 4 que ajude num ganho vira um <b>rolo inteiro de coringa</b> com multiplicador de <b>x2 a x100</b>. Numa linha com dois ou mais rolos de duelo os multiplicadores <b>se multiplicam</b>.</p>`,
+      tables: [table('Pagamento por linha', heads(3, 3), SY, 'Iguais seguidos a partir do rolo da esquerda. Rolos de duelo na mesma linha somam seus multiplicadores.')],
+      highlights: ['⚔️ <b>VS</b> (rolos 2 a 4) vira rolo inteiro de coringa com <b>x2 a x100</b> — vários rolos na mesma linha <b>se somam</b>', '🌅 3 Duelos = <b>Duelo ao Amanhecer</b>: 10 giros com muito mais VS', '🃏 3 Mãos do Morto = coleta de coringas multiplicadores que <b>ficam presos</b>', '💰 3 Trens = <b>Assalto ao Trem</b>: 10 giros com coringas colantes', 'Prêmio máximo: <b>12.500x</b>'],
+      how: `<p>Grade <b>5×5</b> com <b>15 linhas</b>. ${ico('star')} é coringa.</p><p>⚔️ <b>DuelReels:</b> um símbolo VS nos rolos 2, 3 ou 4 que ajude num ganho vira um <b>rolo inteiro de coringa</b> com multiplicador de <b>x2 a x100</b>. Numa linha com dois ou mais rolos de duelo os multiplicadores <b>se somam</b>.</p>`,
       features: `<ul class="si-list"><li>${ico('hourglass')} <b>3 Duelos — Duelo ao Amanhecer:</b> 10 rodadas grátis com VS muito mais frequentes.</li>
         <li>${ico('cards')} <b>3 Mãos do Morto — Mão do Morto:</b> fase de coleta com 3 respins (cada coringa novo reinicia); os coringas vêm com x2 a x100 e <b>ficam presos</b> para 3 giros finais.</li>
         <li>${ico('locomotive')} <b>3 Trens — Assalto ao Trem:</b> 10 rodadas grátis em que todo coringa que cair <b>fica preso</b> até o fim.</li></ul><p class="muted small">A compra de bônus dá o Duelo ao Amanhecer.</p>`,
@@ -66,14 +66,14 @@
         const g = make();
         await rt.spin(g);
         await duels(rt, g);
-        await pay(rt, lines(g, L, SY));
+        await pay(rt, lines(g, L, SY, { mult: 'add' }));
         for (const kind of ['duel', 'dead', 'train']) {
           if (count(g, x => x.kind === kind) >= 3) { rt.mark(cells(g, x => x.kind === kind).map(([c, r]) => key(c, r))); await rt.wait(1000); await this.bonus(rt, { kind }); break; }
         }
       },
       async bonus(rt, { kind = 'duel' } = {}) {
         if (kind === 'duel') {
-          await rt.fsLoop(10, async () => { const g = make('dw'); await rt.spin(g, { tease: false }); await duels(rt, g); await pay(rt, lines(g, L, SY)); }, { title: 'DUELO AO AMANHECER', sub: '10 giros · mais duelos' });
+          await rt.fsLoop(10, async () => { const g = make('dw'); await rt.spin(g, { tease: false }); await duels(rt, g); await pay(rt, lines(g, L, SY, { mult: 'add' })); }, { title: 'DUELO AO AMANHECER', sub: '10 giros · mais duelos' });
         } else if (kind === 'train') {
           const sticky = new Map();
           await rt.fsLoop(10, async () => {
@@ -82,7 +82,7 @@
             await rt.spin(g, { tease: false });
             await duels(rt, g);
             cells(g, x => x.wild && !x.m).forEach(([c, r]) => sticky.set(key(c, r), g[c][r]));
-            await pay(rt, lines(g, L, SY));
+            await pay(rt, lines(g, L, SY, { mult: 'add' }));
           }, { title: 'ASSALTO AO TREM', sub: '10 giros · coringas colantes' });
         } else {
           await rt.banner('MÃO DO MORTO', 'Colete coringas multiplicadores', 1500);
@@ -483,7 +483,7 @@
       S('templo', 'stadium', 'Coliseu', [1, 3, 8], 5), ...SUITS([[0.4, 1, 3], [0.4, 1, 3], [0.3, 0.8, 2], [0.3, 0.8, 2]]),
     ];
     const WILD = { id: 'w', img: 'trophy', name: 'Coringa', wild: true, w: 0.8 };
-    const VS = { id: 'vs', img: 'vs', name: 'VS', t: 'VS', vs: true, reels: [1, 2, 3], w: 0.4, fw: 0.9, bw: 1.7 };
+    const VS = { id: 'vs', img: 'vs', name: 'VS', t: 'VS', vs: true, reels: [1, 2, 3], w: 0.4, fw: 0.9, bw: 1.5 };
     const SC = { id: 'sc', img: 'ticket', name: 'Arena', sc: true, kind: 'arena', w: 0.58, fw: 0, bw: 0, c: 'gsq' };
     const SCB = { id: 'scb', img: 'lionface', name: 'Fera', sc: true, kind: 'beast', w: 0.58, fw: 0, bw: 0, c: 'gsq' };
     const all = [...SY, WILD, VS, SC, SCB];

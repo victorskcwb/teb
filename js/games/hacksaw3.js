@@ -795,7 +795,7 @@
       await tumble(rt, g, {
         draw: c => draw(c),
         evaluate: gg => {
-          const res = payClusters(clusters(gg, 5), TC, k => (k.n >= 70 ? 10 : 1));
+          const res = payClusters(clusters(gg, 5), TC, k => (k.n >= 70 ? 10 : 1) * (st && k.sym.id === st.color ? 2 : 1));
           if (st && res.total) { const col = res.wins.find(w => w.sym.id === st.color); if (col) { st.got += col.n; rt.chip('cor', 'COR', st.got); } }
           return res;
         },
@@ -820,12 +820,12 @@
       tables: [table('Pagamento por tamanho do grupo', ['5–7', '8–10', '11–15', '16–25', '26–45', '46+'], SY, 'Todas as cores pagam igual. Grupos de 70+ valem x10.')],
       highlights: ['🧊 Sem símbolos: só <b>cubos de 6 cores</b> que pagam igual, em grupos de 5+', '📈 Começa em <b>5×5</b> e <b>cresce uma casa em cada direção</b> a cada ganho, até <b>11×11</b>', '💥 Grupo de <b>70+ cubos</b> = <b>x10</b>', '🎨 Bônus: escolha uma cor; a grade não encolhe e juntar cubos dessa cor paga prêmios extras', 'Prêmio máximo: <b>10.500x</b>'],
       how: '<p>A grade começa 5×5. Grupos de 5 ou mais cubos da mesma cor pagam e somem (cascata); a cada cascata a grade ganha um anel novo de cubos, até 11×11. No próximo giro ela volta a 5×5.</p>',
-      features: '<p>🎨 <b>Rodadas grátis</b> (sem scatter): o bônus pode aparecer <b>de surpresa</b> no fim de qualquer giro (em média 1 vez a cada ~400 giros) ou pela compra. Escolha uma cor; durante 10 giros a grade <b>não volta</b> a 5×5 e, a cada 10 cubos da sua cor em ganhos, você recebe um prêmio em dinheiro que dobra a cada vez.</p>',
+      features: '<p>🎨 <b>Rodadas grátis</b> (sem scatter): o bônus pode aparecer <b>de surpresa</b> no fim de qualquer giro (em média 1 vez a cada ~300 giros) ou pela compra. Escolha uma cor; durante 10 giros a grade <b>não volta</b> a 5×5, os grupos dessa cor <b>pagam em dobro</b> e, a cada 10 cubos da sua cor em ganhos, você recebe um prêmio em dinheiro que dobra a cada vez.</p>',
       make: () => make(5),
-      async spin(rt) { const g = make(5); await play(rt, g, null); if (RNG.float() < 0.0025) { await rt.wait(600); await this.bonus(rt, {}); } },
+      async spin(rt) { const g = make(5); await play(rt, g, null); if (RNG.float() < 0.0035) { await rt.wait(600); await this.bonus(rt, {}); } },
       async bonus(rt) {
         const color = await rt.choose('ESCOLHA SUA COR', SY.map(s => ({ id: s.id, img: s.img, label: s.name })));
-        const st = { size: 5, color, got: 0, next: 10, prize: 0.5 };
+        const st = { size: 5, color, got: 0, next: 10, prize: 2 };
         await rt.fsLoop(10, async () => { await play(rt, make(st.size), st); }, { sub: 'A grade não encolhe' });
         rt.chip('cor', null);
       },

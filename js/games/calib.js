@@ -214,7 +214,7 @@ const SLOT_CALIB = {
   "rustycurly": {"k":1.3606,"buy":28,"hit":0.2993,"fs":0.00298},
   "sabedoriaatena": {"k":1.1474,"buy":74,"hit":0.3212,"fs":0.0029},
   "sacerdotisaasteca": {"k":0.067471,"buy":50,"hit":0.5425,"fs":0.00363},
-  "sanguesombra": {"k":0.073224,"buy":354,"hit":0.6166,"fs":0.00184},
+  "sanguesombra": {"k":0.06915,"buy":315,"hit":0.6169,"fs":0.00186},
   "sanguesombra2": {"k":0.14596,"buy":78,"hit":0.7631,"fs":0.00316},
   "segureas": {"k":0.3643,"buy":23,"hit":0.7265,"fs":0.00372},
   "seisseisseis": {"k":1.035,"buy":25,"hit":0.2501,"fs":0.00102},
