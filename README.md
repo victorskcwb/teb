@@ -15,10 +15,12 @@ Para testar no celular na mesma rede: `python -m http.server 8000` e acesse `htt
 | Slots | Touro da Sorte | Fortune Ox — rolo do meio trava um símbolo, pontas fazem respins, tela cheia x10 | ~96% |
 | Slots | Coelho da Sorte | Fortune Rabbit — cenouras com prêmio (5+ pagam), 8 giros só de cenouras | ~96% |
 | Slots | Ratinho Sortudo | Fortune Mouse — rolo do meio vira coringa, ganho garantido | ~95,7% |
-| Slots | Dragãozinho | 3×3 com multiplicador x1/x2/x5/x10 por giro | ~96% |
+| Slots | Dragãozinho | Fortune Dragon — 3×3, multiplicador x1/x2/x5/x10 por giro e Sopro da Fortuna (8 giros, 3 multiplicadores somados até x30) | ~96% |
 | Slots | Doce Bonança | Sweet Bonanza — 6×5, scatter pays, cascata, bombas até 100x nas FS, compra de bônus | ~97% |
-| Slots | Portões do Olimpo | Gates of Olympus — orbes em qualquer giro, multiplicador acumula nas FS | ~95,5% |
-| Slots | Princesa Estelar | Starlight Princess — mesma matemática do Olimpo, tema de estrelas | ~95,5% |
+| Slots | Portões do Olimpo | Gates of Olympus — orbes em qualquer giro, 15 FS com multiplicador que acumula | ~95,5% |
+| Slots | Princesa Estelar | Starlight Princess — mesma matemática do Olimpo (15 FS), tema de estrelas | ~95,5% |
+| Slots | Portais de Fogo | Fire Portals — 7×7 em grupos, portais coringa que sobem +1 a cada ganho e ficam presos nas FS | ~96% |
+| Slots | Zeus x Hades | Zeus vs Hades — 5×3, 15 linhas, coringas expansivos, FS com escolha do deus e rolos presos | ~96,5% |
 | Slots | Pescaria Bonança | Big Bass Bonanza — 5×3, 10 linhas, pescador coleta peixes nas FS (x2/x3/x10), compra de bônus | ~94% |
 | Originais | Foguetinho | Aviator / Crash | 97% |
 | Originais | Double | Blaze Double | 93,3% |
