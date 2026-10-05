@@ -641,7 +641,8 @@
     ];
     const WILD = { id: 'w', img: 'namebadge', name: 'Coringa', wild: true, w: 0.55 };
     const SC = { id: 'sc', img: 'footprints', name: 'Pegadas', sc: true, w: 0.95 };
-    const all = [...SY, WILD, SC];
+    const SPLIT = { id: 'xs', img: 'scissors', name: 'Coringa xSplit', wild: true, w: 0 };
+    const all = [...SY, WILD, SC, SPLIT];
     const draw = pool(all);
     const ENH = [{ e: 'nada', w: 62 }, { e: 'xways', w: 18 }, { e: 'wild', w: 12 }, { e: 'nudge', w: 6 }, { e: 'char', w: 2 }];
     /** Abre uma Enhancer Cell (fica no topo dos rolos 2 a 4). */
@@ -654,13 +655,20 @@
       const m = 1 + RNG.int(0, H - 1);
       return { ...WILD, m, t: 'x' + m, c: 'duel', nudge: true };
     };
-    async function play(rt, g, extra, sticky) {
+    async function play(rt, g, extra, sticky, kill) {
       for (let c = 1; c <= 3; c++) for (let r = 0; r < extra; r++) {
         const k = key(c, r);
         if (sticky && sticky.has(k)) { g[c][r] = sticky.get(k); continue; }
         const x = openCell(g, c, r, g[c].length);
         g[c][r] = { ...x, fresh: true };
         if (sticky && x.id !== 'enh') sticky.set(k, { ...x, fresh: false });
+      }
+      // The Kill: um coringa xSplit em todo giro, que divide a linha dele (tudo conta em dobro)
+      if (kill) {
+        const c0 = RNG.int(1, 3), r0 = RNG.int(extra, g[c0].length - 1), row = r0 - extra;
+        g.forEach((col, c) => { const r = c >= 1 && c <= 3 ? row + extra : row, x = col[r]; if (x && !x.sc && x.id !== 'enh') col[r] = { ...x, n: (x.n || 1) * 2, t: '×' + (x.n || 1) * 2, c: 'fire', fresh: true }; });
+        g[c0][r0] = { ...SPLIT, t: 'xSplit', c: 'fire', fresh: true };
+        rt.msg('🔪 xSplit: a linha inteira se divide!');
       }
       for (let c = 1; c <= 3; c++) { const nd = g[c].find(x => x.nudge); if (nd) fillReel(g, c, { ...nd }); }
       await rt.drop(g);
@@ -673,9 +681,9 @@
       intro: 'Inspirado no "Serial" (Nolimit City), com tema de investigação policial.', hello: 'Cada pista abre uma Enhancer Cell...',
       symbols: all, extraSprites: ['notepad'],
       tables: [table('Pagamento por caminho', heads(3, 3, ' rolos'), SY, '5×3 = 243 caminhos, mais as Enhancer Cells no topo dos rolos 2 a 4.')],
-      highlights: ['🔎 5×3 com <b>243 caminhos</b> e <b>Enhancer Cells</b> no topo dos rolos 2 a 4', 'Cada célula pode revelar <b>xWays</b> (2 a 4 cópias), <b>coringa</b>, <b>xNudge</b> (rolo inteiro com multiplicador) ou personagem', '👣 3/4/5 pegadas = rodadas grátis (cada pegada mostra 2 a 4 giros) com <b>mais células</b> (3-5-5-5-3) que <b>ficam abertas</b>', 'Prêmio máximo: <b>74.800x</b>'],
+      highlights: ['🔎 5×3 com <b>243 caminhos</b> e <b>Enhancer Cells</b> no topo dos rolos 2 a 4', 'Cada célula pode revelar <b>xWays</b> (2 a 4 cópias), <b>coringa</b>, <b>xNudge</b> (rolo inteiro com multiplicador) ou personagem', '👣 3 pegadas = <b>The Search</b>: rodadas grátis com <b>mais células</b> (3-5-5-5-3) que <b>ficam abertas</b>', '🔪 4+ pegadas = <b>The Kill</b>: tudo isso e um <b>coringa xSplit</b> garantido em todo giro', 'Prêmio máximo: <b>74.800x</b>'],
       how: '<p>Grade <b>5×3</b> com <b>243 caminhos</b>. Acima dos rolos 2, 3 e 4 há uma <b>Enhancer Cell</b> que abre em todo giro e pode revelar: <b>xWays</b> (2 a 4 cópias de um símbolo), <b>coringa</b>, <b>xNudge</b> (o rolo inteiro vira coringa com multiplicador) ou um personagem.</p>',
-      features: '<p>👣 <b>3, 4 ou 5 pegadas</b> abrem as rodadas grátis: cada pegada mostra de 2 a 4 giros e você ganha a soma. A grade cresce para <b>3-5-5-5-3</b> (duas Enhancer Cells por rolo do meio) e toda célula revelada <b>fica aberta</b> até o fim. Multiplicadores de coringas na mesma combinação se somam.</p>',
+      features: '<p>👣 <b>3, 4 ou 5 pegadas</b> abrem as rodadas grátis: cada pegada mostra de 2 a 4 giros e você ganha a soma. A grade cresce para <b>3-5-5-5-3</b> (duas Enhancer Cells por rolo do meio) e toda célula revelada <b>fica aberta</b> até o fim. Multiplicadores de coringas na mesma combinação se somam.</p><ul class="si-list"><li><b>3 pegadas — The Search:</b> as células abertas fazem o trabalho.</li><li><b>4 ou 5 pegadas — The Kill:</b> em <b>todo giro</b> cai um <b>coringa xSplit</b> nos rolos 2 a 4, que divide a linha dele: todos os símbolos dela contam em dobro.</li></ul><p class="muted small">A compra do bônus sorteia o nível com as mesmas chances do jogo normal.</p>',
       make: () => grid([3, 4, 4, 4, 3], (c, r) => (c >= 1 && c <= 3 && r === 0 ? { id: 'enh', img: 'notepad', c: 'empty', noPay: true } : draw(c))),
       async spin(rt) {
         const g = grid([3, 4, 4, 4, 3], c => draw(c));
@@ -684,15 +692,17 @@
         const sc = count(g, x => x.sc);
         if (sc >= 3) { rt.mark(scatters(g)); await rt.wait(1000); await this.bonus(rt, { sc }); }
       },
-      async bonus(rt, { sc = 3 } = {}) {
+      async bonus(rt, { sc = 3, buy = false } = {}) {
+        if (buy) sc = RNG.weighted([{ v: 3, w: 91 }, { v: 4, w: 8 }, { v: 5, w: 1 }]).v;
+        const kill = sc >= 4;
         let n = 0;
         for (let i = 0; i < sc; i++) n += RNG.int(2, 4);
         const sticky = new Map();
         await rt.fsLoop(n, async () => {
           const g = grid([3, 5, 5, 5, 3], c => draw(c)).map(col => col.map(x => (x.sc ? RNG.pick(SY) : x)));
           await rt.spin(g, { tease: false });
-          await play(rt, g, 2, sticky);
-        }, { title: 'INVESTIGAÇÃO', sub: `${n} giros · células abertas ficam` });
+          await play(rt, g, 2, sticky, kill);
+        }, { title: kill ? 'THE KILL' : 'THE SEARCH', sub: kill ? `${n} giros · xSplit em todo giro` : `${n} giros · células abertas ficam` });
       },
     }));
   })();

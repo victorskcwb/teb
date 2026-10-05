@@ -32,34 +32,58 @@
     const SY = wsyms([['pistoleiro', 'cowboy', 'Pistoleiro'], ['caveira', 'skull', 'Caveira de boi'], ['revolver', 'pistol', 'Revólver'], ['whisky', 'tumbler', 'Uísque']]);
     const WILD = { id: 'w', img: 'cowboy', name: 'Fora da lei', wild: true, reels: [1, 2, 3], w: 0.45, fw: 1.4 };
     const SC = { id: 'sc', img: 'moneybag', name: '$', sc: true, reels: [1, 2, 3], w: 1.6, fw: 0 };
-    const SHERIFF = { id: 'xer', img: 'police', name: 'Distintivo do xerife', badge: 's', noPay: true, reels: [0], w: 0.4 };
-    const MARSHAL = { id: 'mar', img: 'militarymedal', name: 'Distintivo do marechal', badge: 'm', noPay: true, reels: [4], w: 0.4 };
+    const SHERIFF = { id: 'xer', img: 'police', name: 'Distintivo do xerife', badge: 's', noPay: true, reels: [0], w: 0.6, fw: 0 };
+    const MARSHAL = { id: 'mar', img: 'militarymedal', name: 'Distintivo do marechal', badge: 'm', noPay: true, reels: [4], w: 0.6, fw: 0 };
     const draw = pool([...SY, WILD, SC, SHERIFF, MARSHAL]);
     const make = wk => grid([2, 3, 3, 3, 2], c => draw(c, wk));
+    const MODES = {
+      j: { n: 3, title: 'JUSTIÇA', sub: '3 giros · coringas colantes', sticky: true, grow: false },
+      g: { n: 10, title: 'PISTOLEIRO', sub: '10 giros · multiplicador que cresce', sticky: false, grow: true },
+      b: { n: 12, title: 'RECOMPENSA', sub: '12 giros · coringas colantes e multiplicador', sticky: true, grow: true },
+    };
+    /** st: { sticky: Map(rolo → mult) | null, gm: multiplicador global | null } */
     async function play(rt, g, st) {
       await rt.spin(g, { tease: !st });
       if (st && st.sticky) st.sticky.forEach((m, c) => { g[c] = g[c].map(() => mult({ ...WILD, c: 'sticky' }, m)); });
-      for (let c = 1; c <= 3; c++) if (g[c].some(x => x.wild && !x.m)) { const m = nudgeReel(g, c, WILD, st && st.add ? st.add : 0); if (st && st.sticky) st.sticky.set(c, m); rt.msg(`🤠 xNudge no rolo ${c + 1}: x${m}`); }
+      let pushes = 0;
+      for (let c = 1; c <= 3; c++) {
+        if (!g[c].some(x => x.wild && !x.m)) continue;
+        const m = nudgeReel(g, c, WILD);
+        pushes += m - 1;
+        if (st && st.sticky) st.sticky.set(c, m);
+        rt.msg(`🤠 xNudge no rolo ${c + 1}: x${m}`);
+      }
+      // Pistoleiro: cada empurrão soma +1 num multiplicador que nunca zera
+      if (st && st.gm != null && pushes) { st.gm += pushes; rt.chip('mult', 'MULT.', 'x' + st.gm); }
       await rt.drop(g);
-      await pay(rt, ways(g, SY));
+      await pay(rt, ways(g, SY), st && st.gm ? st.gm : 1);
       return { sc: count(g, x => x.sc), sh: count(g, x => x.badge === 's'), ma: count(g, x => x.badge === 'm') };
     }
     App.register(K.create({
       id: 'lapide', name: 'Lápide', studio: STUDIO, art: 'cowboy', mascot: 'skull',
-      tag: 'xNudge · 3 rodadas grátis', colors: ['#92400e', '#111827'], bg: 'linear-gradient(180deg,#78350f,#1c1917 60%,#0c0a09)',
+      tag: 'xNudge · 3 tipos de bônus', colors: ['#92400e', '#111827'], bg: 'linear-gradient(180deg,#78350f,#1c1917 60%,#0c0a09)',
       cols: 5, rows: 3, maxWin: 11456, vol: 5, rtp: '~96,2%', target: 0.962,
       intro: 'Inspirado no "Tombstone" (Nolimit City).', hello: 'Os foras da lei empurram e multiplicam!',
       symbols: [...SY, WILD, SC, SHERIFF, MARSHAL],
       tables: [table('Pagamento por caminho', heads(3, 3, ' rolos'), SY, 'Rolos 2-3-3-3-2 = 108 caminhos. Multiplicadores no caminho se multiplicam.')],
-      highlights: ['🤠 Rolos 2-3-3-3-2 (108 caminhos)', '⬇️ <b>xNudge:</b> o coringa fora da lei (rolos 2 a 4) empurra até cobrir o rolo e ganha <b>+1 por empurrão</b>', '💰 3 $ = <b>Pistoleiro</b> (8 giros); com distintivo do xerife = <b>Justiça</b> (coringas colantes); com o do marechal = <b>Recompensa</b> (+1 extra em todo empurrão)', 'Prêmio máximo: <b>11.456x</b>'],
+      highlights: ['🤠 Rolos 2-3-3-3-2 (108 caminhos)', '⬇️ <b>xNudge:</b> o coringa fora da lei (rolos 2 a 4) empurra até cobrir o rolo e ganha <b>+1 por empurrão</b>', '⭐ Os 2 distintivos juntos = <b>Justiça</b> (3 giros com coringas colantes), mesmo sem $', '💰 3 $ = <b>Pistoleiro</b> (10 giros com multiplicador que cresce); 3 $ + os 2 distintivos = <b>Recompensa</b> (12 giros com os dois)', 'Prêmio máximo: <b>11.456x</b>'],
       how: '<p>Rolos 2-3-3-3-2 com 108 caminhos. O coringa fora da lei é alto como o rolo; quando aparece só em parte, ele é empurrado até cobrir o rolo todo, somando +1 no multiplicador a cada casa. Vários rolos de coringa no mesmo caminho se multiplicam.</p>',
-      features: '<p>💰 <b>3 símbolos $</b> (rolos 2 a 4) dão 8 rodadas grátis. O tipo depende dos distintivos que caírem junto: nenhum = <b>Pistoleiro</b> (mais coringas); xerife (rolo 1) = <b>Justiça</b> (rolos de coringa colantes); marechal (rolo 5) = <b>Recompensa</b> (todo coringa já começa com +2).</p>',
+      features: '<p>Há três rodadas grátis, conforme os símbolos $ (rolos 2 a 4) e os distintivos do xerife (rolo 1) e do marechal (rolo 5):</p><ul class="si-list"><li>⭐ <b>Justiça</b> — os <b>2 distintivos</b> juntos, mesmo sem $: <b>3 giros</b> em que todo rolo de coringa <b>fica colado</b> até o fim.</li><li>💰 <b>Pistoleiro</b> — <b>3 $</b>: <b>10 giros</b> com um multiplicador que começa em x1, ganha <b>+1 a cada empurrão</b> de xNudge e não zera; ele vale para todos os ganhos.</li><li>🏆 <b>Recompensa</b> — <b>3 $ e os 2 distintivos</b>: <b>12 giros</b> com coringas colantes <b>e</b> o multiplicador que cresce.</li></ul><p class="muted small">A compra do bônus sorteia o tipo com as mesmas chances do jogo normal.</p>',
       make: () => make('w'),
-      async spin(rt) { const g = make('w'); const r = await play(rt, g, null); if (r.sc >= 3) { rt.mark(scatters(g)); await rt.wait(1000); await this.bonus(rt, { mode: r.sh ? 'j' : r.ma ? 'b' : 'g' }); } },
-      async bonus(rt, { mode = 'g' } = {}) {
-        const st = { sticky: mode === 'j' ? new Map() : null, add: mode === 'b' ? 2 : 0 };
-        const names = { g: 'PISTOLEIRO', j: 'JUSTIÇA', b: 'RECOMPENSA' };
-        await rt.fsLoop(8, async () => { await play(rt, make('fw'), st); }, { title: names[mode], sub: { g: 'Mais foras da lei', j: 'Coringas colantes', b: 'Coringas +2' }[mode] });
+      async spin(rt) {
+        const g = make('w');
+        const r = await play(rt, g, null);
+        const both = r.sh > 0 && r.ma > 0;
+        const mode = r.sc >= 3 ? (both ? 'b' : 'g') : both ? 'j' : null;
+        if (mode) { rt.mark(cells(g, x => x.sc || x.badge).map(([c, rr]) => key(c, rr))); await rt.wait(1000); await this.bonus(rt, { mode }); }
+      },
+      async bonus(rt, { mode = 'g', buy = false } = {}) {
+        if (buy) mode = RNG.weighted([{ v: 'g', w: 78 }, { v: 'j', w: 21 }, { v: 'b', w: 1 }]).v;
+        const M = MODES[mode];
+        const st = { sticky: M.sticky ? new Map() : null, gm: M.grow ? 1 : null };
+        if (M.grow) rt.chip('mult', 'MULT.', 'x1');
+        await rt.fsLoop(M.n, async () => { await play(rt, make('fw'), st); }, { title: M.title, sub: M.sub });
+        rt.chip('mult', null);
       },
     }));
   })();
@@ -656,18 +680,23 @@
   /* 17. Tribo do Dragão — xWays e xNudge com cascata */
   (() => {
     const SY = [S('cacadora', 'woman', 'Caçadora', [1, 2.5, 6, 15], 3), S('dragao', 'dragon', 'Dragão', [0.8, 2, 5, 12], 4), S('ovo', 'egg', 'Ovo de dragão', [0.6, 1.5, 4, 9], 5), S('lanca', 'spear', 'Lança', [0.5, 1.2, 3, 7], 5), ...R([[0.15, 0.3, 0.6, 1.2], [0.15, 0.3, 0.6, 1.2], [0.1, 0.2, 0.5, 1], [0.1, 0.2, 0.5, 1]])];
-    const WILD = { id: 'w', img: 'volcano', name: 'Coringa xNudge', wild: true, reels: [1, 2, 3, 4], w: 0.25, fw: 0.4 };
+    const WILD = { id: 'w', img: 'volcano', name: 'Coringa xNudge', wild: true, reels: [1, 2, 3, 4], w: 0.25, fw: 1.6 };
     const XW = { id: 'xw', img: 'question', name: 'xWays', xw: true, noPay: true, w: 0.4, fw: 0.6 };
     const SC = { id: 'sc', img: 'dragonface', name: 'Bônus', sc: true, w: 0.55, fw: 0.35 };
     const draw = pool([...SY, WILD, XW, SC]);
-    const make = wk => grid([4, 4, 4, 4, 4, 4], c => draw(c, wk));
-    async function play(rt, g, wk, extreme) {
+    // giros Normais: só xNudge (sem xWays)
+    const drawN = pool([...SY, WILD, SC]);
+    const make = (wk, d = draw) => grid([4, 4, 4, 4, 4, 4], c => d(c, wk));
+    /** mode: null (jogo base), 'n' (Normal: só xNudge) ou 'x' (Extremo: xNudge + xWays, pelo menos 1 por giro) */
+    async function play(rt, g, wk, mode) {
       await rt.spin(g, { tease: false });
+      if (mode === 'x' && !g.flat().some(x => x.xw)) { const [c, r] = RNG.pick(cells(g, x => !x.sc && !x.wild)); g[c][r] = { ...XW, fresh: true }; }
       // xWays: todos viram o mesmo símbolo com 2 a 4 cópias cada
       if (g.flat().some(x => x.xw)) { const s = RNG.pick(SY); g.forEach((col, c) => col.forEach((x, r) => { if (x.xw) { const n = RNG.int(2, 4); g[c][r] = { ...s, n, t: '×' + n, c: 'gold', fresh: true }; } })); rt.msg(`❓ xWays: ${s.name}!`); }
-      for (let c = 1; c <= 4; c++) if (g[c].some(x => x.wild && !x.m)) nudgeReel(g, c, WILD, extreme ? 1 : 0);
+      for (let c = 1; c <= 4; c++) if (g[c].some(x => x.wild && !x.m)) nudgeReel(g, c, WILD);
       await rt.drop(g);
-      await tumble(rt, g, { draw: c => draw(c, wk), evaluate: gg => ways(gg, SY) });
+      const d = mode === 'n' ? drawN : draw;
+      await tumble(rt, g, { draw: c => d(c, wk), evaluate: gg => ways(gg, SY) });
       return count(g, x => x.sc);
     }
     App.register(K.create({
@@ -677,12 +706,17 @@
       intro: 'Inspirado no "Dragon Tribe" (Nolimit City).', hello: 'A caçadora persegue os dragões!',
       symbols: [...SY, WILD, XW, SC],
       tables: [table('Pagamento por caminho', heads(3, 4, ' rolos'), SY, '6×4 (4.096 caminhos) que crescem com xWays até 20.736.')],
-      highlights: ['🐉 6×4 com cascata', '❓ <b>xWays:</b> os mistérios viram o mesmo símbolo com <b>2 a 4 cópias</b> cada (até 20.736 caminhos)', '⬇️ <b>xNudge:</b> coringas empurram até cobrir o rolo, +1 por empurrão; vários se multiplicam', '3+ bônus: <b>Giros do Dragão</b> normais (10 giros) ou <b>Extremos</b> (8 giros com coringas +1)', 'Prêmio máximo: <b>27.000x</b>'],
+      highlights: ['🐉 6×4 com cascata', '❓ <b>xWays:</b> os mistérios viram o mesmo símbolo com <b>2 a 4 cópias</b> cada (até 20.736 caminhos)', '⬇️ <b>xNudge:</b> coringas empurram até cobrir o rolo, +1 por empurrão; vários se multiplicam', '3+ bônus: <b>10 Giros do Dragão</b> (+3 por bônus extra), <b>Normais</b> (só xNudge) ou <b>Extremos</b> (xNudge e xWays garantido em todo giro)', 'Prêmio máximo: <b>27.000x</b>'],
       how: '<p>Grade 6×4 que paga por caminhos, com cascata. Os símbolos xWays se revelam todos como o mesmo símbolo, cada um contando como 2 a 4 cópias. O coringa xNudge empurra até cobrir o rolo, somando +1 por casa.</p>',
-      features: '<p>🐲 <b>3 ou mais bônus</b> dão a escolha: <b>Normal</b> com 10 rodadas grátis, ou <b>Extremo</b> com 8 rodadas grátis em que todo coringa xNudge começa com +1 e xWays caem mais.</p>',
+      features: '<p>🐲 <b>3 ou mais bônus</b> dão <b>10 rodadas grátis</b>, com <b>+3</b> para cada bônus além do 3º, e você escolhe o modo:</p><ul class="si-list"><li><b>Normal:</b> só coringas <b>xNudge</b> (sem xWays).</li><li><b>Extremo:</b> xNudge <b>e xWays</b>, com pelo menos <b>um xWays em todo giro</b>. Mais volátil.</li></ul><p>Nos dois modos os coringas xNudge caem bem mais. 3+ bônus durante as rodadas grátis dão <b>+3 giros</b>.</p><p class="muted small">A compra do bônus sorteia quantos bônus caíram com as mesmas chances do jogo normal.</p>',
       make: () => make('w'),
-      async spin(rt) { const g = make('w'); if (await play(rt, g, 'w', false) >= 3) { rt.mark(scatters(g)); await rt.wait(1000); await this.bonus(rt, {}); } },
-      async bonus(rt) { const v = await rt.choose('GIROS DO DRAGÃO', [{ id: 'n', img: 'dragon', label: 'Normal', desc: '10 giros', sim: true }, { id: 'x', img: 'volcano', label: 'Extremo', desc: '8 giros · coringas +1' }]); await rt.fsLoop(v === 'x' ? 8 : 10, async api => { if (await play(rt, make('fw'), 'fw', v === 'x') >= 3) api.add(3); }, { title: v === 'x' ? 'GIROS EXTREMOS' : 'GIROS DO DRAGÃO', sub: v === 'x' ? 'Coringas +1' : 'xWays e xNudge' }); },
+      async spin(rt) { const g = make('w'); const sc = await play(rt, g, 'w', null); if (sc >= 3) { rt.mark(scatters(g)); await rt.wait(1000); await this.bonus(rt, { sc }); } },
+      async bonus(rt, { sc = 3, buy = false } = {}) {
+        if (buy) sc = RNG.weighted([{ v: 3, w: 80 }, { v: 4, w: 17 }, { v: 5, w: 3 }]).v;
+        const n = 10 + 3 * Math.max(0, sc - 3);
+        const v = await rt.choose('GIROS DO DRAGÃO', [{ id: 'n', img: 'dragon', label: 'Normal', desc: `${n} giros · só xNudge`, sim: true }, { id: 'x', img: 'volcano', label: 'Extremo', desc: `${n} giros · xNudge e xWays` }]);
+        await rt.fsLoop(n, async api => { if (await play(rt, make('fw', v === 'n' ? drawN : draw), 'fw', v) >= 3) api.add(3); }, { title: v === 'x' ? 'GIROS EXTREMOS' : 'GIROS DO DRAGÃO', sub: v === 'x' ? 'xWays em todo giro' : 'Só xNudge' });
+      },
     }));
   })();
 
@@ -690,45 +724,48 @@
   (() => {
     const SY = [S('eva', 'fairy', 'Eva', [2, 6, 20], 3, { stack: true }), S('pocaoverde', 'potion', 'Poção verde', [1, 3, 10], 4, { potion: true }), S('pocaoroxa', 'testtube', 'Poção roxa', [1, 3, 10], 4, { potion: true }), S('flor', 'hibiscus', 'Flor', [0.8, 2.5, 8], 5), ...R([[0.2, 0.6, 2], [0.2, 0.6, 2], [0.15, 0.5, 1.5], [0.15, 0.5, 1.5]])];
     const WILD = { id: 'w', img: 'mushroom', name: 'Coringa que expande', wild: true, reels: [1, 2, 3], w: 0.45 };
-    const BON = { id: 'bon', img: 'tulip', name: 'Flor do portal', bon: true, noPay: true, reels: [4], w: 0.12 };
+    const BON = { id: 'bon', img: 'tulip', name: 'Flor do portal', bon: true, noPay: true, reels: [4], w: 0.09 };
     const draw = pool([...SY, WILD, BON]);
     const make = () => K.stack(grid([3, 3, 3, 3, 3], c => draw(c)), 0.35);
-    async function play(rt, g, portals) {
+    /** fs: rodadas grátis (rolos 1 e 5 são portais que copiam o símbolo da zona quente) */
+    async function play(rt, g, fs) {
       await rt.spin(g, { tease: false });
-      if (portals) portals.forEach((n, c) => { if (n > 0) g[c] = g[c].map(() => ({ ...WILD, c: 'gold' })); });
+      const nb = count(g, x => x.bon);
       [1, 2, 3].forEach(c => { if (g[c].some(x => x.wild)) g[c] = g[c].map(() => ({ ...WILD, c: 'gold' })); });
+      if (fs) {
+        // zona quente = casa do meio da grade; os portais (rolos 1 e 5) viram cópias dela
+        const hz = g[2][1], src = hz.wild ? { ...WILD } : { ...SY.find(s => s.id === hz.id) };
+        rt.mark([key(2, 1)], 'hl');
+        [0, 4].forEach(c => { g[c] = g[c].map(() => ({ ...src, c: 'gold', fresh: true })); });
+        // nos rolos do meio, o símbolo igual ao da zona quente se expande pelo rolo
+        [1, 2, 3].forEach(c => { if (g[c].some(x => x.id === src.id)) g[c] = g[c].map(() => ({ ...src, c: 'gold', fresh: true })); });
+        rt.msg(`🌀 Portais copiam a zona quente: ${src.name}!`);
+      }
       if (g.some(col => col.every(x => x.id === 'eva'))) { g.forEach((col, c) => col.forEach((x, r) => { if (x.potion) g[c][r] = { ...SY[0], c: 'gold', fresh: true }; })); rt.msg('🧪 Magia Líquida: poções viram Eva!'); rt.fx('rise'); }
       await rt.drop(g);
       await pay(rt, lines(g, L20, SY));
-      return count(g, x => x.bon);
+      return nb;
     }
     App.register(K.create({
       id: 'evavenenosa', name: 'Eva Venenosa', studio: STUDIO, art: 'fairy', mascot: 'potion',
-      tag: 'Magia líquida · portais coringa', colors: ['#16a34a', '#a21caf'], bg: 'radial-gradient(circle at 50% 30%,#14532d,#2e1065 70%)',
+      tag: 'Magia líquida · portais que copiam', colors: ['#16a34a', '#a21caf'], bg: 'radial-gradient(circle at 50% 30%,#14532d,#2e1065 70%)',
       cols: 5, rows: 3, maxWin: 2000, vol: 4, rtp: '~96,1%', target: 0.961,
       intro: 'Inspirado no "Poison Eve" (Nolimit City).', hello: 'A fada venenosa e suas poções...',
       symbols: [...SY, WILD, BON],
       lineList: { cols: 5, rows: 3, list: L20, text: '20 linhas fixas.' },
       tables: [table('Pagamento por linha', heads(3, 3), SY, 'Iguais seguidos a partir da esquerda.')],
-      highlights: ['🧚 5×3 com 20 linhas e símbolos empilhados', '🍄 Coringas nos rolos do meio <b>expandem</b> pelo rolo inteiro', '🧪 <b>Magia Líquida:</b> um rolo coberto por Eva transforma todas as poções em Eva', '🌷 Flores na zona quente (rolo 5) abrem <b>portais</b>: rolos de coringa por 3 a 12 giros grátis', 'Prêmio máximo: <b>2.000x</b>'],
+      highlights: ['🧚 5×3 com 20 linhas e símbolos empilhados', '🍄 Coringas nos rolos do meio <b>expandem</b> pelo rolo inteiro', '🧪 <b>Magia Líquida:</b> um rolo coberto por Eva transforma todas as poções em Eva', '🌷 Flores no rolo 5 abrem o <b>Poder das Flores</b>: os rolos 1 e 5 viram <b>portais</b> que copiam o símbolo da <b>zona quente</b>', 'Prêmio máximo: <b>2.000x</b>'],
       how: '<p>Grade 5×3 com 20 linhas. Coringas (rolos 2 a 4) sempre expandem. Se Eva cobrir um rolo inteiro, todas as poções da tela viram Eva.</p>',
-      features: '<p>🌷 <b>Poder das Flores:</b> cada flor que cai na zona quente do rolo 5 cria um <b>portal</b> no rolo livre mais próximo à esquerda; o portal transforma o rolo em coringa por 3 a 12 giros grátis. O bônus dura enquanto houver portal aberto.</p>',
+      features: '<p>🌷 <b>Poder das Flores:</b> cada flor que cai no rolo 5 vale de <b>3 a 8 rodadas grátis</b>. Nelas, os <b>rolos 1 e 5 são portais</b>: em todo giro eles viram cópias do símbolo da <b>zona quente</b> (a casa do meio da grade). Nos rolos 2 a 4, esse mesmo símbolo <b>se expande</b> pelo rolo inteiro, então os ganhos aparecem em várias linhas de uma vez. Cada nova flor dá <b>+2 giros</b>.</p>',
       make,
-      async spin(rt) { const g = make(); const b = await play(rt, g, null); if (b) { await rt.wait(800); await this.bonus(rt, { b }); } },
+      async spin(rt) { const g = make(); const b = await play(rt, g, false); if (b) { await rt.wait(800); await this.bonus(rt, { b }); } },
       async bonus(rt, { b = 1 } = {}) {
-        const portals = [0, 0, 0, 0, 0];
-        const open = n => { for (let i = 0; i < n; i++) { const c = [3, 2, 1, 0].find(cc => portals[cc] <= 0); if (c == null) break; portals[c] = RNG.int(3, 12); } };
-        open(b);
-        await rt.fsLoop(Math.max(...portals), async api => {
-          const g = make();
-          rt.head(portals.map(n => (n > 0 ? `🌀${n}` : '')));
-          const nb = await play(rt, g, portals);
-          portals.forEach((n, c) => { if (n > 0) portals[c]--; });
-          if (nb) open(nb);
-          const need = Math.max(...portals);
-          if (need > api.left) api.add(need - api.left, true);
-        }, { title: 'PODER DAS FLORES', sub: 'Portais viram rolos coringa' });
-        rt.head(null);
+        let n = 0;
+        for (let i = 0; i < b; i++) n += RNG.int(3, 8);
+        await rt.fsLoop(n, async api => {
+          const nb = await play(rt, make(), true);
+          if (nb) api.add(2 * nb);
+        }, { title: 'PODER DAS FLORES', sub: `${n} giros · portais copiam a zona quente` });
       },
     }));
   })();
@@ -745,6 +782,14 @@
       // o arlequim empurra para cobrir o rolo e depois anda para a esquerda a cada respin
       let walkers = [];
       for (let c = 1; c <= 4; c++) if (g[c].some(x => x.wild)) { const m = nudgeReel(g, c, HARL, st ? st.m : 0); walkers.push({ c, m }); if (st) st.m++; }
+      // 1º giro do bônus: Arlequim xNudge garantido no rolo 5 em x3
+      if (st && st.seed) {
+        st.seed = false;
+        walkers = walkers.filter(w => w.c !== 4);
+        g[4] = g[4].map(x => (x.sc ? x : mult({ ...HARL, c: 'duel', fresh: true }, 3)));
+        walkers.push({ c: 4, m: 3 });
+        rt.msg('🃏 O Arlequim abre o bônus no rolo 5: x3!');
+      }
       await rt.drop(g);
       await pay(rt, lines(g, L20, SY, { mult: 'add' }));
       for (let guard = 0; guard < 6 && walkers.length && !rt.capped; guard++) {
@@ -767,12 +812,12 @@
       symbols: [...SY, HARL, SC],
       lineList: { cols: 5, rows: 3, list: L20, text: '20 linhas fixas.' },
       tables: [table('Pagamento por linha', heads(3, 3), SY, 'Multiplicadores na mesma linha se somam.')],
-      highlights: ['🃏 O <b>Arlequim</b> cai empilhado, faz <b>xNudge</b> até cobrir o rolo (+1 por empurrão)', 'Depois ele <b>anda para a esquerda</b>, dando <b>respin</b> a cada passo e ganhando <b>+1</b>', '🎊 3+ bônus = <b>8 rodadas grátis</b> com multiplicador base que sobe a cada passo e empurrão', 'Prêmio máximo: <b>5.861x</b>'],
+      highlights: ['🃏 O <b>Arlequim</b> cai empilhado, faz <b>xNudge</b> até cobrir o rolo (+1 por empurrão)', 'Depois ele <b>anda para a esquerda</b>, dando <b>respin</b> a cada passo e ganhando <b>+1</b>', '🎊 3+ bônus = <b>8 rodadas grátis</b> que começam com um <b>Arlequim x3 garantido</b> no rolo 5 e multiplicador base que sobe a cada passo e empurrão', 'Prêmio máximo: <b>5.861x</b>'],
       how: '<p>Grade 5×3 com 20 linhas. O Arlequim é um coringa alto (rolos 2 a 5) que se empurra até ficar inteiro e depois caminha um rolo para a esquerda por respin, até sair da grade.</p>',
-      features: '<p>🎊 <b>3 ou mais bônus</b> dão <b>8 rodadas grátis</b>. Cada passo do Arlequim soma +1 num multiplicador base que fica guardado e é somado a todo Arlequim novo.</p>',
+      features: '<p>🎊 <b>3 ou mais bônus</b> dão <b>8 rodadas grátis</b>. O primeiro giro já traz um <b>Arlequim xNudge garantido no rolo 5 valendo x3</b>, que anda para a esquerda ganhando +1 a cada passo. Cada passo do Arlequim soma +1 num multiplicador base que fica guardado e é somado a todo Arlequim novo.</p>',
       make: () => make('w'),
       async spin(rt) { const g = make('w'); if (await play(rt, g, null) >= 3) { rt.mark(scatters(g)); await rt.wait(1000); await this.bonus(rt, {}); } },
-      async bonus(rt) { const st = { m: 2 }; await rt.fsLoop(8, async api => { if (await play(rt, make('fw'), st) >= 3) api.add(4); }, { sub: 'Multiplicador base cresce' }); rt.chip('mult', null); },
+      async bonus(rt) { const st = { m: 2, seed: true }; await rt.fsLoop(8, async api => { if (await play(rt, make('fw'), st) >= 3) api.add(4); }, { sub: 'Multiplicador base cresce' }); rt.chip('mult', null); },
     }));
   })();
 
