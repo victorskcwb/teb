@@ -10,6 +10,8 @@
   const grid = (hs, f) => hs.map((hh, c) => Array.from({ length: hh }, (_, r) => f(c, r)));
   const SUITS = (pays, w = [8, 8, 9, 9]) => K.ROYALS(pays, w);
   const wmult = list => RNG.weighted(list).m;
+  /** Compra de bônus: sorteia o nível com as chances naturais. list = [{ v, w }] */
+  const tier = list => RNG.weighted(list).v;
   const BIG = [{ m: 2, w: 45 }, { m: 3, w: 25 }, { m: 5, w: 15 }, { m: 10, w: 9 }, { m: 25, w: 4 }, { m: 50, w: 1.5 }, { m: 100, w: 0.5 }];
 
   /* =========================================================
@@ -118,9 +120,10 @@
       S('dinheiro', 'banknote', 'Grana', [2, 6, 20], 3), S('maleta', 'briefcase', 'Maleta', [1.5, 4, 12], 4), S('queijo', 'mousetrap', 'Ratoeira', [1, 3, 8], 4),
       S('cartola', 'sunglasses', 'Óculos', [0.8, 2, 5], 5), ...SUITS([[0.3, 0.8, 2], [0.3, 0.8, 2], [0.2, 0.6, 1.5], [0.2, 0.6, 1.5]]),
     ];
-    const CAT = { id: 'cat', img: 'catface', name: 'Gato Ro$$', wild: true, cat: true, reels: [1, 2, 3], w: 0.32, fw: 0.5 };
-    const MOUSE = { id: 'rato', img: 'mouse', name: 'Rato Maxx', wild: true, w: 0.55, fw: 0.9 };
-    const SC = { id: 'sc', img: 'pizza', name: 'Pizza', sc: true, w: 0.55, fw: 0 };
+    // rw = Bônus Ro$$ (mais gatos), fw = Bônus Maxx
+    const CAT = { id: 'cat', img: 'catface', name: 'Gato Ro$$', wild: true, cat: true, reels: [1, 2, 3], w: 0.32, rw: 1.5, fw: 0.8 };
+    const MOUSE = { id: 'rato', img: 'mouse', name: 'Rato Maxx', wild: true, w: 0.55, rw: 1.1, fw: 1.3 };
+    const SC = { id: 'sc', img: 'pizza', name: 'Pizza', sc: true, w: 0.55, rw: 0.25, fw: 0.25 };
     const all = [...SY, CAT, MOUSE, SC];
     const draw = pool(all);
     const MM = [{ m: 2, w: 50 }, { m: 3, w: 25 }, { m: 5, w: 15 }, { m: 10, w: 10 }];
@@ -134,10 +137,11 @@
       symbols: all,
       lineList: { cols: 5, rows: 5, list: L, text: '19 linhas fixas, da esquerda para a direita.' },
       tables: [table('Pagamento por linha', heads(3, 3), SY, 'Iguais seguidos a partir do rolo da esquerda.')],
-      highlights: ['😼 <b>Gato Ro$$</b> (rolos 2 a 4) expande e cobre o rolo inteiro de coringa', '🐭 <b>Rato Maxx</b> é coringa com <b>x2 a x10</b>', '💀 3 scatters = <b>Bônus Ro$$</b> (gatos colantes) · 4+ = <b>Bônus Maxx</b> (ratos somam multiplicador no gato, até x200)', 'Prêmio máximo: <b>12.500x</b>'],
+      highlights: ['😼 <b>Gato Ro$$</b> (rolos 2 a 4) expande e cobre o rolo inteiro de coringa', '🐭 <b>Rato Maxx</b> é coringa com <b>x2 a x10</b>', '🍕 3 scatters = <b>Bônus Ro$$</b> (muito mais gatos) · 4+ = <b>Bônus Maxx</b> (rolos de gato ativados e ratos somando no gato, até x200)', '🔁 3 scatters nas grátis = <b>+4 giros</b>', 'Prêmio máximo: <b>12.500x</b>'],
       how: `<p>Grade <b>5×5</b> com <b>19 linhas</b>.</p><p>${ico('catface')} <b>Gato:</b> coringa que <b>expande</b> e cobre o rolo inteiro. ${ico('mouse')} <b>Rato:</b> coringa com multiplicador x2 a x10; numa linha, multiplicadores se multiplicam.</p>`,
-      features: `<ul class="si-list"><li>💀 <b>3 scatters — Bônus Ro$$:</b> 10 rodadas grátis; todo gato que expandir <b>fica preso</b> até o fim.</li>
-        <li>💀 <b>4+ scatters — Bônus Maxx:</b> 10 rodadas grátis com gatos presos; cada rato que cair num rolo de gato <b>soma seu multiplicador</b> nesse rolo (até x200).</li></ul>`,
+      features: `<ul class="si-list"><li>🍕 <b>3 scatters — Bônus Ro$$:</b> 10 rodadas grátis com <b>gatos bem mais frequentes</b>. Os gatos não ficam presos: cada um expande só naquele giro, e os ratos que caírem no rolo dele somam no multiplicador do gato.</li>
+        <li>🍕 <b>4+ scatters — Bônus Maxx:</b> 10 rodadas grátis. O rolo onde cair um gato fica <b>ativado</b> até o fim: em todo giro ele traz um gato novo, que expande. Cada rato que cair num rolo ativado <b>soma seu multiplicador</b> nele (até x200).</li>
+        <li>🔁 Nos dois bônus, <b>3 scatters</b> dão <b>+4 rodadas</b>.</li></ul><p class="muted small">A compra de bônus dá um bônus aleatório: Ro$$ (85%) ou Maxx (15%).</p>`,
       make: () => make(),
       async spin(rt) {
         const g = make();
@@ -146,24 +150,33 @@
         if (cells(g, x => x.c === 'duel').length) { rt.msg('😼 O gato expandiu!'); await rt.drop(g); }
         await pay(rt, lines(g, L, SY));
         const sc = count(g, x => x.sc);
-        if (sc >= 3) { rt.mark(scatters(g)); await rt.wait(1000); await this.bonus(rt, { maxx: sc >= 4 }); }
+        if (sc >= 3) { rt.mark(scatters(g)); await rt.wait(1000); await this.bonus(rt, { sc }); }
       },
-      async bonus(rt, { maxx = false } = {}) {
-        const cats = {};
-        await rt.fsLoop(10, async () => {
-          const g = make('fw');
+      async bonus(rt, { sc = 3, buy = false } = {}) {
+        if (buy) sc = tier([{ v: 3, w: 85 }, { v: 4, w: 15 }]);
+        const maxx = sc >= 4, cats = {};
+        await rt.fsLoop(10, async api => {
+          const g = make(maxx ? 'fw' : 'rw');
           await rt.spin(g, { tease: false });
+          const s = count(g, x => x.sc);
           for (let c = 0; c < 5; c++) {
+            const rats = g[c].filter(x => x.id === 'rato').reduce((t, x) => t + x.m, 0);
+            if (!maxx) {
+              // Ro$$: o gato expande só neste giro; ratos no rolo somam no gato
+              if (g[c].some(x => x.cat)) expand(g, c, rats || 1);
+              continue;
+            }
             if (g[c].some(x => x.cat) && !cats[c]) cats[c] = 1;
             if (cats[c]) {
-              if (maxx) { const add = g[c].filter(x => x.id === 'rato').reduce((s, x) => s + x.m, 0); if (add) { cats[c] = Math.min(200, (cats[c] === 1 ? 0 : cats[c]) + add); rt.msg(`🐭 Rato no gato: rolo ${c + 1} vale x${cats[c]}`); } }
+              if (rats) { cats[c] = Math.min(200, (cats[c] === 1 ? 0 : cats[c]) + rats); rt.msg(`🐭 Rato no gato: rolo ${c + 1} vale x${cats[c]}`); }
               expand(g, c, cats[c]);
             }
           }
-          rt.head([0, 1, 2, 3, 4].map(c => (cats[c] > 1 ? 'x' + cats[c] : cats[c] ? '😼' : '')));
-          await rt.drop(g);
+          if (maxx) rt.head([0, 1, 2, 3, 4].map(c => (cats[c] > 1 ? 'x' + cats[c] : cats[c] ? '😼' : '')));
+          if (cells(g, x => x.c === 'duel').length) await rt.drop(g);
           await pay(rt, lines(g, L, SY));
-        }, { title: maxx ? 'BÔNUS MAXX' : 'BÔNUS RO$$', sub: maxx ? 'Ratos somam no gato!' : 'Gatos colantes!' });
+          if (s >= 3) api.add(4);
+        }, { title: maxx ? 'BÔNUS MAXX' : 'BÔNUS RO$$', sub: maxx ? 'Rolos de gato ativados · ratos somam no gato!' : 'Muito mais gatos!' });
         rt.head(null);
       },
     }));
@@ -193,7 +206,7 @@
     };
     const paint = (g, gold) => g.forEach((col, c) => col.forEach((x, r) => { if (x && gold.has(key(c, r)) && !x.c) x.c = 'gsq'; }));
     async function activate(rt, g, gold) {
-      if (!gold.size) return;
+      if (!gold.size) return false;
       rt.msg('🌈 Arco-íris! Os quadrados dourados revelam moedas');
       rt.fx('big');
       await rt.wait(600);
@@ -207,6 +220,7 @@
       rt.msg(`🪙 Moedas: ${rt.coins(v)}`);
       rt.fx('coin');
       await rt.wait(1200);
+      return true;
     }
     async function play(rt, g, gold, wk, alwaysRainbow) {
       paint(g, gold);
@@ -215,7 +229,8 @@
         evaluate: gg => payClusters(clusters(gg, 5), T),
         onStep: async (step, gg, res) => { res.cells.forEach(k => gold.add(k)); paint(gg, gold); rt.chip('gold', 'DOURADOS', gold.size); },
       });
-      if (alwaysRainbow || g.some(col => col.some(x => x.rainbow))) await activate(rt, g, gold);
+      const act = alwaysRainbow || g.some(col => col.some(x => x.rainbow)) ? await activate(rt, g, gold) : false;
+      return { sc: count(g, x => x.sc), act };
     }
     App.register(K.create({
       id: 'banditoguaxinim', name: 'O Bandido Guaxinim', studio: STUDIO, art: 'raccoon', mascot: 'raccoon',
@@ -224,9 +239,9 @@
       intro: 'Inspirado no "Le Bandit" (Hacksaw Gaming).', hello: 'Ganhos deixam quadrados dourados!',
       symbols: all, extraSprites: ['coin', 'clover'],
       tables: [table('Pagamento por tamanho do grupo', ['5–6', '7–8', '9–10', '11–12', '13+'], SY, 'Grupos de 5+ iguais encostados, com supercascata.')],
-      highlights: ['🦝 Grade 6×5 com grupos de 5+ e <b>supercascata</b>', '🟨 Cada posição vencedora vira um <b>quadrado dourado</b>', '🌈 O <b>arco-íris</b> revela moedas nos dourados: bronze (até 4x), prata (até 20x) e <b>ouro (até 500x)</b>; o <b>trevo</b> multiplica as moedas vizinhas', '📷 3/4/5 câmeras = 8 ou 12 rodadas grátis (com dourados que não somem)', 'Prêmio máximo: <b>10.000x</b>'],
+      highlights: ['🦝 Grade 6×5 com grupos de 5+ e <b>supercascata</b>', '🟨 Cada posição vencedora vira um <b>quadrado dourado</b>', '🌈 O <b>arco-íris</b> revela moedas nos dourados: bronze (até 4x), prata (até 20x) e <b>ouro (até 500x)</b>; o <b>trevo</b> multiplica as moedas vizinhas', '📷 3/4/5 câmeras = <b>Sorte do Bandido</b>, <b>Tesouro Escondido</b> ou <b>Arco-íris Dourado</b>: os dourados ficam de um giro para o outro', 'Prêmio máximo: <b>10.000x</b>'],
       how: `<p>Grade <b>6×5</b>: grupos de <b>5+</b> iguais encostados pagam e somem (cascata). ${ico('framed')} é coringa.</p><p>Toda posição que fizer parte de um ganho vira um <b>quadrado dourado</b>. Quando um ${ico('rainbow')} <b>arco-íris</b> cai, cada dourado revela uma <b>moeda</b> que paga na hora — ou um ${ico('clover')} <b>trevo</b> que multiplica (x2 a x10) as moedas ao redor.</p>`,
-      features: `<ul class="si-list"><li>📷 <b>3 câmeras:</b> 8 rodadas grátis com mais arco-íris (os dourados zeram a cada giro).</li><li>📷 <b>4 câmeras:</b> 12 rodadas grátis e os dourados <b>ficam a rodada inteira</b>.</li><li>📷 <b>5 câmeras:</b> 12 rodadas, dourados fixos e <b>arco-íris em todo giro</b>.</li></ul>
+      features: `<ul class="si-list"><li>📷 <b>3 câmeras — Sorte do Bandido:</b> 8 rodadas grátis com mais arco-íris. Os dourados <b>ficam de um giro para o outro</b> até um arco-íris ativá-los; depois disso eles zeram.</li><li>📷 <b>4 câmeras — Tesouro Escondido:</b> 12 rodadas grátis e os dourados <b>ficam a rodada inteira</b>, mesmo depois de ativados.</li><li>📷 <b>5 câmeras — Arco-íris Dourado:</b> 12 rodadas, dourados fixos e <b>arco-íris em todo giro</b>.</li><li>🔁 Nas grátis, <b>3 câmeras</b> dão <b>+2 rodadas</b> e <b>4 ou mais</b> dão <b>+4</b>.</li></ul><p class="muted small">A compra de bônus dá um bônus aleatório: Sorte do Bandido (85%), Tesouro Escondido (13%) ou Arco-íris Dourado (2%).</p>
         <table class="paytable"><tr class="si-head"><td>Moeda</td><td>Valores (x aposta)</td></tr><tr><td>Bronze</td><td>0,2 a 4</td></tr><tr><td>Prata</td><td>5 a 20</td></tr><tr><td>Ouro</td><td>25 a 500</td></tr></table>`,
       make: () => make(),
       async spin(rt) {
@@ -237,15 +252,18 @@
         const sc = count(g, x => x.sc);
         if (sc >= 3) { rt.mark(scatters(g)); await rt.wait(1000); await this.bonus(rt, { sc }); }
       },
-      async bonus(rt, { sc = 3 } = {}) {
+      async bonus(rt, { sc = 3, buy = false } = {}) {
+        if (buy) sc = tier([{ v: 3, w: 85 }, { v: 4, w: 13 }, { v: 5, w: 2 }]);
         const keep = sc >= 4, every = sc >= 5;
         let gold = new Set();
-        await rt.fsLoop(keep ? 12 : 8, async () => {
-          if (!keep) gold = new Set();
+        await rt.fsLoop(keep ? 12 : 8, async api => {
           const g = make('fw');
           await rt.drop(g);
-          await play(rt, g, gold, 'fw', every);
-        }, { sub: keep ? 'Quadrados dourados não somem!' : '8 giros' });
+          const r = await play(rt, g, gold, 'fw', every);
+          // Sorte do Bandido: os dourados só zeram depois que um arco-íris os ativa
+          if (!keep && r.act) { gold = new Set(); rt.chip('gold', 'DOURADOS', 0); }
+          if (r.sc >= 3) api.add(r.sc >= 4 ? 4 : 2);
+        }, { title: every ? 'ARCO-ÍRIS DOURADO' : keep ? 'TESOURO ESCONDIDO' : 'SORTE DO BANDIDO', sub: keep ? 'Quadrados dourados não somem!' : 'Dourados ficam até o arco-íris' });
         rt.chip('gold', null);
       },
     }));
@@ -265,6 +283,7 @@
     const all = [...SY, WILD, SC];
     const draw = pool(all);
     const make = () => grid([5, 5, 5, 5, 5], c => { const x = draw(c); if (x.wild) x.m = wmult([{ m: 2, w: 60 }, { m: 3, w: 25 }, { m: 5, w: 15 }]); return x; });
+    const PS = 0.006, PC = 0.013, PE = 0.0005; // chance por casa: caveira, gato, gato épico
     const CATV = [{ v: 0.2, w: 30 }, { v: 0.5, w: 30 }, { v: 1, w: 20 }, { v: 2, w: 10 }, { v: 5, w: 6 }, { v: 10, w: 3 }, { v: 20, w: 1 }];
     App.register(K.create({
       id: 'gangucaos', name: 'Gangue do Caos 2', studio: STUDIO, art: 'skateboard', mascot: 'skull',
@@ -274,40 +293,49 @@
       symbols: [...all, { img: 'cat' }],
       lineList: { cols: 5, rows: 5, list: L, text: '19 linhas fixas, da esquerda para a direita.' },
       tables: [table('Pagamento por linha', heads(3, 3), SY, 'Iguais seguidos a partir do rolo da esquerda.')],
-      highlights: ['😾 Gato Ranzinza coringa com <b>x2, x3 ou x5</b>', '💥 3 scatters = bônus <b>sem símbolos pagantes</b>: só caveiras e gatos', '💀 Caveiras grudam e <b>somam</b> no multiplicador acima do rolo; 😼 gatos pagam seu valor <b>× o multiplicador do rolo</b>', 'Prêmio máximo: <b>20.000x</b>'],
+      highlights: ['😾 Gato Ranzinza coringa com <b>x2, x3 ou x5</b>', '💥 3 scatters = bônus <b>sem símbolos pagantes</b>: 3 giros que <b>voltam a 3</b> a cada caveira ou gato · 4 = <b>Super Bônus</b> com 7 caveiras já na grade', '💀 Caveiras grudam e <b>somam</b> no multiplicador acima do rolo; 😼 gatos pagam seu valor <b>× o multiplicador do rolo</b>', 'Prêmio máximo: <b>20.000x</b>'],
       how: `<p>Grade <b>5×5</b> com <b>19 linhas</b>. ${ico('pouting')} é coringa com multiplicador; numa linha, multiplicadores se multiplicam.</p>`,
-      features: `<p>💥 <b>3 scatters</b> abrem 10 giros numa grade só de recursos. Acima de cada rolo há um <b>multiplicador</b> que começa em x1:</p>
+      features: `<p>💥 <b>3 scatters</b> abrem o bônus numa grade só de recursos: você tem <b>3 giros</b>, e toda caveira ou gato que cair <b>reinicia para 3</b>. Acima de cada rolo há um <b>multiplicador</b> que começa em x1:</p>
         <ul class="si-list"><li>${ico('skull')} <b>Caveira:</b> gruda e soma +1 a +3 no multiplicador do rolo <b>em todos os giros seguintes</b>.</li>
         <li>${ico('cat')} <b>Gato:</b> traz um valor (0,2x a 20x) e paga valor × multiplicador do rolo. Alguns <b>grudam</b> e pagam de novo em todo giro.</li>
-        <li>${ico('catface')} <b>Gato Épico</b> (raro): multiplica seu valor pela <b>soma de todos</b> os multiplicadores.</li></ul>`,
+        <li>${ico('catface')} <b>Gato Épico</b> (raro): multiplica seu valor pela <b>soma de todos</b> os multiplicadores.</li></ul>
+        <p>💥 <b>4 scatters — Super Bônus:</b> as mesmas regras, mas o bônus já começa com <b>7 caveiras</b> presas na grade.</p><p class="muted small">A compra de bônus dá um bônus aleatório: normal (85%) ou Super Bônus (15%).</p>`,
       make,
       async spin(rt) {
         const g = make();
         await rt.spin(g);
         await pay(rt, lines(g, L, SY));
-        if (count(g, x => x.sc) >= 3) { rt.mark(scatters(g)); await rt.wait(1000); await this.bonus(rt, {}); }
+        const sc = count(g, x => x.sc);
+        if (sc >= 3) { rt.mark(scatters(g)); await rt.wait(1000); await this.bonus(rt, { sc }); }
       },
-      async bonus(rt) {
-        const mult = [1, 1, 1, 1, 1], stick = new Map();
+      async bonus(rt, { sc = 3, buy = false } = {}) {
+        if (buy) sc = tier([{ v: 3, w: 85 }, { v: 4, w: 15 }]);
+        const sup = sc >= 4, mult = [1, 1, 1, 1, 1], stick = new Map();
+        const skull = () => { const add = RNG.weighted([{ a: 1, w: 60 }, { a: 2, w: 28 }, { a: 3, w: 12 }]).a; return { id: 'cav', img: 'skull', skull: true, add, t: '+' + add, c: 'sticky', fresh: true }; };
+        // Super Bônus: 7 caveiras já presas (somam a partir do 1º giro)
+        if (sup) while (stick.size < 7) stick.set(key(RNG.int(0, 4), RNG.int(0, 4)), skull());
         rt.head(mult.map(m => 'x' + m));
-        await rt.fsLoop(10, async () => {
+        await rt.fsLoop(3, async api => {
+          let got = 0;
           const g = grid([5, 5, 5, 5, 5], () => ({ id: 'vazio', img: null, c: 'empty' }));
           // caveiras presas somam de novo
           stick.forEach((x, k) => { const [c, r] = K.unkey(k); g[c][r] = { ...x, fresh: false }; if (x.skull) mult[c] += x.add; });
           for (let c = 0; c < 5; c++) for (let r = 0; r < 5; r++) {
             if (stick.has(key(c, r))) continue;
             const p = RNG.float();
-            if (p < 0.025) { const add = RNG.weighted([{ a: 1, w: 60 }, { a: 2, w: 28 }, { a: 3, w: 12 }]).a; const x = { id: 'cav', img: 'skull', skull: true, add, t: '+' + add, c: 'sticky', fresh: true }; g[c][r] = x; stick.set(key(c, r), x); mult[c] += add; }
-            else if (p < 0.085) { const x = { id: 'gato', img: 'cat', v: RNG.weighted(CATV).v, fresh: true }; if (RNG.float() < 0.2) { x.c = 'sticky'; stick.set(key(c, r), x); } g[c][r] = x; }
-            else if (p < 0.0865) { const x = { id: 'epico', img: 'catface', v: RNG.weighted(CATV).v, epic: true, c: 'sticky gsq', fresh: true }; g[c][r] = x; stick.set(key(c, r), x); }
+            if (p < PS) { const x = skull(); g[c][r] = x; stick.set(key(c, r), x); mult[c] += x.add; got++; }
+            else if (p < PS + PC) { const x = { id: 'gato', img: 'cat', v: RNG.weighted(CATV).v, fresh: true }; if (RNG.float() < 0.2) { x.c = 'sticky'; stick.set(key(c, r), x); } g[c][r] = x; got++; }
+            else if (p < PS + PC + PE) { const x = { id: 'epico', img: 'catface', v: RNG.weighted(CATV).v, epic: true, c: 'sticky gsq', fresh: true }; g[c][r] = x; stick.set(key(c, r), x); got++; }
           }
+          // caveira ou gato novo: os giros voltam a 3
+          if (got && api.left < 3) { api.add(3 - api.left, true); rt.msg('💀 Multiplicador novo! Giros de volta a 3'); }
           rt.head(mult.map(m => 'x' + m));
           await rt.drop(g);
           let w = 0;
           const sum = mult.reduce((a, b) => a + b, 0);
           g.forEach((col, c) => col.forEach(x => { if (x.v) w += x.v * (x.epic ? sum : mult[c]); }));
           if (w) { rt.mark(cells(g, x => x.v).map(([c, r]) => key(c, r))); rt.win(w); rt.msg(`😼 Gatos × multiplicadores: ${rt.coins(w)}`); rt.fx('coin'); await rt.wait(900); }
-        }, { title: 'BÔNUS DO CAOS', sub: 'Só multiplicadores!' });
+        }, { title: sup ? 'SUPER BÔNUS DO CAOS' : 'BÔNUS DO CAOS', sub: sup ? '7 caveiras já presas · 3 giros que reiniciam' : '3 giros · caveiras e gatos reiniciam', label: 'GIROS' });
         rt.head(null);
       },
     }));

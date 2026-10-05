@@ -16,6 +16,8 @@
   const AP = [[10, 25, 50], [2.5, 10, 25], [2, 5, 15], [1.5, 2, 12], [1, 1.5, 10], [0.8, 1.2, 8], [0.5, 1, 5], [0.4, 0.9, 4], [0.25, 0.75, 2]];
   const AW = [3, 4, 5, 6, 8, 9, 10, 11, 12];
   const anySyms = list => list.map(([id, img, name], i) => S(id, img, name, AP[i], AW[i]));
+  /** compra de bônus: sorteia uma quantidade natural de scatters (mín. 80%, +1 17%, +2 3%) */
+  const natSc = min => min + RNG.weighted([{ n: 0, w: 80 }, { n: 1, w: 17 }, { n: 2, w: 3 }]).n;
 
   /* 1. Portões do Olimpo 1000 */
   App.register(T.scatterPays({
@@ -140,19 +142,21 @@
       intro: 'Inspirado no "Power of Thor Megaways" (Pragmatic Play).', hello: 'O martelo transforma rolos em coringa!',
       symbols: [...SY, WILD, HAMMER, SC],
       tables: [table('Pagamento por caminho', heads(3, 4, ' rolos'), SY, 'Megaways com cascata.')],
-      highlights: ['🔨 O <b>martelo de Thor</b> transforma o rolo inteiro em coringas', 'Multiplicador de cascata: <b>x1, x2, x3, x5, x8</b>', '⚡ 4+ THOR = rodadas grátis com multiplicador <b>+1 por cascata, sem limite</b>', 'Prêmio máximo: <b>5.000x</b>'],
+      highlights: ['🔨 O <b>martelo de Thor</b> transforma o rolo inteiro em coringas', 'Multiplicador de cascata: <b>x1, x2, x3, x5, x8</b>', '⚡ 4+ THOR = <b>10 rodadas grátis</b> (+4 por scatter extra) com multiplicador <b>+1 por cascata, sem limite</b>', 'Prêmio máximo: <b>5.000x</b>'],
       how: '<p>Megaways (2 a 7 símbolos por rolo) com cascata. No jogo base cada cascata seguida sobe o multiplicador: x1, x2, x3, x5 e x8.</p><p>🔨 Quando o <b>martelo</b> cai (rolos 2 a 5), todos os símbolos daquele rolo viram <b>coringa</b>.</p>',
-      features: '<p>⚡ <b>4 ou mais scatters</b> dão <b>10 rodadas grátis</b> (+5 a cada 3 scatters). O multiplicador começa em x1 e soma <b>+1 a cada cascata</b>, sem teto e sem zerar até o fim do bônus.</p>',
+      features: '<p>⚡ <b>4 ou mais scatters</b> dão <b>10 rodadas grátis</b>, +4 por scatter além de 4 (3 ou mais durante o bônus dão <b>+4</b>). O multiplicador começa em x1 e soma <b>+1 a cada cascata</b>, sem teto e sem zerar até o fim do bônus.</p>',
       make: () => make('w'),
       async spin(rt) {
         const g = make('w');
         await rt.spin(g);
         await play(rt, g, false);
-        if (count(g, x => x.sc) >= 4) { rt.mark(scatters(g)); await rt.wait(1000); await this.bonus(rt, {}); }
+        const sc = count(g, x => x.sc);
+        if (sc >= 4) { rt.mark(scatters(g)); await rt.wait(1000); await this.bonus(rt, { sc }); }
       },
-      async bonus(rt) {
+      async bonus(rt, opts = {}) {
+        const sc = opts.buy ? natSc(4) : opts.sc || 4;
         const st = { m: 1 };
-        await rt.fsLoop(10, async api => { const g = make('fw'); await rt.spin(g, { tease: false }); await play(rt, g, true, st); if (count(g, x => x.sc) >= 3) api.add(5); }, { sub: 'Multiplicador sem teto!' });
+        await rt.fsLoop(10 + 4 * (sc - 4), async api => { const g = make('fw'); await rt.spin(g, { tease: false }); await play(rt, g, true, st); if (count(g, x => x.sc) >= 3) api.add(4); }, { sub: 'Multiplicador sem teto!' });
         rt.chip('mult', null);
       },
     }));
@@ -222,30 +226,36 @@
       intro: 'Inspirado no "The Dog House Multihold" (Pragmatic Play).', hello: 'Desbloqueie até 4 telas no bônus!',
       symbols: [...SY, WILD, SC],
       lineList: { cols: 5, rows: 3, list: L, text: '20 linhas por tela.' },
-      tables: [table('Pagamento por linha', heads(3, 3), SY, 'Coringas x2/x3 nos rolos 2 a 4; multiplicadores na linha se multiplicam.')],
-      highlights: ['🏠 Casinhas coringa x2 ou x3', '🐾 3 pegadas = 2x + <b>7 rodadas grátis</b> numa tela', 'Cada 3 pegadas no bônus <b>abre uma nova tela</b> (até 4) e dá até +3 giros', 'Coringas <b>colantes</b> em cada tela', 'Prêmio máximo: <b>6.750x</b>'],
-      how: '<p>Grade 5×3 com 20 linhas. A casinha é coringa (rolos 2 a 4) com x2 ou x3.</p>',
-      features: '<p>🐾 <b>3 pegadas</b> (rolos 1, 3 e 5) pagam 2x e dão <b>7 rodadas grátis</b> numa tela. Durante o bônus, cada nova trinca de pegadas <b>desbloqueia mais uma tela</b> (até 4 jogando ao mesmo tempo) e dá de 1 a 3 giros extras. Todo coringa que cair <b>gruda</b> na sua tela até o fim.</p>',
+      tables: [table('Pagamento por linha', heads(3, 3), SY, 'Coringas x2/x3 nos rolos 2 a 4; dois coringas na mesma linha somam os multiplicadores.')],
+      highlights: ['🏠 Casinhas coringa x2 ou x3', '🐾 3 pegadas = 2x + <b>7 rodadas grátis</b> numa tela', 'Cada 3 pegadas no bônus <b>abre uma nova tela</b> (até 4) e dá até +3 giros', 'Coringas <b>colantes</b> em cada tela; uma tela nova já começa com os coringas colantes da anterior', 'Prêmio máximo: <b>6.750x</b>'],
+      how: '<p>Grade 5×3 com 20 linhas. A casinha é coringa (rolos 2 a 4) com x2 ou x3; dois coringas na mesma linha <b>somam</b> os multiplicadores.</p>',
+      features: '<p>🐾 <b>3 pegadas</b> (rolos 1, 3 e 5) pagam 2x e dão <b>7 rodadas grátis</b> numa tela. Durante o bônus, cada nova trinca de pegadas <b>desbloqueia mais uma tela</b> (até 4 jogando ao mesmo tempo) e dá de 1 a 3 giros extras. Todo coringa que cair <b>gruda</b> na sua tela até o fim, e cada tela nova já começa com uma <b>cópia dos coringas colantes</b> da tela anterior.</p>',
       make: () => make(1),
       async spin(rt) {
         const g = make(1);
         await rt.spin(g);
-        await pay(rt, lines(g, L, SY));
+        await pay(rt, lines(g, L, SY, { mult: 'add' }));
         if (count(g, x => x.sc) >= 3) { rt.win(2); rt.mark(scatters(g)); await rt.wait(1000); await this.bonus(rt, {}); }
       },
       async bonus(rt) {
         let n = 1;
-        const sticky = new Map();
+        // coringas colantes de cada tela, pela posição dentro da tela (c:r com r de 0 a 2)
+        const sticky = [new Map()];
         await rt.fsLoop(7, async api => {
           rt.layout(3 * n);
           const g = make(n, 'fw');
-          sticky.forEach((x, k) => { const [c, r] = unkey(k); if (r < 3 * n) g[c][r] = { ...x, c: (r % 3 === 0 && r ? 'bandtop ' : '') + 'sticky' }; });
+          sticky.forEach((m, b) => m.forEach((x, k) => { const [c, r] = unkey(k); g[c][b * 3 + r] = { ...x, c: (r === 0 && b ? 'bandtop ' : '') + 'sticky' }; }));
           await rt.spin(g, { tease: false });
-          cells(g, x => x.wild).forEach(([c, r]) => { if (!sticky.has(key(c, r))) sticky.set(key(c, r), { ...g[c][r] }); });
+          cells(g, x => x.wild).forEach(([c, r]) => { const b = Math.floor(r / 3), k = key(c, r % 3); if (!sticky[b].has(k)) sticky[b].set(k, { ...g[c][r] }); });
           let tot = 0;
-          for (let b = 0; b < n; b++) { const res = lines(band(g, b), L, SY); tot += res.total; }
+          for (let b = 0; b < n; b++) { const res = lines(band(g, b), L, SY, { mult: 'add' }); tot += res.total; }
           if (tot) { rt.win(tot); rt.msg(`${n} tela${n > 1 ? 's' : ''}: ${rt.coins(tot)}`); rt.fx('win'); await rt.wait(700); }
-          if (count(g, x => x.sc) >= 3 && n < 4) { n++; const e = RNG.int(1, 3); api.add(e, true); rt.msg(`🐾 Nova tela desbloqueada! (${n} telas) +${e} giros`); rt.fx('big'); await rt.wait(900); }
+          if (count(g, x => x.sc) >= 3 && n < 4) {
+            // a tela nova copia os coringas colantes da tela anterior
+            sticky.push(new Map(sticky[n - 1]));
+            n++;
+            const e = RNG.int(1, 3); api.add(e, true); rt.msg(`🐾 Nova tela desbloqueada com os coringas copiados! (${n} telas) +${e} giros`); rt.fx('big'); await rt.wait(900);
+          }
         }, { sub: '7 giros · coringas colantes' });
         rt.layout(3);
       },
@@ -341,13 +351,14 @@
       intro: 'Inspirado no "Extra Juicy Megaways" (Pragmatic Play).', hello: 'Até 117.649 caminhos!',
       symbols: [...SY, WILD, SC],
       tables: [table('Pagamento por caminho', heads(3, 4, ' rolos'), SY, 'Megaways com cascata.')],
-      highlights: ['🍇 Megaways com cascata', '💎 4/5/6 diamantes = <b>12/16/20 rodadas grátis</b> (+4 por extra)', 'Nas grátis os diamantes viram <b>multiplicadores x3 a x15</b> que se somam e ficam até o fim da cascata', 'Prêmio máximo: <b>10.000x</b>'],
+      highlights: ['🍇 Megaways com cascata', '💎 4/5/6 diamantes = <b>12/16/20 rodadas grátis</b> (+4 por extra), sem giros extras durante o bônus', 'Nas grátis os diamantes viram <b>multiplicadores x3 a x15</b> que se somam e ficam até o fim da cascata', 'Prêmio máximo: <b>10.000x</b>'],
       how: '<p>Megaways (2 a 7 símbolos por rolo) com cascata.</p>',
-      features: '<p>💎 <b>4, 5 ou 6 diamantes</b> dão <b>12, 16 ou 20 rodadas grátis</b> (+4 por diamante extra). Durante o bônus cada diamante cai com um multiplicador de <b>x3 a x15</b>; os da tela se somam e multiplicam o ganho da sequência.</p>',
+      features: '<p>💎 <b>4, 5 ou 6 diamantes</b> dão <b>12, 16 ou 20 rodadas grátis</b> (+4 por diamante extra). Não há giros extras dentro do bônus. Durante o bônus cada diamante cai com um multiplicador de <b>x3 a x15</b>; os da tela se somam e multiplicam o ganho da sequência.</p>',
       make: () => make('w'),
       async spin(rt) { const g = make('w'); await rt.spin(g); const sc = await play(rt, g, false); if (sc >= 4) { rt.mark(scatters(g)); await rt.wait(1000); await this.bonus(rt, { sc }); } },
-      async bonus(rt, { sc = 4 } = {}) {
-        await rt.fsLoop(12 + (Math.min(6, sc) - 4) * 4 + Math.max(0, sc - 6) * 4, async api => { const g = make('fw'); await rt.spin(g, { tease: false }); const s = await play(rt, g, true); if (s >= 3) api.add(4); }, { sub: 'Diamantes multiplicadores' });
+      async bonus(rt, opts = {}) {
+        const sc = opts.buy ? natSc(4) : opts.sc || 4;
+        await rt.fsLoop(12 + (sc - 4) * 4, async () => { const g = make('fw'); await rt.spin(g, { tease: false }); await play(rt, g, true); }, { sub: 'Diamantes multiplicadores' });
       },
     }));
   })();
@@ -356,8 +367,8 @@
   (() => {
     const L20 = K.LINES_5x3.slice(0, 20);
     const SY = [S('kraken', 'octopus', 'Kraken', [5, 20, 100], 3), S('navio', 'ship', 'Navio', [3, 10, 50], 4), S('bau', 'chest', 'Baú', [2, 6, 30], 4), S('ancora', 'anchor', 'Âncora', [1.5, 4, 20], 5), ...R([[0.5, 1.5, 5], [0.5, 1.5, 5], [0.3, 1, 3], [0.3, 1, 3]])];
-    const WILD = { id: 'w', img: 'squid', name: 'Coringa', wild: true, w: 1.1, fw: 3.2 };
-    const SC = { id: 'sc', img: 'trident', name: 'Bônus', sc: true, w: 0.85, fw: 0 };
+    const WILD = { id: 'w', img: 'squid', name: 'Coringa', wild: true, w: 1.1, fw: 0.35 };
+    const SC = { id: 'sc', img: 'trident', name: 'Bônus', sc: true, w: 1.0, fw: 0 };
     const draw = pool([...SY, WILD, SC]);
     const make = wk => grid([3, 3, 3, 3, 3], c => draw(c, wk));
     async function play(rt, g, mult, wk) {
@@ -380,24 +391,55 @@
         n += extra;
       }
     }
-    const FS = { 3: { s: 10, m: 2 }, 4: { s: 20, m: 6 }, 5: { s: 20, m: 10 } };
+    // jogo de escolha antes das grátis: começa com 4 giros x1; baús dão giros ou multiplicador até sair "Começar"
+    const PICKS = [{ k: 's', v: 2, w: 30 }, { k: 's', v: 3, w: 14 }, { k: 'm', v: 1, w: 28 }, { k: 'm', v: 2, w: 8 }, { k: 'end', w: 20 }];
+    const GOLD = { ...WILD, id: 'w', img: 'squid', name: 'Coringa dourado', golden: true, c: 'gold' };
     App.register(K.create({
       id: 'kraken2', name: 'Liberte o Kraken 2', studio: STUDIO, art: 'squid', mascot: 'octopus',
-      tag: 'Respins de coringas · até x10', colors: ['#0e7490', '#1e3a8a'], bg: 'linear-gradient(180deg,#0c4a6e,#083344 60%,#020617)',
+      tag: 'Escolha giros e multiplicador · coringas que andam', colors: ['#0e7490', '#1e3a8a'], bg: 'linear-gradient(180deg,#0c4a6e,#083344 60%,#020617)',
       cols: 5, rows: 3, maxWin: 5000, vol: 4, rtp: '~96%', target: 0.96,
       intro: 'Inspirado no "Release the Kraken 2" (Pragmatic Play).', hello: '4 coringas soltam o Kraken!',
-      symbols: [...SY, WILD, SC],
+      symbols: [...SY, WILD, SC], extraSprites: ['chest'],
       lineList: { cols: 5, rows: 3, list: L20, text: '20 linhas fixas.' },
       tables: [table('Pagamento por linha', heads(3, 3), SY, 'Iguais seguidos a partir do rolo da esquerda.')],
-      highlights: ['🦑 <b>4+ coringas</b> = respin: eles ficam (mudando de lugar) enquanto caírem novos', '🔱 3/4/5 bônus = <b>10 giros x2</b> · <b>20 giros x6</b> · <b>20 giros x10</b>', 'Prêmio máximo: <b>5.000x</b>'],
+      highlights: ['🦑 <b>4+ coringas</b> = respin: eles ficam (mudando de lugar) enquanto caírem novos', '🔱 3 bônus = <b>baús do tesouro</b> que definem as rodadas grátis: de <b>4 a 20 giros</b> e multiplicador de <b>x1 a x10</b>', 'Nas grátis todo coringa <b>fica até o fim</b> e muda de lugar a cada giro; o <b>coringa dourado</b> soma +1 no multiplicador', 'Prêmio máximo: <b>5.000x</b>'],
       how: '<p>Grade 5×3 com 20 linhas.</p><p>🦑 <b>Respin de coringas:</b> com 4 ou mais coringas na tela, eles continuam no próximo giro em posições aleatórias. Cada coringa novo dá outro respin.</p>',
-      features: `<table class="paytable"><tr class="si-head"><td>Bônus</td><td>Giros</td><td>Multiplicador</td></tr>${Object.entries(FS).map(([k, v]) => `<tr><td>${k}</td><td>${v.s}</td><td>x${v.m}</td></tr>`).join('')}</table>`,
+      features: '<p>🔱 <b>3 ou mais bônus</b> abrem os <b>baús do tesouro</b>. Você começa com <b>4 giros e x1</b>; cada baú aberto dá <b>+2 ou +3 giros</b> ou <b>+1 ou +2 no multiplicador</b>, até sair o baú de começar (no máximo <b>20 giros e x10</b>).</p><p>🦑 Nas rodadas grátis todo coringa que cair <b>fica até o fim do bônus</b>, mudando para posições aleatórias a cada giro. O <b>coringa dourado</b> também fica e ainda soma <b>+1 no multiplicador</b> (até x10). Todos os ganhos são multiplicados.</p>',
       make: () => make('w'),
       async spin(rt) { const g = make('w'); await rt.spin(g); await play(rt, g, 1, 'w'); const sc = count(g, x => x.sc); if (sc >= 3) { rt.mark(scatters(g)); await rt.wait(1000); await this.bonus(rt, { sc }); } },
-      async bonus(rt, { sc = 3 } = {}) {
-        const f = FS[Math.min(5, sc)];
-        rt.chip('mult', 'MULT.', 'x' + f.m);
-        await rt.fsLoop(f.s, async () => { const g = make('fw'); await rt.spin(g, { tease: false }); await play(rt, g, f.m, 'fw'); }, { sub: `${f.s} giros · tudo x${f.m}` });
+      async bonus(rt) {
+        let spins = 4, m = 1;
+        rt.chip('fs', 'GIROS', spins); rt.chip('mult', 'MULT.', 'x' + m);
+        for (let guard = 0; guard < 20; guard++) {
+          await rt.choose('ESCOLHA UM BAÚ', [0, 1, 2].map(i => ({ id: String(i), img: 'chest', label: 'Baú ' + (i + 1), desc: `${spins} giros · x${m}` })));
+          const p = RNG.weighted(PICKS);
+          if (p.k === 'end' || (spins >= 20 && m >= 10)) { rt.msg('🔱 O Kraken acordou: começar!'); await rt.wait(600); break; }
+          if (p.k === 's') { const a = Math.min(20, spins + p.v) - spins; spins += a; rt.msg(a ? `🎁 +${a} giros!` : '🎁 Giros no máximo!'); }
+          else { const a = Math.min(10, m + p.v) - m; m += a; rt.msg(a ? `🎁 +${a} no multiplicador!` : '🎁 Multiplicador no máximo!'); }
+          rt.chip('fs', 'GIROS', spins); rt.chip('mult', 'MULT.', 'x' + m);
+          rt.fx('coin');
+          await rt.wait(500);
+        }
+        rt.chip('fs', null);
+        // coringas acumulados no bônus: ficam até o fim e mudam de lugar a cada giro
+        let held = 0;
+        await rt.fsLoop(spins, async () => {
+          const g = make('fw');
+          // os coringas que caem agora (alguns dourados)
+          let fresh = 0, gold = 0;
+          g.forEach((col, c) => col.forEach((x, r) => {
+            if (!x.wild) return;
+            fresh++;
+            if (RNG.float() < 0.15) { g[c][r] = { ...GOLD }; gold++; }
+          }));
+          // os que já estavam vão para posições aleatórias livres
+          const free = RNG.shuffle(cells(g, x => !x.wild && !x.sc));
+          free.slice(0, held).forEach(([c, r]) => { g[c][r] = { ...WILD, c: 'sticky', fresh: true }; });
+          await rt.spin(g, { tease: false });
+          if (gold && m < 10) { m = Math.min(10, m + gold); rt.chip('mult', 'MULT.', 'x' + m); rt.msg(`✨ Coringa dourado: multiplicador x${m}!`); rt.fx('rise'); await rt.wait(600); }
+          await pay(rt, lines(g, L20, SY), m);
+          held = Math.min(14, held + fresh);
+        }, { sub: `${spins} giros · x${m} · coringas que ficam` });
         rt.chip('mult', null);
       },
     }));
@@ -416,16 +458,23 @@
   }));
 
   /* 14. Forja do Olimpo — orbes melhoram de nível */
-  App.register(T.scatterPays({
-    id: 'forjaolimpo', name: 'Forja do Olimpo', studio: STUDIO, art: 'anvil', mascot: 'anvil',
-    tag: 'Multiplicadores sobem de nível', colors: ['#ea580c', '#57534e'], bg: 'radial-gradient(circle at 50% 100%,#c2410c,#1c1917 70%)',
-    intro: 'Inspirado no "Forge of Olympus" (Pragmatic Play).', maxWin: 5000,
-    syms: anySyms([['bigorna', 'anvil', 'Bigorna'], ['tenaz', 'tongs', 'Tenaz'], ['elmo', 'helmet', 'Elmo'], ['espada', 'sword2', 'Espada'], ['fogo', 'fire', 'Fogo'], ['carvao', 'rock', 'Carvão'], ['ferro', 'nutbolt', 'Ferro'], ['corrente', 'chains', 'Corrente'], ['moeda', 'coin', 'Moeda']]),
-    scImg: 'volcano', scName: 'Vulcão', scW: 1.15, orbImg: 'hammer', orbName: 'Martelos', orbs: [{ m: 2, w: 300 }, { m: 3, w: 200 }, { m: 5, w: 150 }, { m: 8, w: 90 }, { m: 10, w: 70 }, { m: 15, w: 40 }, { m: 20, w: 25 }, { m: 25, w: 15 }, { m: 50, w: 6 }, { m: 100, w: 2 }],
-    orbBase: 0.005, orbFS: 0.032, accumulate: false, fsCount: 10, levels: [{ at: 0, min: 2 }, { at: 6, min: 8 }, { at: 11, min: 15 }, { at: 15, min: 50 }],
-    features: '<p>🔨 <b>Forja:</b> nas rodadas grátis cada martelo multiplicador é coletado. Com 6 coletados os martelos passam a valer no mínimo <b>x8</b>; com 11, <b>x15</b>; com 15, <b>x50</b> (até x100).</p>',
-    highlights: ['🔨 Martelos multiplicadores (x2 a x100) se somam no fim da cascata', 'Nas grátis a forja <b>sobe de nível</b>: mínimo x8, x15 e depois x50', '4+ vulcões = <b>10 rodadas grátis</b>', 'Prêmio máximo: <b>5.000x</b>'],
-  }));
+  (() => {
+    const forja = T.scatterPays({
+      id: 'forjaolimpo', name: 'Forja do Olimpo', studio: STUDIO, art: 'anvil', mascot: 'anvil',
+      tag: 'Multiplicadores sobem de nível', colors: ['#ea580c', '#57534e'], bg: 'radial-gradient(circle at 50% 100%,#c2410c,#1c1917 70%)',
+      intro: 'Inspirado no "Forge of Olympus" (Pragmatic Play).', maxWin: 5000,
+      syms: anySyms([['bigorna', 'anvil', 'Bigorna'], ['tenaz', 'tongs', 'Tenaz'], ['elmo', 'helmet', 'Elmo'], ['espada', 'sword2', 'Espada'], ['fogo', 'fire', 'Fogo'], ['carvao', 'rock', 'Carvão'], ['ferro', 'nutbolt', 'Ferro'], ['corrente', 'chains', 'Corrente'], ['moeda', 'coin', 'Moeda']]),
+      scImg: 'volcano', scName: 'Vulcão', scW: 1.15, orbImg: 'hammer', orbName: 'Martelos', orbs: [{ m: 2, w: 300 }, { m: 3, w: 200 }, { m: 5, w: 150 }, { m: 8, w: 90 }, { m: 10, w: 70 }, { m: 15, w: 40 }, { m: 20, w: 25 }, { m: 25, w: 15 }, { m: 50, w: 6 }, { m: 100, w: 2 }],
+      orbBase: 0.005, orbFS: 0.032, accumulate: false, fsCount: 10, levels: [{ at: 0, min: 2 }, { at: 6, min: 8 }, { at: 11, min: 15 }, { at: 15, min: 50 }],
+      fsPer: 5,
+      features: '<p>🌋 <b>4, 5 ou 6 vulcões</b> dão <b>10, 15 ou 20 rodadas grátis</b> (mais de 6 também dão 20).</p><p>🔨 <b>Forja:</b> nas rodadas grátis cada martelo multiplicador é coletado. Com 6 coletados os martelos passam a valer no mínimo <b>x8</b>; com 11, <b>x15</b>; com 15, <b>x50</b> (até x100).</p>',
+      highlights: ['🔨 Martelos multiplicadores (x2 a x100) se somam no fim da cascata', 'Nas grátis a forja <b>sobe de nível</b>: mínimo x8, x15 e depois x50', '4/5/6 vulcões = <b>10/15/20 rodadas grátis</b>', 'Prêmio máximo: <b>5.000x</b>'],
+    });
+    // 4/5/6 vulcões = 10/15/20 giros (6+ fica em 20); a compra sorteia a quantidade de vulcões
+    const ob = forja.logic.bonus;
+    forja.logic.bonus = function (rt, opts = {}) { return ob.call(this, rt, { ...opts, sc: Math.min(6, opts.buy ? natSc(4) : opts.sc || 4) }); };
+    App.register(forja);
+  })();
 
   /* 15. Festa na Praia (Wild Beach Party) */
   App.register(T.clusterWild({
@@ -449,11 +498,12 @@
     const N = 7;
     const make = () => Array.from({ length: N }, (_, c) => Array.from({ length: N }, () => draw(c)));
     const TT = n => (n < 5 ? -1 : n <= 6 ? 0 : n <= 8 ? 1 : n <= 10 ? 2 : n <= 12 ? 3 : n <= 14 ? 4 : 5);
-    async function play(rt, g, egg) {
+    async function play(rt, g, egg, fs) {
       await rt.drop(g);
       await tumble(rt, g, { draw: c => draw(c), evaluate: gg => payClusters(clusters(gg, 5), TT) });
       const ups = g.flat().filter(x => x.up);
-      if (!ups.length) return;
+      // nas grátis o ovo cai depois de toda sequência de cascatas, mesmo sem regador/trevo
+      if (!ups.length && !fs) return;
       ups.forEach(u => { if (u.up === 'size') egg.size = Math.min(6, egg.size + 1); else egg.mult = Math.min(10, egg.mult + 1); });
       rt.chip('ovo', 'OVO', `${egg.size}×${egg.size} x${egg.mult}`);
       rt.msg(`🥚 O ovo gigante ${egg.size}×${egg.size} (x${egg.mult}) cai na grade!`);
@@ -472,14 +522,15 @@
       intro: 'Inspirado no "Chicken Drop" (Pragmatic Play).', hello: 'Regadores e trevos chocam o ovo gigante!',
       symbols: [...SY, SC, CAN, CLOVER],
       tables: [table('Pagamento por tamanho do grupo', ['5–6', '7–8', '9–10', '11–12', '13–14', '15+'], SY, 'Grupos de 5+ iguais encostados, com cascata.')],
-      highlights: ['🐔 7×7 com grupos e cascata', '🚿 Regador aumenta o <b>ovo gigante</b> (até 6×6); 🍀 trevo aumenta o multiplicador dele (até x10)', 'O ovo cai como um bloco de um símbolo só e os ganhos com ele são multiplicados', '4/5/6 celeiros = <b>10/15/20 rodadas grátis</b> com as melhorias guardadas', 'Prêmio máximo: <b>5.000x</b>'],
+      highlights: ['🐔 7×7 com grupos e cascata', '🚿 Regador aumenta o <b>ovo gigante</b> (até 6×6); 🍀 trevo aumenta o multiplicador dele (até x10)', 'O ovo cai como um bloco de um símbolo só e os ganhos com ele são multiplicados', '4/5/6 celeiros = <b>10/15/20 rodadas grátis</b>: o ovo cai em <b>todo giro</b> e as melhorias ficam guardadas', 'Prêmio máximo: <b>5.000x</b>'],
       how: '<p>Grade 7×7: grupos de 5+ iguais encostados pagam, com cascata.</p><p>🚿 Cada <b>regador</b> aumenta o tamanho do <b>ovo gigante</b> (2×2 até 6×6) e cada 🍀 <b>trevo</b> aumenta o multiplicador (x2 até x10). Quando algum deles cai, depois das cascatas o ovo despenca na grade virando um bloco gigante de um símbolo, e as cascatas seguintes valem com o multiplicador do ovo.</p>',
-      features: '<p>🏚️ <b>4, 5 ou 6 celeiros</b> dão <b>10, 15 ou 20 rodadas grátis</b>. O tamanho e o multiplicador do ovo <b>não zeram</b> durante o bônus.</p>',
+      features: '<p>🏚️ <b>4, 5 ou 6 celeiros</b> dão <b>10, 15 ou 20 rodadas grátis</b>. Nelas o ovo gigante cai <b>depois de toda sequência de cascatas</b>, mesmo sem regador ou trevo, e o tamanho e o multiplicador dele <b>não zeram</b> durante o bônus.</p>',
       make,
       async spin(rt) { const g = make(); await play(rt, g, { size: 2, mult: 2 }); rt.chip('ovo', null); const sc = count(g, x => x.sc); if (sc >= 4) { rt.mark(scatters(g)); await rt.wait(1000); await this.bonus(rt, { sc }); } },
-      async bonus(rt, { sc = 4 } = {}) {
+      async bonus(rt, opts = {}) {
+        const sc = opts.buy ? natSc(4) : opts.sc || 4;
         const egg = { size: 2, mult: 2 };
-        await rt.fsLoop({ 4: 10, 5: 15 }[sc] || 20, async api => { const g = make(); await play(rt, g, egg); if (count(g, x => x.sc) >= 4) api.add(10); }, { sub: 'O ovo cresce e não zera' });
+        await rt.fsLoop({ 4: 10, 5: 15 }[sc] || 20, async api => { const g = make(); await play(rt, g, egg, true); if (count(g, x => x.sc) >= 4) api.add(10); }, { sub: 'O ovo cresce e não zera' });
         rt.chip('ovo', null);
       },
     }));
@@ -596,14 +647,15 @@
       symbols: [...SY, WILD, SC],
       lineList: { cols: 5, rows: 5, list: L10, text: '10 linhas fixas.' },
       tables: [table('Pagamento por linha', heads(3, 3), SY, 'Cascata depois de cada ganho.')],
-      highlights: ['🧊 Coringas de gelo <b>não somem</b> na cascata: andam para uma casa vizinha e ganham <b>+1</b> (até x5)', '🏔️ 3+ scatters = <b>rodadas grátis</b> com multiplicador global <b>+1 por cascata, sem zerar</b>', 'Prêmio máximo: <b>10.000x</b>'],
+      highlights: ['🧊 Coringas de gelo <b>não somem</b> na cascata: andam para uma casa vizinha e ganham <b>+1</b> (até x5)', '🏔️ 3/4/5 scatters = <b>10/12/15 rodadas grátis</b> com multiplicador global <b>+1 por cascata, sem zerar</b>', 'Prêmio máximo: <b>10.000x</b>'],
       how: '<p>Grade 5×5 com 10 linhas e cascata. O coringa de gelo que participa de um ganho não some: ele <b>se move para uma casa vizinha</b> e seu multiplicador sobe +1 (até x5). Em x5, depois do ganho ele derrete.</p>',
-      features: '<p>🏔️ <b>3 ou mais scatters</b> dão <b>10 rodadas grátis</b> (3+ nelas dão +5, sem limite). Um multiplicador global começa em x1 e soma <b>+1 a cada cascata</b>, sem zerar até o fim.</p>',
+      features: '<p>🏔️ <b>3, 4 ou 5 scatters</b> dão <b>10, 12 ou 15 rodadas grátis</b> (3+ nelas dão <b>+10</b>, sem limite). Um multiplicador global começa em x1 e soma <b>+1 a cada cascata</b>, sem zerar até o fim.</p>',
       make,
-      async spin(rt) { const g = make(); await rt.spin(g); await play(rt, g, null); if (count(g, x => x.sc) >= 3) { rt.mark(scatters(g)); await rt.wait(1000); await this.bonus(rt, {}); } },
-      async bonus(rt) {
+      async spin(rt) { const g = make(); await rt.spin(g); const sc = count(g, x => x.sc); await play(rt, g, null); if (sc >= 3) { rt.mark(scatters(g)); await rt.wait(1000); await this.bonus(rt, { sc }); } },
+      async bonus(rt, opts = {}) {
+        const sc = opts.buy ? natSc(3) : opts.sc || 3;
         const st = { m: 1 };
-        await rt.fsLoop(10, async api => { const g = make('fw'); await rt.spin(g, { tease: false }); await play(rt, g, st); if (count(g, x => x.sc) >= 3) api.add(5); }, { sub: 'Multiplicador global sem zerar' });
+        await rt.fsLoop({ 3: 10, 4: 12 }[sc] || 15, async api => { const g = make('fw'); await rt.spin(g, { tease: false }); const n = count(g, x => x.sc); await play(rt, g, st); if (n >= 3) api.add(10); }, { sub: 'Multiplicador global sem zerar' });
         rt.chip('mult', null);
       },
     }));

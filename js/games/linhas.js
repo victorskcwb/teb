@@ -392,59 +392,7 @@
   }
 
   /* ---------------- Zeus x Hades ---------------- */
-  const ZEUS = { id: 'zeus', img: 'zeus', name: 'Zeus', wild: true, reels: [1, 2, 3] };
-  const TRIDENT = { id: 'tridente', img: 'trident', name: 'Tridente', scatter: true };
-  // calibrado: ~96,5% com Zeus ou Hades (rodadas grátis ≈ 78x a aposta, 1 a cada ~170 giros)
-  const ZH = {
-    payK: 1.5, buyX: 84,
-    base: { wildW: 1.2, scatterW: 1.2, mults: [{ m: 1, w: 70 }, { m: 2, w: 20 }, { m: 3, w: 7 }, { m: 5, w: 3 }] },
-    zeus: { wildW: 9, scatterW: 0.9, mults: [{ m: 2, w: 50 }, { m: 3, w: 30 }, { m: 5, w: 20 }] },
-    hades: { wildW: 3.5, scatterW: 0.9, mults: [{ m: 5, w: 50 }, { m: 10, w: 30 }, { m: 25, w: 15 }, { m: 50, w: 5 }] },
-  };
-  const multTable = list => {
-    const tot = list.reduce((s, x) => s + x.w, 0);
-    return list.map(x => `x${x.m} (${Math.round((x.w / tot) * 100)}%)`).join(' · ');
-  };
-  App.register(createLineSlot({
-    id: 'zeushades', name: 'Zeus x Hades', art: 'zeus', mascot: 'zeus', extraSprites: ['skull'],
-    tag: 'Escolha seu deus · coringas até x50', colors: ['#2563eb', '#b91c1c'],
-    rtp: '~96,5%', vol: 4, hit: '~1 em 4 giros (26%)', maxWin: 10000,
-    intro: 'Inspirado no "Zeus vs Hades".',
-    hello: 'Coringas de Zeus multiplicam as linhas!',
-    payK: ZH.payK, buyX: ZH.buyX, fsCount: 10, retrigger: 5,
-    scatterPay: { 3: 2, 4: 10, 5: 50 },
-    wild: ZEUS, scatter: TRIDENT,
-    modes: { base: ZH.base, zeus: ZH.zeus, hades: ZH.hades },
-    gods: [
-      { id: 'zeus', img: 'zeus', name: 'Zeus', desc: 'Coringas frequentes<br>x2 a x5' },
-      { id: 'hades', img: 'skull', name: 'Hades', desc: 'Coringas raros<br>x5 a x50' },
-    ],
-    symbols: [
-      { id: 'coroa', img: 'crown', name: 'Coroa', w: 3, pays: [20, 100, 500] },
-      { id: 'elmo', img: 'helmet', name: 'Elmo', w: 4, pays: [15, 60, 250] },
-      { id: 'espadas', img: 'swords', name: 'Espadas', w: 5, pays: [10, 40, 150] },
-      { id: 'escudo', img: 'shield', name: 'Escudo', w: 6, pays: [8, 30, 100] },
-      { id: 'anfora', img: 'amphora', name: 'Ânfora', w: 8, pays: [5, 20, 75] },
-      { id: 'anel', img: 'ring', name: 'Anel', w: 9, pays: [3, 10, 40] },
-      { id: 'moeda', img: 'coin', name: 'Moeda', w: 10, pays: [2, 8, 30] },
-    ],
-    highlights: [
-      '⚡ Coringas de Zeus (rolos 2 a 4) trazem <b>multiplicadores que se somam</b> na linha',
-      '🔱 3+ tridentes (≈1 em 170 giros) = <b>10 rodadas grátis</b> e você <b>escolhe o deus</b>',
-      '☠️ Hades: coringas raros mas com <b>x5 a x50</b>',
-      'Prêmio máximo: <b>10.000x</b>',
-    ],
-    how: `<p>Grade <b>5×3</b> com <b>10 linhas</b>. Junte <b>3, 4 ou 5 iguais seguidos a partir do rolo da esquerda</b>.</p>
-      <p>${ico('zeus')} <b>Zeus</b> é o coringa (só nos rolos 2, 3 e 4) e pode trazer um <b>multiplicador</b>. Se vários coringas com multiplicador estiverem na mesma linha, os valores <b>se somam</b> (ex.: x2 + x3 = x5).</p>
-      <p>${ico('trident')} <b>Tridente</b> é o scatter: paga em qualquer lugar e 3+ abrem as rodadas grátis.</p>`,
-    features: `<p>${ico('trident')} <b>Rodadas grátis:</b> 3+ tridentes dão <b>10 rodadas</b>; durante elas, 3+ tridentes dão <b>+5</b>.</p>
-      <p><b>Antes de começar, você escolhe o deus:</b></p>
-      <ul class="si-list">
-        <li>${ico('zeus')} <b>Zeus</b> — coringas frequentes: ${multTable(ZH.zeus.mults)}</li>
-        <li>${ico('skull')} <b>Hades</b> — coringas raros, porém enormes: ${multTable(ZH.hades.mults)}</li>
-      </ul>
-      <p class="muted small">Os dois têm o mesmo retorno médio; Hades é mais arriscado. No jogo base os coringas vêm com ${multTable(ZH.base.mults)}.</p>`,
-  }));
+  // Zeus x Hades foi refeito no SlotKit (js/games/remakes.js).
 
   /* ---------------- Livro de Anúbis ---------------- */
   const BOOK = { id: 'livro', img: 'book', name: 'Livro', wild: true, scatter: true };

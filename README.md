@@ -15,10 +15,12 @@ Para testar no celular na mesma rede: `python -m http.server 8000` e acesse `htt
 | Slots | Touro da Sorte | Fortune Ox — rolo do meio trava um símbolo, pontas fazem respins, tela cheia x10 | ~96% |
 | Slots | Coelho da Sorte | Fortune Rabbit — cenouras com prêmio (5+ pagam), 8 giros só de cenouras | ~96% |
 | Slots | Ratinho Sortudo | Fortune Mouse — rolo do meio vira coringa, ganho garantido | ~95,7% |
-| Slots | Dragãozinho | 3×3 com multiplicador x1/x2/x5/x10 por giro | ~96% |
+| Slots | Dragãozinho | Fortune Dragon — 3×3, multiplicador x1/x2/x5/x10 por giro e Sopro da Fortuna (8 giros, 3 multiplicadores somados até x30) | ~96% |
 | Slots | Doce Bonança | Sweet Bonanza — 6×5, scatter pays, cascata, bombas até 100x nas FS, compra de bônus | ~97% |
-| Slots | Portões do Olimpo | Gates of Olympus — orbes em qualquer giro, multiplicador acumula nas FS | ~95,5% |
-| Slots | Princesa Estelar | Starlight Princess — mesma matemática do Olimpo, tema de estrelas | ~95,5% |
+| Slots | Portões do Olimpo | Gates of Olympus — orbes em qualquer giro, 15 FS com multiplicador que acumula | ~95,5% |
+| Slots | Princesa Estelar | Starlight Princess — mesma matemática do Olimpo (15 FS), tema de estrelas | ~95,5% |
+| Slots | Portais de Fogo | Fire Portals — 7×7 em grupos, portais coringa que sobem +1 a cada ganho e ficam presos nas FS | ~96% |
+| Slots | Zeus x Hades | Zeus vs Hades — 5×3, 15 linhas, coringas expansivos, FS com escolha do deus e rolos presos | ~96,5% |
 | Slots | Pescaria Bonança | Big Bass Bonanza — 5×3, 10 linhas, pescador coleta peixes nas FS (x2/x3/x10), compra de bônus | ~94% |
 | Originais | Foguetinho | Aviator / Crash | 97% |
 | Originais | Double | Blaze Double | 93,3% |
@@ -258,6 +260,8 @@ Recriações com nomes e artes próprios dos slots mais jogados de cada estúdio
 | Festival da Lua | Moon Festival | 243 caminhos · luas colantes | ~97% | 2.000x |
 | Feng Shen | Feng Shen | 4.096 caminhos · coringas somam no multiplicador | ~96% | 1.000x |
 | Dragão da Sorte | Lucky Dragon | 243 caminhos · grátis x3 que se renovam | ~97% | 3.000x |
+| Mega Ás | Mega Ace | 6×4, 4.096 caminhos · cartas douradas viram coringa (grande se copia) · escada x1–x5 / x2–x10 | ~96,5% | 10.000x |
+| Dinheiro Chegando | Money Coming | Montagem de números · rolo especial x2/x5/x10, respin e Roda da Sorte até x100 | ~96% | 10.000x |
 
 **Estilo Nolimit City**
 
@@ -352,7 +356,7 @@ js/progress.js      XP/passe, missões, check-in, roda, anúncios fictícios, ro
 js/history.js       histórico de giros dos slots (localStorage) e o modal de histórico
 js/games/kit.js     SlotKit: motor dos slots de estúdio (tela, giro, cascata, ways/linhas/grupos, hold & spin, rodadas grátis)
 js/games/calib.js   calibração gerada (escala de prêmios, preço do bônus, chance de ganho, frequência do bônus)
-js/games/pragmatic*.js, pgsoft*.js, hacksaw*.js, tada*.js, nolimit*.js   os 248 slots de estúdio
+js/games/pragmatic*.js, pgsoft*.js, hacksaw*.js, tada*.js, nolimit*.js, remakes.js   os 252 slots de estúdio
 js/games/templates.js  modelos reaproveitados (paga em qualquer lugar, grupos, PG Soft)
 tools/calibrate.js  simulador que calibra o RTP dos slots de estúdio
 js/slotinfo.js      painel "Prêmios" dos slots (prêmio máximo, tabela, bônus, linhas)

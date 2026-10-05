@@ -19,7 +19,7 @@ const os = require('os');
 const ROOT = path.join(__dirname, '..');
 /** Retorno da compra de bônus (o jogo normal usa o target de cada slot). */
 const BUY_RTP = 0.94;
-const FILES = ['js/games/kit.js', 'js/games/templates.js', 'js/games/pragmatic.js', 'js/games/pgsoft.js', 'js/games/hacksaw.js', 'js/games/tada.js', 'js/games/nolimit.js', 'js/games/pragmatic2.js', 'js/games/pragmatic3.js', 'js/games/pgsoft2.js', 'js/games/pgsoft3.js', 'js/games/hacksaw2.js', 'js/games/hacksaw3.js', 'js/games/nolimit2.js', 'js/games/nolimit3.js', 'js/games/tada2.js', 'js/games/tada3.js'];
+const FILES = ['js/games/kit.js', 'js/games/templates.js', 'js/games/pragmatic.js', 'js/games/pgsoft.js', 'js/games/hacksaw.js', 'js/games/tada.js', 'js/games/nolimit.js', 'js/games/pragmatic2.js', 'js/games/pragmatic3.js', 'js/games/remakes.js', 'js/games/pgsoft2.js', 'js/games/pgsoft3.js', 'js/games/hacksaw2.js', 'js/games/hacksaw3.js', 'js/games/nolimit2.js', 'js/games/nolimit3.js', 'js/games/tada2.js', 'js/games/tada3.js'];
 const OUT = path.join(ROOT, 'js/games/calib.js');
 
 function loadGames() {
@@ -112,7 +112,11 @@ if (isMainThread) {
   const nW = Math.min(os.cpus().length, list.length);
   const queue = [...list];
   let active = 0;
+  const mine = {};
   const done = () => {
+    // relê o arquivo antes de gravar: outra calibração pode ter rodado em paralelo
+    try { const src = fs.readFileSync(OUT, 'utf8'); calib = JSON.parse(src.slice(src.indexOf('{'), src.lastIndexOf('}') + 1)); } catch { /* novo */ }
+    Object.assign(calib, mine);
     const ids = Object.keys(calib).sort();
     const body = '{\n' + ids.map(id => `  ${JSON.stringify(id)}: ${JSON.stringify(calib[id])}`).join(',\n') + '\n}';
     fs.writeFileSync(OUT, `'use strict';\n/* Gerado por tools/calibrate.js — não editar à mão.\n   k = escala dos prêmios, buy = preço do bônus (x aposta), hit = chance de ganho, fs = frequência do bônus. */\nconst SLOT_CALIB = ${body};\n`);
@@ -124,7 +128,7 @@ if (isMainThread) {
     const w = new Worker(__filename, { workerData: { id, spins, bonusN, verify: args.includes('--verify') ? calib[id] : null } });
     w.on('message', r => {
       if (r.verify) { console.log(`${r.id.padEnd(16)} verificação: rtp=${(r.rtp * 100).toFixed(2)}% ±${(r.se * 100).toFixed(2)} hit=${(r.hit * 100).toFixed(1)}%`); return; }
-      calib[r.id] = { k: r.k, buy: r.buy, hit: r.hit, fs: r.fs };
+      calib[r.id] = mine[r.id] = { k: r.k, buy: r.buy, hit: r.hit, fs: r.fs };
       console.log(`${r.id.padEnd(14)} rtp=${(r.rtp * 100).toFixed(2)}% ±${(r.se * 100).toFixed(2)} k=${r.k} buy=${r.buy} (bônus médio ${r.bonusAvg.toFixed(1)}x) hit=${(r.hit * 100).toFixed(1)}% bônus=1/${r.fs ? Math.round(1 / r.fs) : '-'}${r.hold ? ` hold=1/${Math.round(1 / r.hold)}` : ''}`);
     });
     w.on('error', e => console.error(id, e));

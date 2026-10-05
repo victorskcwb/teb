@@ -392,10 +392,10 @@
       ['gem', 'gem', 'Rubi'], ['bluegem', 'bluediamond', 'Safira'], ['orangegem', 'orangediamond', 'Topázio'], ['purple', 'purpleheart', 'Ametista'], ['green', 'greenheart', 'Esmeralda'],
     ]), 1.05),
     scatter: { id: 'sc', img: 'voltage', name: 'Raio de Zeus', w: 1.25 },
-    orbImg: 'crystal', orbs: ORBS, orbBase: 0.0048, orbFS: 0.03,
-    fsCount: 10, buyX: 60, accumulate: true,
+    orbImg: 'crystal', orbs: ORBS, orbBase: 0.0048, orbFS: 0.0155,
+    fsCount: 15, buyX: 60, accumulate: true,
     maxWin: 5000, vol: 4, hit: '~1 em 3 giros (32%)', fsEvery: 295,
-    highlights: ['⚡ Orbes de <b>2x a 100x</b> podem cair em qualquer giro', 'Nas rodadas grátis os orbes <b>acumulam</b> e valem para todos os ganhos seguintes', '4+ raios = <b>10 rodadas grátis</b>', 'Prêmio máximo: <b>5.000x</b>'],
+    highlights: ['⚡ Orbes de <b>2x a 100x</b> podem cair em qualquer giro', 'Nas rodadas grátis os orbes <b>acumulam</b> e valem para todos os ganhos seguintes', '4+ raios = <b>15 rodadas grátis</b>', 'Prêmio máximo: <b>5.000x</b>'],
   }));
 
   App.register(createScatterSlot({
@@ -408,27 +408,11 @@
       ['heart', 'heart', 'Coração'], ['blue', 'blueheart', 'Coração azul'], ['purple', 'purpleheart', 'Coração roxo'], ['green', 'greenheart', 'Coração verde'], ['yellow', 'yellowheart', 'Coração dourado'],
     ]), 1.05),
     scatter: { id: 'sc', img: 'shootingstar', name: 'Estrela cadente', w: 1.25 },
-    orbImg: 'glowstar', orbs: ORBS, orbBase: 0.0048, orbFS: 0.03,
-    fsCount: 10, buyX: 65, accumulate: true,
+    orbImg: 'glowstar', orbs: ORBS, orbBase: 0.0048, orbFS: 0.0155,
+    fsCount: 15, buyX: 65, accumulate: true,
     maxWin: 5000, vol: 4, hit: '~1 em 3 giros (32%)', fsEvery: 295,
-    highlights: ['🌟 Estrelas de <b>2x a 100x</b> podem cair em qualquer giro', 'Nas rodadas grátis as estrelas <b>acumulam</b> e valem para todos os ganhos seguintes', '4+ estrelas cadentes = <b>10 rodadas grátis</b>', 'Prêmio máximo: <b>5.000x</b>'],
+    highlights: ['🌟 Estrelas de <b>2x a 100x</b> podem cair em qualquer giro', 'Nas rodadas grátis as estrelas <b>acumulam</b> e valem para todos os ganhos seguintes', '4+ estrelas cadentes = <b>15 rodadas grátis</b>', 'Prêmio máximo: <b>5.000x</b>'],
   }));
 
-  App.register(createScatterSlot({
-    id: 'portais', name: 'Portais de Fogo', art: 'cyclone', mascot: 'fire',
-    tag: 'Portais transformam a grade', colors: ['#ea580c', '#7e22ce'], rtp: '~95%',
-    intro: 'Inspirado no "Fire Portals": portais de fogo transformam casas da grade num mesmo símbolo.',
-    orbRules: `<p>🌀 <b>Portais:</b> podem cair em qualquer giro (e nas cascatas). Cada portal vira um símbolo sorteado e transforma de <b>2 a 5 outras casas</b> nesse mesmo símbolo — ótimo para completar 8+.</p>
-      <p>🔥 <b>Multiplicador de fogo:</b> nas rodadas grátis os portais são mais frequentes e <b>cada portal soma +1</b> num multiplicador que começa em x1 e vale para todos os ganhos seguintes, até o fim.</p>`,
-    symbols: scale(mk([
-      ['dragao', 'dragon', 'Dragão'], ['coracao', 'heartfire', 'Coração em chamas'], ['cometa', 'comet', 'Cometa'], ['varinha', 'wand', 'Varinha'],
-      ['bola', 'crystal', 'Bola de cristal'], ['rubi', 'gem', 'Rubi'], ['topazio', 'orangediamond', 'Topázio'], ['safira', 'bluediamond', 'Safira'], ['chama', 'fire', 'Chama'],
-    ]), 1.5),
-    scatter: { id: 'sc', img: 'volcano', name: 'Vulcão', w: 1.25 },
-    portal: { img: 'cyclone', pBase: 0.004, pFS: 0.0205, min: 2, max: 5 },
-    orbBase: 0, orbFS: 0,
-    fsCount: 10, buyX: 107, accumulate: false,
-    maxWin: 5000, vol: 4, hit: '~1 em 3 giros (35%)', fsEvery: 285,
-    highlights: ['🌀 Portais transformam de <b>2 a 5 casas</b> num mesmo símbolo', '🔥 Nas rodadas grátis cada portal soma <b>+1 no multiplicador</b>, que nunca zera', '🌋 4+ vulcões (≈1 em 285 giros) = <b>10 rodadas grátis</b>', 'Prêmio máximo: <b>5.000x</b>'],
-  }));
+  // Portais de Fogo foi refeito no SlotKit (js/games/remakes.js).
 })();

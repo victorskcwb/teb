@@ -12,41 +12,78 @@
   const grid = (hs, f) => hs.map((hh, c) => Array.from({ length: hh }, (_, r) => f(c, r)));
   const mult = (x, m) => { x.m = m; x.t = 'x' + m; return x; };
   const W = (img, name, extra = {}) => ({ id: 'w', img, name, wild: true, ...extra });
+  /** Coringa Grande (Transformação Dourada): na próxima cascata ele se copia em 2 ou 3 casas vizinhas. */
+  const spreadBig = (g, mk) => {
+    let n = 0;
+    g.forEach((col, c) => col.forEach((x, r) => {
+      if (!x || !x.big) return;
+      x.big = false;
+      const nb = [[c - 1, r], [c + 1, r], [c, r - 1], [c, r + 1]].filter(([a, b]) => g[a] && g[a][b] && !g[a][b].sc && !g[a][b].wild);
+      RNG.shuffle(nb).slice(0, RNG.int(2, 3)).forEach(([a, b]) => { g[a][b] = mk(); n++; });
+    }));
+    return n;
+  };
 
   /* 21. Sacerdotisa Asteca (Aztec Priestess) — 32.400 caminhos, molduras e multiplicador nas grátis */
   App.register(T.pg({
-    studio: STUDIO, id: 'sacerdotisaasteca', name: 'Sacerdotisa Asteca', art: 'womanface', mascot: 'feather', tag: '32.400 caminhos · mult. que sobe nas grátis',
+    studio: STUDIO, id: 'sacerdotisaasteca', name: 'Sacerdotisa Asteca', art: 'womanface', mascot: 'feather', tag: '32.400 caminhos · escada de multiplicador',
     colors: ['#0d9488', '#ca8a04'], bg: 'linear-gradient(180deg,#134e4a,#115e59 50%,#422006)', maxWin: 3000, vol: 3, rtp: '~97%', target: 0.97, cols: 6, rows: 6, cellH: 1,
     intro: 'Inspirado no "Aztec Priestess" (TaDa Gaming).', hello: 'A sacerdotisa abre o templo!',
     syms: T.pgx.mk([['sacerdotisa', 'womanface', 'Sacerdotisa'], ['jaguar', 'leopard', 'Jaguar'], ['idolo', 'moai', 'Ídolo'], ['mascara', 'maskface', 'Máscara'], ['pena', 'feather', 'Pena']], T.pgx.P6),
     wildImg: 'sunface', scImg: 'temple', scName: 'Templo', scW: 0.75, scFW: 0.3, scMin: 4,
     heights: () => [5, 6, 6, 6, 6, 5], gold: [0.05, 0.09], frameReels: [1, 2, 3, 4], stack: 0.3,
-    baseM: {}, fsM: { start: 1, add: 1, persist: true }, fsCount: s => 8 + (s - 4) * 2, retrig: s => 2 + (s - 4) * 2,
-    highlights: ['🌞 Rolos 5-6-6-6-6-5: <b>32.400 caminhos</b> com cascata', '🖼️ Símbolos com <b>moldura dourada</b> viram coringa quando ganham', '🛕 4+ templos = <b>8 rodadas grátis</b> (+2 por extra) com multiplicador que sobe <b>+1 a cada cascata</b> e não zera', 'Prêmio máximo: <b>3.000x</b>'],
+    // nas grátis a escada de cada giro começa em x1 e sobe +2 a cada duas cascatas: x1, x2, x2, x4, x4, x6, x6, x8…
+    baseM: {}, fsM: { ladder: Array.from({ length: 60 }, (_, i) => (i ? 2 * Math.ceil(i / 2) : 1)) }, fsCount: s => 8 + (s - 4) * 2, retrig: s => 8 + (s - 4) * 2,
+    fsSub: 'Escada x1, x2, x2, x4, x4…',
+    highlights: ['🌞 Rolos 5-6-6-6-6-5: <b>32.400 caminhos</b> com cascata', '🖼️ Símbolos com <b>moldura dourada</b> viram coringa quando ganham', '🛕 4+ templos = <b>8 rodadas grátis</b> (+2 por extra); 4+ templos nelas dão mais 8 (+2 por extra)', '📈 Nas grátis cada giro começa em x1 e a cascata sobe a escada <b>x1, x2, x2, x4, x4, x6, x6, x8…</b>', 'Prêmio máximo: <b>3.000x</b>'],
     how: '<p>Rolos 5-6-6-6-6-5 que pagam por caminhos, com cascata.</p>',
-    features: `<p>🛕 <b>4 ou mais templos</b> dão <b>8 rodadas grátis</b> (+2 por templo extra). O multiplicador global começa em x1 e sobe a cada cascata, sem zerar. ${T.pgx.goldTxt}</p>`,
+    features: `<p>🛕 <b>4 ou mais templos</b> dão <b>8 rodadas grátis</b> (+2 por templo extra); 4 ou mais templos durante elas dão <b>mais 8 giros</b> (+2 por extra). Em cada giro grátis o multiplicador volta a <b>x1</b> e sobe +2 a cada duas cascatas: <b>x1, x2, x2, x4, x4, x6, x6, x8</b> e assim por diante. ${T.pgx.goldTxt}</p>`,
   }));
 
-  /* 22. Ás Selvagem (Wild Ace) — combo que cresce e duelo do Ás nas grátis */
-  App.register(T.pg({
-    studio: STUDIO, id: 'asselvagem', name: 'Ás Selvagem', art: 'heartsuit', mascot: 'jester', tag: '1.024 caminhos · Duelo do Ás',
-    colors: ['#7c3aed', '#dc2626'], bg: 'linear-gradient(180deg,#312e81,#4c1d95 50%,#450a0a)', maxWin: 10000, vol: 4, rtp: '~96,5%', target: 0.965, cols: 5, rows: 4, cellH: 1.25,
-    intro: 'Inspirado no "Wild Ace" (TaDa Gaming).', hello: 'O Ás selvagem domina a mesa!',
-    syms: [S('rei', 'princeman', 'Rei', [0.6, 1.2, 2.5], 4), S('dama', 'princess', 'Dama', [0.5, 1, 2], 4), S('valete', 'man', 'Valete', [0.4, 0.8, 1.6], 5), S('coringa_c', 'jester', 'Bobo', [0.3, 0.6, 1.2], 5), ...['A', 'K', 'Q', 'J'].map((l, i) => K.L(l, [[0.2, 0.4, 0.8], [0.15, 0.3, 0.6], [0.1, 0.25, 0.5], [0.1, 0.2, 0.4]][i], 7 + i))],
-    wildImg: 'joker', wildName: 'Ás selvagem', wildW: 0.25, scImg: 'cards', scName: 'Scatter', scW: 0.65, scFW: 0.45,
-    heights: () => [4, 4, 4, 4, 4], gold: [0.04, 0.08], frameReels: [1, 2, 3], stack: 0.2,
-    baseM: { ladder: [1, 2, 3, 5, 8] }, fsM: { ladder: [2, 4, 6, 10, 16] }, fsCount: () => 8, retrig: () => 4,
-    onStep: async (rt, gg, fs, st, res, cell) => {
-      // a cada 2 cascatas, um símbolo da tela ganha moldura dourada
-      if (st.step % 2) return;
-      const opts = cells(gg, x => !x.wild && !x.sc && !x.gold).filter(([c]) => c >= 1 && c <= 3);
-      if (!opts.length) return;
-      const [c, r] = RNG.pick(opts); gg[c][r] = { ...gg[c][r], gold: true };
-    },
-    highlights: ['♥️ 5×4 com <b>1.024 caminhos</b> e cascata', '🔥 Combo x1 → x2 → x3 → x5 → <b>x8</b> por cascata (nas grátis até <b>x16</b>)', '✨ A cada 2 cascatas um símbolo ganha <b>moldura dourada</b> (vira coringa ao ganhar)', '🃏 3+ scatters = <b>8 rodadas grátis</b> (+4 com 3)', 'Prêmio máximo: <b>10.000x</b>'],
-    how: '<p>Grade 5×4 com 1.024 caminhos e cascata. O multiplicador do combo sobe a cada cascata do mesmo giro.</p>',
-    features: `<p>🃏 <b>3 ou mais scatters</b> dão <b>8 rodadas grátis</b> com o combo dobrado (x2 a x16). ${T.pgx.goldTxt}</p>`,
-  }));
+  /* 22. Ás Selvagem (Wild Ace) — Transformação Dourada, cartas douradas com multiplicador e Duelo do Ás nas grátis */
+  (() => {
+    const GM = { J: 2, Q: 3, K: 4, A: 5 };
+    const ACE = () => W('joker', 'Ás selvagem', { fresh: true });
+    App.register(T.pg({
+      studio: STUDIO, id: 'asselvagem', name: 'Ás Selvagem', art: 'heartsuit', mascot: 'jester', tag: '1.024 caminhos · Duelo do Ás',
+      colors: ['#7c3aed', '#dc2626'], bg: 'linear-gradient(180deg,#312e81,#4c1d95 50%,#450a0a)', maxWin: 10000, vol: 4, rtp: '~96,5%', target: 0.965, cols: 5, rows: 4, cellH: 1.25,
+      intro: 'Inspirado no "Wild Ace" (TaDa Gaming).', hello: 'O Ás selvagem domina a mesa!',
+      syms: [S('rei', 'princeman', 'Rei', [0.6, 1.2, 2.5], 4), S('dama', 'princess', 'Dama', [0.5, 1, 2], 4), S('valete', 'man', 'Valete', [0.4, 0.8, 1.6], 5), S('coringa_c', 'jester', 'Bobo', [0.3, 0.6, 1.2], 5), ...['A', 'K', 'Q', 'J'].map((l, i) => K.L(l, [[0.2, 0.4, 0.8], [0.15, 0.3, 0.6], [0.1, 0.25, 0.5], [0.1, 0.2, 0.4]][i], 7 + i))],
+      wildImg: 'joker', wildName: 'Ás selvagem', wildW: 0.25, scImg: 'cards', scName: 'Scatter', scW: 0.65, scFW: 0.45,
+      heights: () => [4, 4, 4, 4, 4], gold: [0.04, 0.08], frameReels: [1, 2, 3], stack: 0.2,
+      baseM: { ladder: [1, 2, 3, 4, 5] }, fsM: { ladder: [2, 4, 6, 8, 10] }, fsCount: () => 8, retrig: () => 4, fsState: () => ({ duel: 0 }),
+      // moldura dourada vencedora vira Ás selvagem (pequeno ou grande); nas grátis J/Q/K/A dourados viram coringa x2/x3/x4/x5
+      convert: (x, c, r, fs) => {
+        if (x.frame !== 'gold') return null;
+        const w = ACE();
+        if (fs && GM[x.letter]) mult(w, GM[x.letter]);
+        if (RNG.float() < 0.2) Object.assign(w, { big: true, c: 'giant', name: 'Ás selvagem grande' });
+        return w;
+      },
+      onStep: async (rt, gg, fs, st) => {
+        if (spreadBig(gg, ACE)) rt.msg('🃏 O Ás grande se copiou nas casas vizinhas!');
+        // a cada 2 cascatas, um símbolo da tela ganha moldura dourada
+        if (st.step % 2) return;
+        const opts = cells(gg, x => !x.wild && !x.sc && !x.gold).filter(([c]) => c >= 1 && c <= 3);
+        if (!opts.length) return;
+        const [c, r] = RNG.pick(opts); gg[c][r] = { ...gg[c][r], frame: 'gold', gold: true };
+      },
+      // Duelo do Ás: 3+ cascatas num giro grátis = escolha 1 de 2 cartas com giros extras
+      after: async (rt, g, fs, st) => {
+        if (!fs || st.step < 3 || st.duel >= 12 || rt.capped) return;
+        const vals = [0, 1].map(() => RNG.weighted([{ v: 1, w: 40 }, { v: 2, w: 35 }, { v: 3, w: 18 }, { v: 5, w: 7 }]).v);
+        const p = Number(await rt.choose('DUELO DO ÁS · ESCOLHA UMA CARTA', [{ id: '0', img: 'spadesuit', label: '?', desc: 'giros extras' }, { id: '1', img: 'heartsuit', label: '?', desc: 'giros extras' }]));
+        const n = Math.min(vals[p], 12 - st.duel);
+        st.duel += n;
+        st.api.add(n, true);
+        rt.msg(`⚔️ Duelo do Ás: +${n} giro${n > 1 ? 's' : ''}! (a outra carta tinha +${vals[1 - p]})`); rt.fx('big');
+        await rt.wait(900);
+      },
+      highlights: ['♥️ 5×4 com <b>1.024 caminhos</b> e cascata', '🔥 Escada por cascata <b>x1 → x2 → x3 → x4 → x5</b> (nas grátis <b>x2 → x10</b>)', '✨ Molduras douradas que ganham viram <b>Ás selvagem</b> no lugar; o <b>Ás grande</b> se copia em 2 ou 3 casas vizinhas', '🃏 3+ scatters = <b>8 rodadas grátis</b>: J, Q, K e A dourados viram coringa <b>x2, x3, x4 e x5</b>', '⚔️ <b>Duelo do Ás:</b> 3+ cascatas num giro grátis = escolha 1 de 2 cartas com <b>giros extras</b>', 'Prêmio máximo: <b>10.000x</b>'],
+      how: '<p>Grade 5×4 com 1.024 caminhos e cascata. O multiplicador sobe a cada cascata do mesmo giro: x1, x2, x3, x4 e x5.</p><p>Símbolos com <b>moldura dourada</b> (rolos 2 a 4) que fazem parte de um ganho não somem: viram <b>Ás selvagem</b> no mesmo lugar para a próxima cascata. Às vezes vira o <b>Ás grande</b>, que se copia em 2 ou 3 casas vizinhas. A cada 2 cascatas um símbolo da tela ganha moldura dourada.</p>',
+      features: '<p>🃏 <b>3 ou mais scatters</b> dão <b>8 rodadas grátis</b> (+4 com 3 nelas) com a escada <b>x2, x4, x6, x8 e x10</b>. Nelas as cartas douradas viram coringas com multiplicador: <b>J x2, Q x3, K x4 e A x5</b> (multiplicam os caminhos em que entram).</p><p>⚔️ <b>Duelo do Ás:</b> sempre que um giro grátis tiver <b>3 ou mais cascatas</b>, você escolhe 1 de 2 cartas viradas; ela revela de <b>+1 a +5 giros</b> (até 12 extras por bônus).</p>',
+    }));
+  })();
 
   /* 23. Tigre Mestre (Master Tiger) — grátis começando em x3 com mistérios */
   App.register(vgame({
@@ -73,42 +110,62 @@
     features: '<p>☯️ <b>3, 4 ou 5 yin-yang</b> dão <b>6, 10 ou 15 rodadas grátis</b> com multiplicador inicial x3, que não zera. Mistérios nelas somam +3 no multiplicador ou dão +1 giro.</p>',
   }));
 
-  /* 24. Cidade do Pecado (Sin City) — o Chefe abre respins com modificadores */
+  /* 24. Cidade do Pecado (Sin City) — o Chefe é o scatter: 2 dão respin com modificadores, 3+ dão grátis com 1 a 3 modificadores */
   (() => {
     const MODS = [{ k: 'ambos', n: 'Ganhos dos dois lados', w: 25 }, { k: 'misterio', n: 'Mistério', w: 25 }, { k: 'gigante', n: 'Coringa gigante', w: 20 }, { k: 'upgrade', n: 'Upgrade', w: 20 }, { k: 'mult', n: 'Multiplicador', w: 10 }];
     const L40 = K.linesFor(4, 40);
     const SYC = syms5([['chefe', 'supervillain', 'Chefe'], ['carro', 'car', 'Carro'], ['diamante', 'gem', 'Diamante'], ['dados', 'dice2', 'Dados']]);
+    const FSN = { 3: 6, 4: 10, 5: 15 };
+    /** sorteia de 1 a 3 modificadores diferentes */
+    const pickMods = () => {
+      const n = RNG.weighted([{ n: 1, w: 50 }, { n: 2, w: 35 }, { n: 3, w: 15 }]).n, left = [...MODS], out = [];
+      while (out.length < n) { const m = RNG.weighted(left); out.push(m); left.splice(left.indexOf(m), 1); }
+      return out;
+    };
+    async function applyMods(rt, g) {
+      const ms = pickMods();
+      rt.msg(`🎩 O Chefe ativou: ${ms.map(m => m.n).join(' + ')}!`); rt.fx('rise');
+      for (const m of ms) {
+        if (m.k === 'misterio') { const s = RNG.pick(SYC.slice(0, 4)); RNG.shuffle(cells(g, x => x.pays)).slice(0, 6).forEach(([c, r]) => { g[c][r] = { ...s, c: 'gold', fresh: true }; }); }
+        if (m.k === 'gigante') { const c0 = RNG.int(1, 2), r0 = RNG.int(0, 2); for (let c = c0; c < c0 + 2; c++) for (let r = r0; r < r0 + 2; r++) if (!g[c][r].sc) g[c][r] = W('tophat', 'Coringa gigante', { c: 'giant', fresh: true }); }
+        if (m.k === 'upgrade') g.forEach((col, c) => col.forEach((x, r) => { if (x.letter) g[c][r] = { ...RNG.pick(SYC.slice(0, 4)), fresh: true }; }));
+        if (m.k === 'mult') g.modMult = RNG.pick([2, 3, 5]);
+        if (m.k === 'ambos') g.both = true;
+      }
+      await rt.drop(g);
+    }
+    /** com "dois lados", ganhos da direita para a esquerda também pagam */
+    async function bothWays(rt, g) {
+      if (!g.both) return;
+      const rev = g.slice().reverse(), r2 = lines(rev, L40, SYC, { mult: 'add' });
+      r2.wins = r2.wins.filter(w => w.n < 5); r2.total = r2.wins.reduce((t, w) => t + w.pay, 0);
+      if (r2.total) { const cs = new Set(); r2.cells.forEach(k => { const [c, r] = unkey(k); cs.add(key(4 - c, r)); }); r2.cells = cs; await pay(rt, r2, g.modMult || 1, ' · ⇄'); }
+    }
     App.register(vgame({
-      id: 'cidadepecado', name: 'Cidade do Pecado', art: 'tophat', mascot: 'supervillain', tag: '40 linhas · 5 modificadores do Chefe',
+      id: 'cidadepecado', name: 'Cidade do Pecado', art: 'tophat', mascot: 'supervillain', tag: '40 linhas · Chefe com até 3 modificadores',
       colors: ['#dc2626', '#0f172a'], bg: 'radial-gradient(circle at 50% 20%,#7f1d1d,#020617 70%)', maxWin: 2500, vol: 4, heights: [4, 4, 4, 4, 4],
       intro: 'Inspirado no "Sin City" (TaDa Gaming) — clima noir, sem violência.', hello: 'O Chefe está de olho...',
       syms: SYC,
-      lines: L40, wild: { img: 'tophat', name: 'Coringa', w: 0.4 }, sc: { img: 'cigar', name: 'Charuto', w: 0.6 }, fsMult: 2,
-      extra: [{ id: 'boss', img: 'supervillain', name: 'Chefe', boss: true, noPay: true, reels: [2], w: 0.5, fw: 0.9 }],
-      fsCount: () => 8, retrig: () => 4,
-      multOf: (st, g) => (g.modMult || 1) * ((st && st.m) || 1),
-      afterLand: async (rt, g, wk, st, cell) => {
-        if (!g.flat().some(x => x.boss) || RNG.float() > (st ? 1 : 0.5)) return;
-        const m = RNG.weighted(MODS);
-        rt.msg(`🎩 O Chefe ativou: ${m.n}!`); rt.fx('rise');
-        g.forEach((col, c) => col.forEach((x, r) => { if (x.boss) g[c][r] = { id: 'w', img: 'tophat', name: 'Coringa', wild: true, c: 'gold' }; }));
-        if (m.k === 'misterio') { const s = RNG.pick(SYC.slice(0, 4)); RNG.shuffle(cells(g, x => x.pays)).slice(0, 6).forEach(([c, r]) => { g[c][r] = { ...s, c: 'gold', fresh: true }; }); }
-        if (m.k === 'gigante') { const c0 = RNG.int(1, 2); for (let c = c0; c < c0 + 2; c++) for (let r = 1; r < 3; r++) g[c][r] = { id: 'w', img: 'tophat', name: 'Coringa gigante', wild: true, c: 'giant', fresh: true }; }
-        if (m.k === 'upgrade') g.forEach((col, c) => col.forEach((x, r) => { if (x.letter) g[c][r] = { ...cell(c, 'fw'), fresh: true }; }));
-        if (m.k === 'mult') g.modMult = RNG.pick([2, 3, 5]);
-        if (m.k === 'ambos') g.both = true;
-        await rt.drop(g);
+      lines: L40, wild: { img: 'tophat', name: 'Coringa', w: 0.4 }, sc: { img: 'supervillain', name: 'Chefe', w: 0.58 },
+      fsCount: s => FSN[Math.min(5, s)],
+      multOf: (st, g) => g.modMult || 1,
+      // nas grátis o Chefe sempre ativa de 1 a 3 modificadores antes do pagamento
+      afterLand: async (rt, g, wk, st) => { if (st) await applyMods(rt, g); },
+      after: async (rt, g) => { await bothWays(rt, g); },
+      // 2 Chefes no jogo base: respin com eles travados e 1 a 3 modificadores
+      base: async (rt, g, H) => {
+        if (count(g, x => x.sc) !== 2 || rt.capped) return;
+        rt.mark(scatters(g)); rt.msg('🕴️ 2 Chefes: respin com modificadores!'); await rt.wait(800);
+        const ng = H.make('w').map(col => col.map(x => (x.sc ? { ...RNG.pick(SYC) } : x)));
+        g.forEach((col, c) => col.forEach((x, r) => { if (x.sc) ng[c][r] = { ...x, c: 'sticky' }; }));
+        await rt.spin(ng, { tease: false });
+        await applyMods(rt, ng);
+        await pay(rt, H.evalOf(ng), ng.modMult || 1);
+        await bothWays(rt, ng);
       },
-      after: async (rt, g, wk, st, res) => {
-        if (!g.both) return;
-        // ganhos da direita para a esquerda também pagam
-        const rev = g.slice().reverse(), r2 = lines(rev, L40, SYC, { mult: 'add' });
-        r2.wins = r2.wins.filter(w => w.n < 5); r2.total = r2.wins.reduce((s, w) => s + w.pay, 0);
-        if (r2.total) { const cs = new Set(); r2.cells.forEach(k => { const [c, r] = unkey(k); cs.add(key(4 - c, r)); }); r2.cells = cs; await pay(rt, r2, (g.modMult || 1) * ((st && st.m) || 1)); }
-      },
-      highlights: ['🎩 5×4 com <b>40 linhas</b>, tema noir', '🕴️ O <b>Chefe</b> (rolo 3) pode ativar um de 5 modificadores: <b>ganhos dos dois lados</b>, <b>mistério</b>, <b>coringa gigante 2×2</b>, <b>upgrade</b> das cartas ou <b>multiplicador x2–x5</b>', '🚬 3+ charutos = <b>8 rodadas grátis</b> com ganhos <b>x2</b> em que o Chefe sempre ativa um modificador (+4 com 3)', 'Prêmio máximo: <b>2.500x</b>'],
-      how: '<p>Grade 5×4 com 40 linhas. Quando o Chefe cai no rolo do meio, há chance de ele ativar um modificador antes do pagamento.</p>',
-      features: '<p>🚬 <b>3 ou mais charutos</b> dão <b>8 rodadas grátis</b> com ganhos dobrados; nelas o Chefe cai mais e sempre ativa um modificador.</p>',
+      highlights: ['🎩 5×4 com <b>40 linhas</b>, tema noir', '🕴️ O <b>Chefe</b> é o scatter e cai em <b>todos os rolos</b>', '2 Chefes = <b>respin</b> com eles travados e <b>1 a 3 modificadores</b>: dois lados, mistério, coringa gigante 2×2, upgrade das cartas ou multiplicador x2–x5', '3/4/5 Chefes = <b>6/10/15 rodadas grátis</b>, cada uma com <b>1 a 3 modificadores garantidos</b>', 'Prêmio máximo: <b>2.500x</b>'],
+      how: '<p>Grade 5×4 com 40 linhas. O 🕴️ Chefe é o scatter: pode cair em qualquer rolo e não paga sozinho.</p><p><b>2 Chefes</b> dão um <b>respin</b>: eles ficam travados, o resto gira de novo e o Chefe ativa de <b>1 a 3 modificadores diferentes</b> antes do pagamento.</p>',
+      features: `<p>🕴️ <b>3, 4 ou 5 Chefes</b> dão <b>6, 10 ou 15 rodadas grátis</b> (sem novas ativações durante elas). Em <b>todo</b> giro grátis o Chefe ativa de 1 a 3 modificadores diferentes:</p><p>⇄ <b>Dois lados:</b> as linhas também pagam da direita para a esquerda.<br>❓ <b>Mistério:</b> 6 posições viram o mesmo símbolo alto.<br>🎩 <b>Coringa gigante:</b> um bloco 2×2 de coringas no meio.<br>⬆️ <b>Upgrade:</b> todas as cartas viram símbolos altos.<br>✖️ <b>Multiplicador:</b> x2, x3 ou x5 no ganho do giro.</p>`,
     }));
   })();
 
@@ -201,7 +258,7 @@
   (() => {
     const SY = [S('fenix', 'phoenix', 'Fênix', [1, 2.5, 6, 15], 3), S('pena', 'feather', 'Pena', [0.8, 2, 5, 12], 4), S('chama', 'fire', 'Chama', [0.6, 1.5, 4, 9], 5), S('joia', 'orangediamond', 'Joia', [0.5, 1.2, 3, 7], 5), ...K.ROYALS([[0.15, 0.3, 0.6, 1.2], [0.15, 0.3, 0.6, 1.2], [0.1, 0.2, 0.5, 1], [0.1, 0.2, 0.5, 1]], [7, 7, 8, 8])];
     const WILD = W('flame2', 'Coringa', { w: 0.35 });
-    const SC = { id: 'sc', img: 'sunrise', name: 'Sol', sc: true, w: 0.2, fw: 0 };
+    const SC = { id: 'sc', img: 'sunrise', name: 'Sol', sc: true, w: 0.5, fw: 0.15 };
     const draw = pool([...SY, WILD, SC]);
     async function play(rt, rows, wk, st) {
       // nas grátis os símbolos que subiram de nível já caem no nível novo
@@ -237,14 +294,14 @@
       intro: 'Inspirado no "Trial of Phoenix" (TaDa Gaming).', hello: 'A fênix renasce das cinzas!',
       symbols: [...SY, WILD, SC],
       tables: [table('Pagamento por caminho', heads(3, 4, ' rolos'), SY, 'De 729 (6×3) até 15.625 caminhos (6×5).')],
-      highlights: ['🔥 6 rolos que começam com <b>3 linhas</b> (729 caminhos)', '📌 Os símbolos vencedores <b>ficam</b> e o resto gira de novo enquanto houver ganho novo', '⬆️ Com <b>12 ou mais</b> vencedores e sóis presos a grade ganha uma linha, até 6×5 (<b>15.625 caminhos</b>)', '☀️ 3+ sóis = <b>8 rodadas grátis</b> em grade 4×6; no fim de cada giro o símbolo vencedor mais baixo <b>sobe de nível</b>', 'Prêmio máximo: <b>10.000x</b>'],
+      highlights: ['🔥 6 rolos que começam com <b>3 linhas</b> (729 caminhos)', '📌 Os símbolos vencedores <b>ficam</b> e o resto gira de novo enquanto houver ganho novo', '⬆️ Com <b>12 ou mais</b> vencedores e sóis presos a grade ganha uma linha, até 6×5 (<b>15.625 caminhos</b>)', '☀️ 4+ sóis = <b>8 rodadas grátis</b> em grade 6×4; no fim de cada giro o símbolo vencedor mais baixo <b>sobe de nível</b>', 'Prêmio máximo: <b>10.000x</b>'],
       how: '<p>6 rolos que pagam por caminhos. Depois de um ganho, os vencedores ficam no lugar e o resto gira de novo; se aparecer ganho novo, repete.</p>',
-      features: '<p>☀️ <b>3 ou mais sóis</b> dão <b>8 rodadas grátis</b> começando com 4 linhas (4.096 caminhos). No fim de cada giro o símbolo vencedor de menor valor vira o símbolo acima dele pelo resto do bônus (+4 giros com 3 sóis).</p>',
+      features: '<p>☀️ <b>4 ou mais sóis</b> dão <b>8 rodadas grátis</b> começando com 4 linhas (4.096 caminhos). Os sóis ficam presos durante os respins do giro. No fim de cada giro o símbolo vencedor de menor valor vira o símbolo acima dele pelo resto do bônus. 4 ou mais sóis nas grátis dão +4 giros.</p>',
       make: () => grid(Array(6).fill(3), c => draw(c, 'w')),
-      async spin(rt) { const sc = await play(rt, 3, 'w', null); rt.layout(3); if (sc >= 3) { await rt.wait(900); await this.bonus(rt, {}); } },
+      async spin(rt) { const sc = await play(rt, 3, 'w', null); rt.layout(3); if (sc >= 4) { await rt.wait(900); await this.bonus(rt, {}); } },
       async bonus(rt) {
         const st = { upg: {} };
-        await rt.fsLoop(8, async api => { if (await play(rt, 4, 'fw', st) >= 3) api.add(4); }, { sub: 'Símbolos sobem de nível' });
+        await rt.fsLoop(8, async api => { if (await play(rt, 4, 'fw', st) >= 4) api.add(4); }, { sub: 'Símbolos sobem de nível' });
         rt.layout(3);
       },
     }));
@@ -424,25 +481,48 @@
     features: '<p>☁️ Com <b>2 ou mais nuvens</b>, elas viram coringas travados e os outros símbolos giram mais uma vez (ganhos x2).</p>',
   }));
 
-  /* 37. Beleza Havaiana (Hawaii Beauty) — 50 linhas, grátis x2 e bônus das flores */
-  App.register(vgame({
-    id: 'belezahavaiana', name: 'Beleza Havaiana', art: 'hibiscus', mascot: 'womandance', tag: '50 linhas · grátis x2 · flores',
-    colors: ['#f97316', '#0891b2'], bg: 'linear-gradient(180deg,#fef3c7,#fb923c 40%,#0e7490)', maxWin: 1250, vol: 2, heights: [4, 4, 4, 4, 4],
-    intro: 'Inspirado no "Hawaii Beauty" (TaDa Gaming).', hello: 'Aloha! Bem-vindo ao paraíso!',
-    syms: syms5([['dancarina', 'womandance', 'Dançarina'], ['coco', 'coconut', 'Coco'], ['drink', 'tropicaldrink', 'Drink'], ['ukulele', 'guitar', 'Ukulele']]),
-    lines: K.linesFor(4, 50), wild: { img: 'womandance', name: 'Dançarina coringa', w: 0.4, fw: 0.6 }, sc: { img: 'sunset', name: 'Pôr do sol', w: 0.65 },
-    extra: [{ id: 'flor', img: 'hibiscus', name: 'Flor', flower: true, noPay: true, reels: [0, 2, 4], w: 0.6 }],
-    fsCount: s => ({ 3: 10, 4: 12 }[s] || 15), retrig: () => 5, fsMult: 2,
-    after: async (rt, g, wk, st) => {
-      if (count(g, x => x.flower) < 3) return;
-      const vals = Array.from({ length: 5 }, () => RNG.weighted([{ v: 3, w: 35 }, { v: 5, w: 28 }, { v: 10, w: 18 }, { v: 20, w: 10 }, { v: 50, w: 5 }, { v: 100, w: 1.5 }]).v);
-      const p = await rt.choose('ESCOLHA UMA FLOR', vals.map((v, i) => ({ id: String(i), img: 'hibiscus', label: '?', desc: 'flor' })));
-      const v = vals[Number(p)]; rt.win(v); rt.msg(`🌺 Flor havaiana: ${rt.coins(v)}`); rt.fx('big'); await rt.wait(900);
-    },
-    highlights: ['🌺 5×4 com <b>50 linhas</b>', '🌅 3/4/5 pores do sol = <b>10/12/15 rodadas grátis</b> com ganhos <b>x2</b>', '🌸 3 flores (rolos 1, 3 e 5) = <b>bônus das flores</b>: escolha uma flor com prêmio de até <b>100x</b>', 'Prêmio máximo: <b>1.250x</b>'],
-    how: '<p>Grade 5×4 com 50 linhas. A dançarina de hula é coringa.</p>',
-    features: '<p>🌅 <b>3, 4 ou 5 pores do sol</b> dão <b>10, 12 ou 15 rodadas grátis</b> com todos os ganhos dobrados. 🌸 <b>3 flores</b> nos rolos 1, 3 e 5 abrem o bônus de escolha.</p>',
-  }));
+  /* 37. Beleza Havaiana (Hawaii Beauty) — 50 linhas, grátis x2 e coleta de corações */
+  (() => {
+    const HV = [{ v: 1, w: 30 }, { v: 2, w: 30 }, { v: 3, w: 20 }, { v: 5, w: 12 }, { v: 10, w: 6 }, { v: 25, w: 2 }];
+    const HC = [{ img: 'heart' }, { img: 'pinkheart' }, { img: 'orangeheart' }, { img: 'blueheart' }];
+    /** Coleta de corações: 8 corações virados, 3 escolhas; os coloridos somam valores, o dourado multiplica o total */
+    async function hearts(rt) {
+      rt.stat('hold');
+      const board = RNG.shuffle([...Array.from({ length: 7 }, () => ({ v: RNG.weighted(HV).v, img: RNG.pick(HC).img })), { gold: true, m: RNG.weighted([{ m: 2, w: 55 }, { m: 3, w: 33 }, { m: 5, w: 12 }]).m, img: 'yellowheart' }]);
+      const open = new Set();
+      let sum = 0, m = 1;
+      rt.chip('heart', 'CORAÇÕES', '0x');
+      for (let i = 0; i < 3; i++) {
+        const opts = board.map((h, j) => ({ id: String(j), img: 'hibiscus', label: '?', desc: 'coração' })).filter(o => !open.has(o.id));
+        const j = Number(await rt.choose(`COLETA DE CORAÇÕES (${i + 1}/3)`, opts));
+        open.add(String(j));
+        const h = board[j];
+        if (h.gold) { m = h.m; rt.msg(`💛 Coração dourado: o total vale x${m}!`); }
+        else { sum += h.v; rt.msg(`❤️ Coração: +${rt.coins(h.v)}`); }
+        rt.chip('heart', 'CORAÇÕES', `${K.short(sum)}x${m > 1 ? ' · x' + m : ''}`);
+        rt.fx('coin');
+        await rt.wait(600);
+      }
+      rt.chip('heart', null);
+      const v = sum * m;
+      rt.win(v); rt.msg(`🌺 Coleta de corações: ${rt.coins(sum)}${m > 1 ? ` x${m}` : ''} = ${rt.coins(v)}`); rt.fx('big'); await rt.wait(900);
+    }
+    App.register(vgame({
+      id: 'belezahavaiana', name: 'Beleza Havaiana', art: 'hibiscus', mascot: 'womandance', tag: '50 linhas · grátis x2 · coleta de corações',
+      colors: ['#f97316', '#0891b2'], bg: 'linear-gradient(180deg,#fef3c7,#fb923c 40%,#0e7490)', maxWin: 1250, vol: 2, heights: [4, 4, 4, 4, 4],
+      intro: 'Inspirado no "Hawaii Beauty" (TaDa Gaming).', hello: 'Aloha! Bem-vindo ao paraíso!',
+      // nas grátis as cartas e a dançarina coringa caem mais
+      syms: syms5([['dancarina', 'womandance', 'Dançarina'], ['coco', 'coconut', 'Coco'], ['drink', 'tropicaldrink', 'Drink'], ['ukulele', 'guitar', 'Ukulele']]).map(x => (x.letter ? { ...x, fw: x.w * 2 } : x)),
+      lines: K.linesFor(4, 50), wild: { img: 'womandance', name: 'Dançarina coringa', w: 0.4, fw: 3 }, sc: { img: 'sunset', name: 'Pôr do sol', w: 0.85 },
+      extra: [{ id: 'flor', img: 'hibiscus', name: 'Flor', flower: true, noPay: true, reels: [0, 2, 4], w: 0.6 }],
+      sprites: ['pinkheart', 'orangeheart', 'blueheart', 'yellowheart'],
+      fsCount: s => ({ 3: 8, 4: 10 }[s] || 12), retrig: () => 5, fsMult: 2,
+      after: async (rt, g) => { if (count(g, x => x.flower) >= 3 && !rt.capped) await hearts(rt); },
+      highlights: ['🌺 5×4 com <b>50 linhas</b>', '🌅 3/4/5 pores do sol = <b>8/10/12 rodadas grátis</b> com ganhos <b>x2</b>', '🌸 3 flores (rolos 1, 3 e 5) = <b>coleta de corações</b>: abra 3 de 8 corações; os coloridos somam prêmios e o <b>dourado multiplica</b> o total (até x5)', 'Prêmio máximo: <b>1.250x</b>'],
+      how: '<p>Grade 5×4 com 50 linhas. A dançarina de hula é coringa.</p>',
+      features: '<p>🌅 <b>3, 4 ou 5 pores do sol</b> dão <b>8, 10 ou 12 rodadas grátis</b> com todos os ganhos dobrados; nelas a dançarina coringa aparece bem mais (+5 giros com 3 pores do sol).</p><p>🌸 <b>3 flores</b> nos rolos 1, 3 e 5 abrem a <b>coleta de corações</b>: há 8 corações virados e você abre 3. Cada coração colorido soma um prêmio de 1x a 25x; o único <b>coração dourado</b> não soma, mas multiplica o total por <b>x2, x3 ou x5</b>.</p>',
+    }));
+  })();
 
   /* 38. Festival da Lua (Moon Festival) — luas coringa colantes nas grátis */
   App.register(vgame({
@@ -467,7 +547,7 @@
     const make = wk => K.stack(grid([4, 4, 4, 4, 4, 4], c => draw(c, wk)), 0.25);
     async function play(rt, g, wk, st) {
       await rt.spin(g, { tease: !st });
-      if (st) { const w = count(g, x => x.wild); if (w) { st.m += w; rt.chip('mult', 'MULT.', 'x' + st.m); } }
+      if (st) { const w = count(g, x => x.wild); if (w && st.m < 10) { st.m = Math.min(10, st.m + w); rt.chip('mult', 'MULT.', 'x' + st.m); } }
       // cascata sem gravidade: os vencedores somem e novos símbolos aparecem no mesmo lugar
       await tumble(rt, g, {
         draw: c => draw(c, wk), evaluate: gg => ways(gg, SY), mult: () => (st ? st.m : 1),
@@ -483,9 +563,9 @@
       intro: 'Inspirado no "Feng Shen" (TaDa Gaming).', hello: 'Os deuses da mitologia chinesa duelam!',
       symbols: [...SY, WILD, BON],
       tables: [table('Pagamento por caminho', heads(3, 4, ' rolos'), SY, '6×4 = 4.096 caminhos.')],
-      highlights: ['⚡ 6×4 com <b>4.096 caminhos</b>', '✨ <b>Cascata sem gravidade:</b> os vencedores somem e novos símbolos aparecem no mesmo lugar', '📜 Bônus em <b>todos os 6 rolos</b> = <b>10 rodadas grátis</b>: um símbolo alto pode virar coringa e <b>cada coringa soma +1</b> no multiplicador (não zera)', 'Prêmio máximo: <b>1.000x</b>'],
+      highlights: ['⚡ 6×4 com <b>4.096 caminhos</b>', '✨ <b>Cascata sem gravidade:</b> os vencedores somem e novos símbolos aparecem no mesmo lugar', '📜 Bônus em <b>todos os 6 rolos</b> = <b>10 rodadas grátis</b>: um símbolo alto pode virar coringa e <b>cada coringa soma +1</b> no multiplicador (não zera, até <b>x10</b>)', 'Prêmio máximo: <b>1.000x</b>'],
       how: '<p>Grade 6×4 que paga por caminhos. Depois de um ganho os símbolos vencedores são trocados no próprio lugar, sem cair, e o jogo avalia de novo.</p>',
-      features: '<p>📜 Um <b>bônus em cada um dos 6 rolos</b> dá <b>10 rodadas grátis</b>. Um símbolo alto é sorteado e, a cada cascata, pode virar coringa. Cada coringa que aparecer soma +1 no multiplicador, que dura até o fim.</p>',
+      features: '<p>📜 Um <b>bônus em cada um dos 6 rolos</b> dá <b>10 rodadas grátis</b>. Um símbolo alto é sorteado e, a cada cascata, pode virar coringa. Cada coringa que aparecer soma +1 no multiplicador, que dura até o fim do bônus e vai até <b>x10</b>.</p>',
       make: () => make('w'),
       async spin(rt) { const g = make('w'); if (await play(rt, g, 'w', null)) { rt.mark(scatters(g)); await rt.wait(900); await this.bonus(rt, {}); } },
       async bonus(rt) {
@@ -508,4 +588,85 @@
     how: '<p>Grade 5×3 que paga por caminhos. O dragão (rolos 2 a 4) é coringa.</p>',
     features: '<p>🪙 <b>3 ou mais moedas do dragão</b> dão <b>8 rodadas grátis</b> com todos os ganhos triplicados. Nelas as moedas aparecem mais e 3 moedas dão +8 giros.</p>',
   }));
+
+  /* 41. Mega Ás (Mega Ace) — Transformação Dourada em 6×4 (4.096 caminhos) */
+  (() => {
+    const JOKER = () => W('joker', 'Coringa', { fresh: true });
+    App.register(T.pg({
+      studio: STUDIO, id: 'megaas', name: 'Mega Ás', art: 'spadesuit', mascot: 'jester', tag: '4.096 caminhos · cartas douradas viram coringa',
+      colors: ['#ca8a04', '#1d4ed8'], bg: 'linear-gradient(180deg,#0c4a6e,#1e1b4b 55%,#422006)', maxWin: 10000, vol: 4, rtp: '~96,5%', target: 0.965, cols: 6, rows: 4, cellH: 1.2,
+      intro: 'Inspirado no "Mega Ace" (TaDa Gaming).', hello: 'Cartas douradas viram coringas!',
+      syms: [S('as_e', 'spadesuit', 'Ás de espadas', [0.5, 1, 2, 4], 4), S('as_c', 'heartsuit', 'Ás de copas', [0.4, 0.8, 1.6, 3], 4), S('as_o', 'diamondsuit', 'Ás de ouros', [0.3, 0.6, 1.2, 2.5], 5), S('as_p', 'clubsuit', 'Ás de paus', [0.25, 0.5, 1, 2], 5),
+        ...['A', 'K', 'Q', 'J'].map((l, i) => K.L(l, [[0.15, 0.3, 0.6, 1.2], [0.12, 0.25, 0.5, 1], [0.1, 0.2, 0.4, 0.8], [0.1, 0.2, 0.4, 0.8]][i], 7 + i))],
+      wildImg: 'joker', wildName: 'Coringa', wildW: 0.2, scImg: 'cards', scName: 'Scatter', scW: 0.55, scFW: 0.4,
+      heights: () => [4, 4, 4, 4, 4, 4], gold: [0.05, 0.1], frameReels: [1, 2, 3, 4], stack: 0.2,
+      baseM: { ladder: [1, 2, 3, 4, 5] }, fsM: { ladder: [2, 4, 6, 8, 10] }, fsCount: s => 10 + (s - 3) * 2, retrig: () => 5,
+      // carta dourada vencedora vira Coringa pequeno ou (20%) Coringa grande, que se copia em 2 ou 3 vizinhas
+      convert: x => {
+        if (x.frame !== 'gold') return null;
+        const w = JOKER();
+        if (RNG.float() < 0.2) Object.assign(w, { big: true, c: 'giant', name: 'Coringa grande' });
+        return w;
+      },
+      onStep: async (rt, gg) => { if (spreadBig(gg, JOKER)) rt.msg('🃏 O Coringa grande se copiou nas casas vizinhas!'); },
+      highlights: ['🂡 6×4 com <b>4.096 caminhos</b> e cascata', '🔥 Escada por cascata <b>x1 → x2 → x3 → x4 → x5</b> (nas grátis <b>x2 → x10</b>)', '✨ Cartas douradas (rolos 2 a 5) que ganham viram <b>Coringa</b> no lugar; o <b>Coringa grande</b> se copia em 2 ou 3 casas vizinhas', '🃏 3+ scatters = <b>10 rodadas grátis</b> (+2 por extra), +5 com 3 nelas', 'Prêmio máximo: <b>10.000x</b>'],
+      how: '<p>Grade 6×4 com 4.096 caminhos e cascata. O multiplicador sobe a cada cascata do mesmo giro: x1, x2, x3, x4 e x5.</p><p>Cartas com <b>moldura dourada</b> (rolos 2 a 5) que fazem parte de um ganho não somem: viram <b>Coringa</b> no mesmo lugar para a próxima cascata. Às vezes vira o <b>Coringa grande</b>, que se copia em 2 ou 3 casas vizinhas.</p>',
+      features: '<p>🃏 <b>3 ou mais scatters</b> dão <b>10 rodadas grátis</b> (+2 por scatter extra) com a escada <b>x2, x4, x6, x8 e x10</b>. 3 scatters nas grátis dão <b>+5 giros</b>.</p>',
+    }));
+  })();
+
+  /* 42. Dinheiro Chegando (Money Coming) — Montagem de Números com rolo especial e Roda da Sorte */
+  (() => {
+    const N = (n, w) => ({ id: 'n' + n, letter: n, name: n, num: n, noPay: true, w });
+    const BLANK = { id: 'vazio', img: null, name: 'Vazio', c: 'empty', noPay: true, noBlur: true };
+    const R1 = [N('1', 1.6), N('5', 1), N('10', 0.45), { ...BLANK, w: 2 }];
+    const R23 = [N('0', 2), N('1', 1), N('5', 0.8), N('00', 0.12), { ...BLANK, w: 2 }];
+    const SP = [{ k: 'x2', m: 2, w: 9 }, { k: 'x5', m: 5, w: 3 }, { k: 'x10', m: 10, w: 1 }, { k: 'respin', w: 5 }, { k: 'roda', w: 1.2 }, { k: 'nada', w: 75 }];
+    const WHEEL = [{ v: 2, w: 30 }, { v: 3, w: 25 }, { v: 5, w: 20 }, { v: 10, w: 12 }, { v: 20, w: 7 }, { v: 50, w: 4 }, { v: 100, w: 2 }];
+    const d1 = pool(R1), d23 = pool(R23);
+    const scell = () => { const o = RNG.weighted(SP); return o.k === 'nada' ? { id: 'rv', img: null, c: 'mreel empty', t: '', sp: o } : { id: 'rv', img: o.k === 'respin' ? 'counterclockwise' : o.k === 'roda' ? 'dizzystar' : null, c: 'mreel', t: o.m ? o.k : o.k === 'roda' ? 'RODA' : 'RESPIN', sp: o }; };
+    const make = () => [...grid([3, 3, 3], c => (c === 0 ? d1(c) : d23(c))), [scell(), scell(), scell()]];
+    const number = g => { const xs = [g[0][1], g[1][1], g[2][1]]; if (xs.some(x => !x.num)) return 0; return Number(xs.map(x => x.num).join('')); };
+    const DIV = 100;
+    App.register(K.create({
+      id: 'dinheirochegando', name: 'Dinheiro Chegando', studio: STUDIO, art: 'moneybag', mascot: 'moneybag',
+      tag: 'Monte o número · Roda da Sorte até x100', colors: ['#16a34a', '#ca8a04'], bg: 'radial-gradient(circle at 50% 30%,#14532d,#052e16 70%)',
+      cols: 4, rows: 3, maxWin: 10000, vol: 4, rtp: '~96%', target: 0.96, buy: false,
+      intro: 'Inspirado no "Money Coming" (TaDa Gaming).', hello: 'Monte o número e gire a Roda da Sorte!',
+      symbols: [...R1, ...R23.filter(x => x.id === 'n00' || x.id === 'n0'), { img: 'counterclockwise', noBlur: true }, { img: 'dizzystar', noBlur: true }],
+      lineList: { cols: 3, rows: 3, list: [[1, 1, 1]], text: 'Uma única linha, no meio; o 4º rolo é o rolo especial.' },
+      tables: [{ title: 'Exemplos de números montados', raw: true, head: ['prêmio'], rows: [['1', '0', '0', 1], ['5', '1', '0', 5.1], ['10', '0', '5', 10.05], ['5', '00', '00', 500], ['10', '00', '00', 1000]].map(([a, b2, c, v]) => ({ name: `${a} | ${b2} | ${c}`, pays: [v + 'x'] })) }],
+      highlights: ['🔢 <b>Montagem de números:</b> 3 rolos com <b>0, 1, 5, 10 e 00</b> numa linha só', 'Prêmio = número formado da esquerda para a direita: <b>10 | 0 | 5 = 1005</b>', '🎰 Rolo especial: <b>x2, x5, x10</b>, <b>respin</b> ou a <b>Roda da Sorte</b>', '🎡 <b>Roda da Sorte:</b> multiplica o número montado por <b>x2 até x100</b>', 'Prêmio máximo: <b>10.000x</b>'],
+      how: '<p>Três rolos de números e uma linha no meio. Se os três mostrarem números, os dígitos são <b>juntados como texto</b>, da esquerda para a direita: 100 no visor valem 1x a aposta (ex.: 5 | 1 | 0 = 510 = 5,1x).</p>',
+      features: '<p>🎰 <b>Rolo especial (4º rolo):</b> <b>x2, x5 ou x10</b> multiplicam o número montado; <b>RESPIN</b> dá um giro grátis; <b>RODA</b> gira a Roda da Sorte, que multiplica o número por <b>x2 a x100</b> (se não houver número, paga 1x a aposta vezes o valor da roda).</p>',
+      make,
+      async spin(rt) {
+        for (let i = 0; i < 5 && !rt.capped; i++) {
+          const g = make();
+          await rt.spin(g, { tease: false });
+          const v = number(g), sp = g[3][1].sp;
+          let m = sp.m || 1;
+          if (sp.k === 'roda') {
+            rt.mark([key(3, 1)], 'hl');
+            const wi = WHEEL.indexOf(RNG.weighted(WHEEL));
+            await rt.reveal('RODA DA SORTE', WHEEL.map(o => ({ img: 'dizzystar', t: 'x' + o.v })), wi);
+            m = WHEEL[wi].v;
+          }
+          const x = v ? (v / DIV) * m : sp.k === 'roda' ? m : 0;
+          if (x) {
+            rt.mark([...(v ? [key(0, 1), key(1, 1), key(2, 1)] : []), ...(m > 1 ? [key(3, 1)] : [])]);
+            rt.win(x);
+            rt.msg(`🔢 ${v || '—'}${m > 1 ? ` · x${m}` : ''} = ${rt.coins(x)}`);
+            rt.fx(x >= 50 ? 'jackpot' : m > 1 ? 'big' : 'win');
+            await rt.wait(900);
+          }
+          if (sp.k !== 'respin') break;
+          rt.mark([key(3, 1)], 'hl');
+          rt.msg('🎰 RESPIN grátis!'); rt.fx('rise');
+          await rt.wait(700);
+        }
+      },
+      async bonus() {},
+    }));
+  })();
 })();

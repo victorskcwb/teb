@@ -1191,8 +1191,10 @@ select { padding: 9px 10px; border-radius: 12px; background: var(--bg2); border:
 .kc.mk-brown { box-shadow: inset 0 0 0 3px #a16207; }
 .kc.mk-red { box-shadow: inset 0 0 0 3px #ef4444; }
 .kc.mk-green { box-shadow: inset 0 0 0 3px #4ade80; }
+.kc.mk-yellow { box-shadow: inset 0 0 0 3px #facc15; }
+.kc[class*=" mk-"] { background-image: radial-gradient(circle, transparent 55%, rgba(255,255,255,.12)); }
 .mkt { padding: 0 6px; border-radius: 6px; }
-.mkt.mk-blue { background: #0369a1; } .mkt.mk-pink { background: #be185d; } .mkt.mk-brown { background: #854d0e; } .mkt.mk-red { background: #b91c1c; } .mkt.mk-green { background: #15803d; }
+.mkt.mk-blue { background: #0369a1; } .mkt.mk-pink { background: #be185d; } .mkt.mk-brown { background: #854d0e; } .mkt.mk-red { background: #b91c1c; } .mkt.mk-green { background: #15803d; } .mkt.mk-yellow { background: #a16207; }
 .kit-pick { flex-wrap: wrap; justify-content: center; }
 .kit-pick .god { background: linear-gradient(180deg, var(--k1), var(--k2)); min-width: 120px; max-width: 200px; }
 .kit-reveal { display: flex; flex-direction: column; align-items: center; gap: 4px; margin-top: 8px; }
@@ -1346,3 +1348,26 @@ select { padding: 9px 10px; border-radius: 12px; background: var(--bg2); border:
 .lite .kit-frame.shake { animation-duration: .3s; }
 .claim-all-m { width: 100%; margin: 4px 0 10px; animation: pulse 1.6s infinite; }
 .lite .claim-all-m { animation: none; }
+
+/* =========================================================
+   Símbolos especiais em destaque (scatter / coringa / prêmios)
+   ========================================================= */
+.kc.sc { background: radial-gradient(circle at 50% 38%, #c084fc, #7e22ce 55%, #3b0764); box-shadow: inset 0 0 0 2px #facc15, 0 0 10px rgba(250, 204, 21, .55); animation: specPulse 1.6s ease-in-out infinite; }
+.kc.wild { box-shadow: inset 0 0 0 2px #fff7c2, 0 0 10px rgba(251, 191, 36, .6); }
+.kc.cash { box-shadow: inset 0 0 0 2px #22c55e; background: radial-gradient(circle at 50% 38%, rgba(74, 222, 128, .35), rgba(21, 128, 61, .25) 70%); }
+.kc.mulx { box-shadow: inset 0 0 0 2px #38bdf8; background: radial-gradient(circle at 50% 38%, rgba(125, 211, 252, .35), rgba(3, 105, 161, .25) 70%); }
+.stag { position: absolute; left: 50%; top: 1px; transform: translateX(-50%); z-index: 2; pointer-events: none; padding: 0 4px; border-radius: 4px; font-size: clamp(6px, 1.7vw, 9px); font-weight: 900; font-style: normal; line-height: 1.35; letter-spacing: .4px; color: #fff; background: linear-gradient(180deg, #a855f7, #6b21a8); box-shadow: 0 1px 2px rgba(0, 0, 0, .5); white-space: nowrap; }
+.stag.w { background: linear-gradient(180deg, #ef4444, #991b1b); }
+@keyframes specPulse { 0%, 100% { filter: brightness(1); } 50% { filter: brightness(1.25); } }
+/* motores clássicos: mesma ideia com pseudo-elementos */
+.cell.is-wild, .pcell.wild, .pcell.scatter, .sc-cell.scatter, .rc.scatter { position: relative; }
+.cell.is-wild::after, .pcell.wild::after, .pcell.scatter::after, .sc-cell.scatter::after, .rc.scatter::after {
+  content: "WILD"; position: absolute; left: 50%; top: 1px; transform: translateX(-50%); z-index: 2; pointer-events: none; padding: 0 4px; border-radius: 4px;
+  font-size: clamp(6px, 1.7vw, 9px); font-weight: 900; line-height: 1.35; letter-spacing: .4px; color: #fff; background: linear-gradient(180deg, #ef4444, #991b1b); box-shadow: 0 1px 2px rgba(0, 0, 0, .5); }
+.pcell.scatter::after, .sc-cell.scatter::after, .rc.scatter::after { content: "BÔNUS"; background: linear-gradient(180deg, #a855f7, #6b21a8); }
+.pcell.wild.scatter::after { content: "WILD · BÔNUS"; }
+.cell.is-wild, .pcell.wild { box-shadow: inset 0 0 0 2px #fff7c2, 0 0 10px rgba(251, 191, 36, .6); }
+.pcell.scatter, .sc-cell.scatter, .rc.scatter { background: radial-gradient(circle at 50% 38%, #c084fc, #7e22ce 55%, #3b0764); box-shadow: inset 0 0 0 2px #facc15, 0 0 10px rgba(250, 204, 21, .55); animation: specPulse 1.6s ease-in-out infinite; }
+.lite .kc.sc, .lite .pcell.scatter, .lite .sc-cell.scatter, .lite .rc.scatter { animation: none; }
+/* linha horizontal do topo (Megaways com trilho) */
+.kc.trk { background: linear-gradient(180deg, rgba(250, 204, 21, .28), rgba(250, 204, 21, .08)); box-shadow: inset 0 -2px 0 #facc15; }

@@ -26,12 +26,14 @@
   const xways = (g, SY, rt) => { if (!g.flat().some(x => x.xw)) return; const s = RNG.pick(SY); g.forEach((col, c) => col.forEach((x, r) => { if (x.xw) { const n = RNG.int(2, 4); g[c][r] = { ...s, n, t: '×' + n, c: 'gold', fresh: true }; } })); if (rt) rt.msg(`❓ xWays: ${s.name}!`); };
   /** xSplit: o símbolo dividido conta em dobro */
   const xsplit = (g, c, r) => { const x = g[c][r]; g[c][r] = { ...x, n: (x.n || 1) * 2, t: '×' + (x.n || 1) * 2, c: 'gold' }; };
+  /** Nível do bônus: pelo número de scatters ou, na compra, sorteado com as chances naturais (3, 4, 5...) */
+  const tierSc = (o = {}, ws = [80, 17, 3], def = 3) => (o.buy ? def + RNG.weighted(ws.map((w, i) => ({ i, w }))).i : o.sc || def);
   const ENH = [{ e: null, w: 55 }, { e: 'wild', w: 18 }, { e: 'xways', w: 12 }, { e: 'split', w: 10 }, { e: 'high', w: 5 }];
 
   /* 21. Gênio Dourado e os Coringas Andantes */
   (() => {
     const SY = wsyms([['jasmine', 'princess', 'Princesa'], ['aladim', 'prince', 'Aladim'], ['lampada', 'oillamp', 'Lâmpada'], ['tigre', 'tiger2', 'Tigre']]);
-    const GENIE = { id: 'w', img: 'genie', name: 'Gênio', wild: true, sc: true, w: 0.9, fw: 0.6 };
+    const GENIE = { id: 'w', img: 'genie', name: 'Gênio', wild: true, sc: true, w: 0.95, fw: 0.85 };
     const draw = pool([...SY, GENIE]);
     const make = wk => grid([3, 3, 3, 3, 3], c => draw(c, wk));
     const both = g => { const a = lines(g, L20, SY), b = lines(g.slice().reverse(), L20, SY); return { total: a.total + b.wins.filter(w => w.n < 5).reduce((s, w) => s + w.pay, 0), wins: a.wins, cells: a.cells }; };
@@ -52,22 +54,33 @@
       symbols: [...SY, GENIE],
       lineList: { cols: 5, rows: 3, list: L20, text: '20 linhas fixas.' },
       tables: [table('Pagamento por linha', heads(3, 3), SY, 'Iguais seguidos a partir da esquerda.')],
-      highlights: ['🧞 O <b>Gênio</b> é coringa e scatter', '✨ <b>Desejo:</b> Aladim logo à esquerda da lâmpada transforma as cartas num símbolo alto', '🪔 <b>Lâmpadas:</b> rolos 2 e 4 viram coringa e o giro paga <b>dos dois lados</b>', '3+ Gênios = <b>Desfile do Gênio</b>: os gênios <b>andam</b> um rolo para a esquerda a cada giro, ganham <b>+1 de multiplicador</b> a cada passo (até x10), novos gênios entram pelo rolo 5 e o bônus dura enquanto houver gênio (mínimo 8 giros)', 'Prêmio máximo: <b>9.583x</b>'],
+      highlights: ['🧞 O <b>Gênio</b> é coringa e scatter', '✨ <b>Desejo:</b> Aladim logo à esquerda da lâmpada transforma as cartas num símbolo alto', '🪔 <b>Lâmpadas:</b> rolos 2 e 4 viram coringa e o giro paga <b>dos dois lados</b>', '3+ Gênios = <b>Desfile do Gênio</b>: cada gênio <b>anda</b> um rolo para a esquerda por giro e ganha <b>+1 no próprio multiplicador</b> a cada passo; ao sair da tela, <b>passa o multiplicador</b> para o gênio mais próximo. O bônus dura enquanto houver gênio', 'Prêmio máximo: <b>9.583x</b>'],
       how: '<p>Grade 5×3 com 20 linhas. Dois recursos podem aparecer no jogo base: o Desejo e as Lâmpadas do Gênio.</p>',
-      features: '<p>🧞 <b>3 ou mais Gênios</b> começam o <b>Desfile</b>: não há número fixo de giros; os gênios ficam e andam uma casa para a esquerda a cada giro, com multiplicador que cresce a cada passo (até x10), e novos gênios entram no desfile pelo último rolo. O bônus dura pelo menos 8 giros e acaba quando não sobrar nenhum.</p>',
+      features: '<p>🧞 <b>3 ou mais Gênios</b> começam o <b>Desfile</b>: não há número fixo de giros. Cada gênio fica na tela e anda uma casa para a esquerda a cada giro, somando <b>+1 no seu multiplicador</b> a cada passo. Quando um gênio sai pela esquerda, o multiplicador dele <b>vai para o gênio mais próximo</b>, que continua crescendo. Novos gênios entram no desfile pelo último rolo, e o bônus acaba quando não sobrar nenhum.</p>',
       make: () => make('w'),
       async spin(rt) { const g = make('w'); if (await play(rt, g) >= 3) { rt.mark(scatters(g)); await rt.wait(1000); await this.bonus(rt, { g }); } },
       async bonus(rt, { g } = {}) {
-        let walk = g ? cells(g, x => x.wild).map(([c, r]) => [c, r]) : [[4, 0], [4, 1], [4, 2]];
+        // cada gênio guarda o próprio multiplicador (m), que cresce +1 a cada passo
+        let walk = (g ? cells(g, x => x.wild) : [[4, 0], [4, 1], [4, 2]]).map(([c, r]) => ({ c, r, m: 1 }));
         await rt.fsLoop(1, async api => {
-          walk = walk.map(([c, r]) => [c - 1, r]).filter(([c]) => c >= 0);
+          walk.forEach(w => { w.c--; w.m++; });
+          const out = walk.filter(w => w.c < 0);
+          walk = walk.filter(w => w.c >= 0);
+          // quem sai da tela passa o multiplicador para o gênio mais próximo
+          out.forEach(o => {
+            const t = walk.slice().sort((a, b) => (a.c + Math.abs(a.r - o.r)) - (b.c + Math.abs(b.r - o.r)))[0];
+            if (t) { t.m += o.m; rt.msg(`🧞 Um gênio saiu e passou x${o.m} adiante: x${t.m}!`); }
+          });
+          // dois gênios na mesma casa viram um só, somando os multiplicadores
+          const at = {};
+          walk = walk.filter(w => { const k = key(w.c, w.r); if (at[k]) { at[k].m += w.m; return false; } at[k] = w; return true; });
           const gg = make('fw');
-          if (RNG.float() < 0.2) walk.push([4, RNG.int(0, 2)]);
-          walk.forEach(([c, r]) => { gg[c][r] = mult({ ...GENIE, sc: false, c: 'sticky' }, Math.min(10, api.i + 1)); });
+          if (RNG.float() < 0.3) { const r = RNG.int(0, 2); if (!at[key(4, r)]) walk.push({ c: 4, r, m: 1 }); }
+          walk.forEach(w => { gg[w.c][w.r] = mult({ ...GENIE, sc: false, c: 'sticky' }, w.m); });
           await rt.spin(gg, { tease: false });
-          cells(gg, x => x.wild && x.sc).forEach(([c, r]) => walk.push([c, r]));
+          cells(gg, x => x.wild && x.sc).forEach(([c, r]) => walk.push({ c, r, m: 1 }));
           await pay(rt, lines(gg, L20, SY, { mult: 'add' }));
-          if ((walk.length || api.i < 7) && api.left === 0 && api.i < 40) api.add(1, true);
+          if (walk.length && api.left === 0 && api.i < 60) api.add(1, true);
         }, { title: 'DESFILE DO GÊNIO', sub: 'Dura enquanto houver gênio', label: 'DESFILE' });
       },
     }));
@@ -76,8 +89,8 @@
   /* 22. Vias Lácteas — coringas solares e giros de fusão */
   (() => {
     const SY = msyms([['astronauta', 'astronaut', 'Astronauta'], ['foguete', 'rocket', 'Foguete'], ['planeta', 'ringedplanet', 'Planeta'], ['cometa', 'comet', 'Cometa']]);
-    const WILD = { id: 'w', img: 'sunface', name: 'Coringa solar', wild: true, w: 0.55, fw: 0.22 };
-    const SC = { id: 'sc', img: 'milkyway', name: 'Galáxia', sc: true, w: 1.05, fw: 0 };
+    const WILD = { id: 'w', img: 'sunface', name: 'Coringa solar', wild: true, w: 0.55, fw: 0.1 };
+    const SC = { id: 'sc', img: 'milkyway', name: 'Galáxia', sc: true, w: 0.86, fw: 0 };
     const draw = pool([...SY, WILD, SC]);
     const cell = (c, wk) => { const x = draw(c, wk); if (x.wild) mult(x, RNG.int(1, wk === 'fw' ? 2 : 3)); if (x.m === 1) { delete x.m; delete x.t; } return x; };
     const make = (rows, wk) => grid([rows, rows, rows, rows, rows], c => cell(c, wk));
@@ -88,19 +101,21 @@
       intro: 'Inspirado no "Milky Ways" (Nolimit City).', hello: 'Coringas solares se multiplicam!',
       symbols: [...SY, WILD, SC],
       tables: [table('Pagamento por caminho', heads(3, 3, ' rolos'), SY, 'De 243 (5×3) até 3.125 (5×5) caminhos.')],
-      highlights: ['🌌 5×3 com 243 caminhos', '☀️ <b>Coringas solares</b> com x1 a x3 que <b>se multiplicam</b>', '3 galáxias = <b>3 giros</b> numa grade <b>5×5</b> (3.125 caminhos) com <b>1 coringa garantido</b>', '🔗 <b>Giros de Fusão:</b> cada ganho nas grátis prende os vencedores e gira o resto mais uma vez', 'Prêmio máximo: <b>5.664x</b>'],
+      highlights: ['🌌 5×3 com 243 caminhos', '☀️ <b>Coringas solares</b> com x1 a x3 que <b>se multiplicam</b>', '3 galáxias = <b>3 giros</b> numa grade <b>5×5</b> (3.125 caminhos) com <b>2 coringas garantidos</b> nos rolos do meio', '🔗 <b>Giros de Fusão:</b> cada ganho nas grátis prende os vencedores e gira o resto de novo, <b>enquanto o ganho melhorar</b>', 'Prêmio máximo: <b>5.664x</b>'],
       how: '<p>Grade 5×3 que paga por caminhos. Coringas solares podem vir com multiplicador, e os multiplicadores de coringas no mesmo caminho se multiplicam.</p>',
-      features: '<p>🌌 <b>3 galáxias</b> dão <b>3 rodadas grátis</b> numa grade 5×5 com um coringa garantido. Sempre que houver ganho, começa a <b>Fusão</b>: os símbolos vencedores ficam presos e o resto gira mais uma vez. 3 galáxias nas grátis dão +3.</p>',
+      features: '<p>🌌 <b>3 galáxias</b> dão <b>3 rodadas grátis</b> numa grade 5×5 com <b>dois coringas garantidos</b> nos rolos do meio. Sempre que houver ganho, começa a <b>Fusão</b>: os símbolos vencedores ficam presos e o resto gira de novo. Se o ganho melhorar, a fusão se repete; se não melhorar, ela termina. 3 galáxias nas grátis dão +3.</p>',
       make: () => make(3, 'w'),
       async spin(rt) { rt.layout(3); const g = make(3, 'w'); await rt.spin(g); await pay(rt, ways(g, SY)); if (count(g, x => x.sc) >= 3) { rt.mark(scatters(g)); await rt.wait(1000); await this.bonus(rt, {}); } },
       async bonus(rt) {
         rt.layout(5);
         await rt.fsLoop(3, async api => {
           let g = make(5, 'fw');
-          g[RNG.int(0, 4)][RNG.int(0, 4)] = { ...WILD };
+          // 2 coringas garantidos nos rolos do meio (2 a 4), em rolos diferentes
+          RNG.shuffle([1, 2, 3]).slice(0, 2).forEach(c => { g[c][RNG.int(0, 4)] = { ...WILD }; });
           await rt.spin(g, { tease: false });
           let res = ways(g, SY); await pay(rt, res);
-          for (let guard = 0; guard < 1 && res.total && !rt.capped; guard++) {
+          // a fusão se repete enquanto o ganho melhorar
+          for (let guard = 0; guard < 12 && res.total && !rt.capped; guard++) {
             const ng = make(5, 'fw'); res.cells.forEach(k => { const [c, r] = unkey(k); ng[c][r] = { ...g[c][r], c: 'sticky' }; });
             g = ng; rt.msg('🔗 Fusão: vencedores presos!'); await rt.spin(g, { tease: false });
             const nr = ways(g, SY);
@@ -203,7 +218,7 @@
     const COL = [{ m: 4, w: 40 }, { m: 5, w: 25 }, { m: 10, w: 18 }, { m: 25, w: 10 }, { m: 50, w: 5 }, { m: 250, w: 0.4 }];
     async function play(rt, g, wk, st) {
       let col = 1;
-      if (RNG.float() < (st ? 0.3 : 0.08)) {
+      if (RNG.float() < (st ? 0.4 : 0.08)) {
         const size = RNG.float() < 0.3 ? 3 : 2, s = RNG.pick(SY.slice(0, 4)), c0 = RNG.int(0, 6 - size), r0 = RNG.int(0, 4 - size);
         col = wm(COL);
         for (let a = 0; a < size; a++) for (let b = 0; b < size; b++) g[c0 + a][r0 + b] = { ...s, c: 'giant', t: a === 0 && b === 0 ? 'x' + col : undefined };
@@ -213,7 +228,13 @@
       let m = st ? st.m : 1;
       await tumble(rt, g, {
         draw: c => draw(c, wk), evaluate: gg => ways(gg, SY), mult: (s) => (s === 0 ? col : 1) * m,
-        onStep: async () => { if (st) { st.m += st.step; m = st.m; rt.chip('mult', 'CIPÓ', 'x' + m); } },
+        onStep: async (step, gg, res) => {
+          if (!st) return;
+          // o cipó só sobe quando uma linha inteira (6 casas) entra no ganho
+          let full = 0;
+          for (let r = 0; r < 4; r++) if ([0, 1, 2, 3, 4, 5].every(c => res.cells.has(key(c, r)))) full++;
+          if (full) { st.m += full; m = st.m; rt.msg(`🌿 Linha completa: o cipó sobe para x${m}!`); rt.chip('mult', 'CIPÓ', 'x' + m); }
+        },
       });
       return count(g, x => x.sc);
     }
@@ -222,14 +243,23 @@
       tag: 'Colossais até x250 · cipó multiplicador', colors: ['#16a34a', '#ca8a04'], bg: 'linear-gradient(180deg,#14532d,#3f6212 50%,#713f12)',
       cols: 6, rows: 4, maxWin: 12683, vol: 4, rtp: '~96%', target: 0.96,
       intro: 'Inspirado no "Monkey\'s Gold xPays" (Nolimit City).', hello: 'Símbolos colossais na selva!',
-      symbols: [...SY, WILD, SC],
+      symbols: [...SY, WILD, SC], extraSprites: ['dice2'],
       tables: [table('Pagamento por caminho', heads(3, 4, ' rolos'), SY, '6×4 = 4.096 caminhos, a partir de 3 rolos, com cascata.')],
-      highlights: ['🐒 6×4 com 4.096 caminhos e cascata, pagando a partir de 3 rolos', '🗿 <b>Símbolos colossais</b> 2×2 ou 3×3 com multiplicador de <b>x4 a x250</b> no primeiro ganho', '🛕 3+ templos = <b>10 rodadas grátis</b> com o <b>cipó multiplicador</b>: ele sobe de 1 a 3 a cada cascata e não zera', 'Prêmio máximo: <b>12.683x</b>'],
+      highlights: ['🐒 6×4 com 4.096 caminhos e cascata, pagando a partir de 3 rolos', '🗿 <b>Símbolos colossais</b> 2×2 ou 3×3 com multiplicador de <b>x4 a x250</b> no primeiro ganho', '🛕 3+ templos = <b>10 rodadas grátis</b> (+3 por templo extra) com o <b>cipó multiplicador</b>: um dado define o valor inicial e ele sobe a cada <b>linha completa</b>, sem zerar', 'Prêmio máximo: <b>12.683x</b>'],
       how: '<p>Grade 6×4 que paga por caminhos (3 ou mais rolos seguidos), com cascata. Um símbolo colossal multiplica o primeiro ganho do giro pelo seu valor.</p>',
-      features: '<p>🛕 <b>3 ou mais templos</b> dão <b>10 rodadas grátis</b>. Antes de começar, o passo do cipó é sorteado (+1, +2 ou +3): a cada cascata o multiplicador sobe esse passo e nunca volta.</p>',
+      features: '<p>🛕 <b>3 ou mais templos</b> dão <b>10 rodadas grátis</b>, e cada templo além do terceiro dá <b>+3 giros</b>. Antes de começar, um <b>dado</b> é rolado e define o valor inicial do cipó (x1 a x6). Sempre que uma <b>linha inteira</b> da grade fizer parte de um ganho, o cipó sobe +1, e ele nunca volta. 3 ou mais templos durante o bônus dão +3 giros por templo. Na compra do bônus, o número de templos (e de giros) é sorteado.</p>',
       make: () => make('w'),
-      async spin(rt) { const g = make('w'); if (await play(rt, g, 'w', null) >= 3) { rt.mark(scatters(g)); await rt.wait(1000); await this.bonus(rt, {}); } },
-      async bonus(rt) { const st = { m: 1, step: RNG.weighted([{ m: 1, w: 70 }, { m: 2, w: 22 }, { m: 3, w: 8 }]).m }; rt.msg(`🌿 Passo do cipó: +${st.step}`); await rt.fsLoop(10, async api => { if (await play(rt, make('fw'), 'fw', st) >= 3) api.add(5); }, { sub: `Cipó +${st.step} por cascata` }); rt.chip('mult', null); },
+      async spin(rt) { const g = make('w'); const sc = await play(rt, g, 'w', null); if (sc >= 3) { rt.mark(scatters(g)); await rt.wait(1000); await this.bonus(rt, { sc }); } },
+      async bonus(rt, o = {}) {
+        const sc = tierSc(o, [85, 13, 2]);
+        // o dado define o valor inicial do cipó
+        const die = RNG.weighted([{ v: 1, w: 15 }, { v: 2, w: 20 }, { v: 3, w: 20 }, { v: 4, w: 18 }, { v: 5, w: 15 }, { v: 6, w: 12 }]).v;
+        const st = { m: die };
+        await rt.reveal('DADO DO CIPÓ', [1, 2, 3, 4, 5, 6].map(v => ({ img: 'dice2', label: 'x' + v })), die - 1);
+        rt.msg(`🎲 O dado caiu em ${die}: o cipó começa em x${die}`); rt.chip('mult', 'CIPÓ', 'x' + die);
+        await rt.fsLoop(10 + 3 * (sc - 3), async api => { const n = await play(rt, make('fw'), 'fw', st); if (n >= 3) api.add(3 * n); }, { sub: `Cipó começa em x${die}` });
+        rt.chip('mult', null);
+      },
     }));
   })();
 
@@ -237,7 +267,7 @@
   (() => {
     const L25 = K.LINES_5x3.slice(0, 25).map(L => [...L, L[4]]);
     const SY = [S('viking', 'beardman', 'Guerreiro viking', [1, 3, 10, 30], 3), S('cavaleiro', 'militaryhelmet', 'Cavaleiro', [0.8, 2.5, 8, 25], 3), S('samurai', 'ninja', 'Samurai', [0.6, 2, 6, 20], 4), S('espada', 'sword2', 'Espada', [0.5, 1.5, 5, 15], 5), ...R([[0.15, 0.4, 1.2, 4], [0.15, 0.4, 1.2, 4], [0.1, 0.3, 1, 3], [0.1, 0.3, 1, 3]])];
-    const WILD = { id: 'w', img: 'headstone', name: 'Lápide coringa', wild: true, reels: [1, 2, 3, 4], w: 0.4, fw: 0.6 };
+    const WILD = { id: 'w', img: 'headstone', name: 'Lápide coringa', wild: true, reels: [1, 2, 3, 4], w: 0.4, fw: 1.05 };
     const SC = { id: 'sc', img: 'skull', name: 'Bônus', sc: true, w: 0.75, fw: 0 };
     const draw = pool([...SY, WILD, SC]);
     const make = wk => grid(Array(6).fill(3), c => draw(c, wk));
@@ -262,61 +292,122 @@
       symbols: [...SY, WILD, SC],
       lineList: { cols: 6, rows: 3, list: L25, text: '25 linhas fixas.' },
       tables: [table('Pagamento por linha', heads(3, 4), SY, 'Multiplicadores de coringa na mesma linha se multiplicam.')],
-      highlights: ['🪦 6×3 com 25 linhas', '⬇️ <b>Lápides xNudge</b> (rolos 2 a 5) empurram até cobrir o rolo com <b>+1 por empurrão</b>', '⚔️ <b>Ataque dos Guerreiros:</b> 3 premium iguais são empurrados para encher os rolos', '💀 3/4/5 bônus = <b>8/10/12 Giros do Cemitério</b>: cada empurrão soma no multiplicador global, <b>sem teto</b>; com 5 bônus, as lápides grudam (<b>Giros da Morte</b>)', 'Prêmio máximo: <b>9.797x</b>'],
+      highlights: ['🪦 6×3 com 25 linhas', '⬇️ <b>Lápides xNudge</b> (rolos 2 a 5) empurram até cobrir o rolo com <b>+1 por empurrão</b>', '⚔️ <b>Ataque dos Guerreiros:</b> 3 premium iguais são empurrados para encher os rolos', '💀 3/4/5 bônus = <b>8/10/12 Giros do Cemitério</b>: cada empurrão soma no multiplicador global, <b>sem teto</b>', '☠️ 6 bônus = <b>14 Giros da Morte</b>: além disso, as lápides <b>grudam</b>', 'Prêmio máximo: <b>9.797x</b>'],
       how: '<p>Grade 6×3 com 25 linhas. As lápides são coringas altos que se empurram para dentro do rolo, ganhando +1 por casa.</p>',
-      features: '<p>💀 Nas rodadas grátis, cada empurrão de lápide ou ataque dos guerreiros soma +1 num multiplicador global que vale para todos os ganhos e não zera. Com <b>5 bônus</b>, além disso, os rolos de lápide ficam presos.</p>',
+      features: '<p>💀 <b>3, 4 ou 5 bônus</b> dão <b>8, 10 ou 12 Giros do Cemitério</b>: cada empurrão de lápide ou ataque dos guerreiros soma +1 num multiplicador global que vale para todos os ganhos e não zera. Com <b>6 bônus</b> vêm os <b>14 Giros da Morte</b>, em que, além disso, os rolos de lápide ficam presos até o fim. Na compra do bônus, o número de bônus (e o modo) é sorteado com as chances do jogo normal.</p>',
       make: () => make('w'),
       async spin(rt) { const g = make('w'); const sc = await play(rt, g, null); if (sc >= 3) { rt.mark(scatters(g)); await rt.wait(1000); await this.bonus(rt, { sc }); } },
-      async bonus(rt, { sc = 3 } = {}) { const st = { m: 1, sticky: sc >= 5 ? new Map() : null }; await rt.fsLoop({ 3: 8, 4: 10 }[sc] || 12, async () => { await play(rt, make('fw'), st); }, { title: st.sticky ? 'GIROS DA MORTE' : 'GIROS DO CEMITÉRIO', sub: 'Multiplicador global sem teto' }); rt.chip('mult', null); },
+      async bonus(rt, o = {}) { const sc = tierSc(o, [78, 17, 4, 1]), st = { m: 1, sticky: sc >= 6 ? new Map() : null }; await rt.fsLoop({ 3: 8, 4: 10, 5: 12 }[sc] || 14, async () => { await play(rt, make('fw'), st); }, { title: st.sticky ? 'GIROS DA MORTE' : 'GIROS DO CEMITÉRIO', sub: 'Multiplicador global sem teto' }); rt.chip('mult', null); },
     }));
   })();
 
-  /* 27. Buraco de Fogo 2 — a mina desaba e abre linhas */
+  /* 27. Buraco de Fogo 2 — xBomb abre a mina; Vagão da Sorte com moedas */
   (() => {
     const SY = msyms([['anao', 'man', 'Mineiro'], ['picareta', 'pick', 'Picareta'], ['lanterna', 'lantern', 'Lanterna'], ['carrinho', 'minecart', 'Carrinho']]);
-    const BOMB = { id: 'w', img: 'firecracker', name: 'Coringa xBomb', wild: true, bomb: true, w: 0.3, fw: 0.5 };
-    const SC = { id: 'sc', img: 'chest', name: 'Baú', sc: true, w: 0.55, fw: 0.3 };
+    const BOMB = { id: 'w', img: 'firecracker', name: 'Coringa xBomb', wild: true, bomb: true, w: 0.3 };
+    const SC = { id: 'sc', img: 'chest', name: 'Baú', sc: true, w: 0.55 };
     const draw = pool([...SY, BOMB, SC]);
-    const cell = (c, wk) => { const x = draw(c, wk); if (x.bomb) mult(x, wm([{ m: 1, w: 40 }, { m: 2, w: 30 }, { m: 3, w: 15 }, { m: 5, w: 10 }, { m: 10, w: 4 }, { m: 25, w: 1 }])); if (x.m === 1) { delete x.m; delete x.t; } return x; };
-    const make = (rows, wk) => grid(Array(6).fill(6), (c, r) => (r < 6 - rows ? LOCK('rock') : cell(c, wk)));
-    async function play(rt, g, wk, open) {
-      let rows = open;
-      await rt.spin(g, { tease: false });
-      await tumble(rt, g, {
-        draw: c => cell(c, wk),
-        evaluate: gg => ways(gg, SY, { wildMult: 'add' }),
-        keep: x => x.id === 'lock',
-        onStep: async (s, gg) => {
-          // cada desabamento abre mais uma linha da mina (até 6)
-          if (rows < 6) { rows++; const r = 6 - rows; gg.forEach((col, c) => { if (col[r].id === 'lock') col[r] = { ...cell(c, wk), fresh: true }; }); rt.msg(`⛏️ A mina desabou: ${rows} linhas`); }
-        },
-      });
-      return { sc: count(g, x => x.sc), rows };
+    const H = 6;
+    /** as linhas de cima ficam abertas; as escondidas (pedra) ficam embaixo */
+    const make = (open = 3) => grid(Array(6).fill(H), (c, r) => (r >= open ? LOCK('rock') : draw(c)));
+    async function play(rt, g, st) {
+      for (let guard = 0; guard < 40 && !rt.capped; guard++) {
+        const res = ways(g, SY);
+        if (res.total) await pay(rt, res, st.m);
+        if (rt.capped) break;
+        const rm = new Set(res.cells);
+        // todo xBomb na tela explode (mesmo sem ganho): destrói os vizinhos, +1 no multiplicador e abre uma linha
+        const bombs = cells(g, x => x.bomb);
+        bombs.forEach(([c, r]) => { for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) { const y = g[c + a] && g[c + a][r + b]; if (y && y.id !== 'lock' && !y.sc) rm.add(key(c + a, r + b)); } });
+        if (!rm.size) break;
+        const before = st.open;
+        if (bombs.length) {
+          st.m += bombs.length; st.open = Math.min(H, st.open + bombs.length);
+          rt.chip('mult', 'MULT.', 'x' + st.m); rt.msg(`🧨 xBomb! Multiplicador x${st.m}${st.open > before ? ` · ${st.open} linhas abertas` : ''}`); rt.fx('boom');
+          if (st.open > before) rt.chip('rows', 'LINHAS', st.open);
+        }
+        rt.mark([...rm], 'burst'); await rt.wait(200);
+        g.forEach((col, c) => {
+          const stay = col.slice(0, before).filter((x, r) => !rm.has(key(c, r)));
+          g[c] = [...Array.from({ length: st.open - stay.length }, () => ({ ...draw(c), fresh: true })), ...stay, ...Array.from({ length: H - st.open }, () => LOCK('rock'))];
+        });
+        await rt.drop(g);
+      }
+      rt.chip('mult', null); rt.chip('rows', null);
+      return count(g, x => x.sc);
+    }
+    const CV = [{ v: 0.5, w: 30 }, { v: 1, w: 30 }, { v: 2, w: 20 }, { v: 5, w: 12 }, { v: 10, w: 6 }, { v: 25, w: 1.8 }, { v: 100, w: 0.2 }];
+    const COIN = () => ({ id: 'moeda', img: 'coin', name: 'Moeda', coin: true, noPay: true, v: 12 * RNG.weighted(CV).v });
+    const EMPTY = () => ({ id: 'vazio', img: null, c: 'empty', noPay: true });
+    const CARTS = [{ k: 'valor', w: 45 }, { k: 'carga', w: 30 }, { k: 'mult', w: 25 }];
+    async function wagon(rt, rows) {
+      rt.stat('hold');
+      await rt.banner('VAGÃO DA SORTE', `${rows} linhas · moedas travam e reiniciam os 3 giros`, 1500);
+      const g = grid(Array(6).fill(H), (c, r) => (r >= rows ? LOCK('rock') : RNG.float() < 0.2 ? COIN() : EMPTY()));
+      while (count(g, x => x.coin) < 3) { const c = RNG.int(0, 5), r = RNG.int(0, rows - 1); g[c][r] = COIN(); }
+      const cm = Array(6).fill(1), keep = [];
+      // carrinho: valor (+moeda em cada moeda do rolo), carga (enche o rolo de moedas) ou mult (+1x no rolo)
+      const cart = (k, c) => {
+        let got = 0;
+        if (k === 'valor') { g[c].forEach(x => { if (x.coin) x.v += 12; }); rt.msg(`🛒 Carrinho de valor no rolo ${c + 1}!`); }
+        if (k === 'carga') { g[c].forEach((x, r) => { if (r < rows && !x.coin) { g[c][r] = { ...COIN(), fresh: true }; got++; } }); if (got) rt.msg(`🛒 Carrinho de carga encheu o rolo ${c + 1}!`); }
+        if (k === 'mult') { cm[c]++; rt.msg(`🛒 Carrinho multiplicador: rolo ${c + 1} x${cm[c]}`); }
+        return got;
+      };
+      rt.show(g);
+      let left = 3;
+      while (left > 0 && !rt.capped) {
+        rt.chip('fs', 'GIROS', left);
+        left--;
+        let got = 0;
+        g.forEach((col, c) => col.forEach((x, r) => { if (r < rows && !x.coin && RNG.float() < 0.07) { g[c][r] = { ...COIN(), fresh: true }; got++; } }));
+        keep.forEach(e => { got += cart(e.k, e.c); });
+        if (RNG.float() < 0.12) {
+          const e = { k: RNG.weighted(CARTS).k, c: RNG.int(0, 5) };
+          got += cart(e.k, e.c);
+          if (keep.length < 2 && RNG.float() < 0.25) { keep.push(e); rt.msg(`✨ Carrinho dourado: ele volta em todo giro (rolo ${e.c + 1})!`); }
+          rt.fx('big');
+        }
+        await rt.drop(g);
+        if (got) left = 3;
+        if (g.every(col => col.every((x, r) => r >= rows || x.coin))) { cm.forEach((m, c) => { cm[c] = m * 2; }); rt.msg('TELA CHEIA! Tudo x2'); break; }
+        await rt.wait(350);
+      }
+      rt.chip('fs', null);
+      const v = g.reduce((s, col, c) => s + col.filter(x => x.coin).reduce((a, x) => a + x.v, 0) * cm[c], 0);
+      rt.win(v);
+      rt.msg(`🛒 Vagão da sorte: ${rt.coins(v)}`);
+      rt.fx('big');
+      await rt.wait(900);
     }
     App.register(K.create({
       id: 'buracofogo2', name: 'Buraco de Fogo 2', studio: STUDIO, art: 'firecracker', mascot: 'pick',
-      tag: 'Mina desaba · até 46.656 caminhos', colors: ['#ea580c', '#44403c'], bg: 'linear-gradient(180deg,#292524,#57534e 50%,#7c2d12)',
+      tag: 'xBomb abre a mina · Vagão da Sorte', colors: ['#ea580c', '#44403c'], bg: 'linear-gradient(180deg,#292524,#57534e 50%,#7c2d12)',
       cols: 6, rows: 6, maxWin: 65000, vol: 5, rtp: '~96,1%', target: 0.961,
-      intro: 'Inspirado no "Fire in the Hole 2" (Nolimit City).', hello: 'Cada desabamento abre a mina!',
-      symbols: [...SY, BOMB, SC], extraSprites: ['rock'],
-      tables: [table('Pagamento por caminho', heads(3, 4, ' rolos'), SY, 'De 729 (3 linhas) até 46.656 caminhos (6 linhas).')],
-      highlights: ['⛏️ 6 rolos que começam com <b>3 linhas abertas</b>; cada cascata <b>desaba a mina</b> e abre mais uma, até 6 (46.656 caminhos)', '🧨 <b>Coringas xBomb</b> com multiplicador de até x25', '📦 3+ baús = <b>Vagão da Sorte</b>: 8 giros em que as linhas que desabam, <b>não fecham</b> mais', 'Prêmio máximo: <b>65.000x</b>'],
-      how: '<p>6 rolos com 6 linhas, das quais só as 3 de baixo começam abertas. Ganhos pagam por caminho e somem (cascata); a cada cascata uma nova linha de pedra é aberta.</p>',
-      features: '<p>📦 <b>3 ou mais baús</b> dão <b>8 rodadas grátis</b> no Vagão da Sorte: toda linha que desabar fica aberta até o fim e os coringas xBomb caem mais. 3 baús nelas dão +4.</p>',
-      make: () => make(3, 'w'),
-      async spin(rt) { const g = make(3, 'w'); const r = await play(rt, g, 'w', 3); if (r.sc >= 3) { rt.mark(scatters(g)); await rt.wait(1000); await this.bonus(rt, {}); } },
-      async bonus(rt) { let open = 3; await rt.fsLoop(8, async api => { const r = await play(rt, make(open, 'fw'), 'fw', open); open = r.rows; if (r.sc >= 3) api.add(4); }, { title: 'VAGÃO DA SORTE', sub: 'As linhas abertas ficam abertas' }); },
+      intro: 'Inspirado no "Fire in the Hole 2" (Nolimit City).', hello: 'Cada xBomb abre mais a mina!',
+      symbols: [...SY, BOMB, SC], extraSprites: ['rock', 'coin'],
+      tables: [table('Pagamento por caminho', heads(3, 4, ' rolos'), SY, 'De 729 (6×3) até 46.656 caminhos (6×6).')],
+      highlights: ['⛏️ Grade que começa em <b>6×3</b> e cresce até <b>6×6</b> (46.656 caminhos), com cascata', '🧨 <b>xBomb</b> é coringa e explode: destrói os vizinhos (mesmo sem ganho), soma <b>+1 no multiplicador</b> do giro e <b>abre uma linha</b> escondida embaixo', '📦 3/4/5 baús = <b>Vagão da Sorte</b> com 3, 4 ou 6 linhas: moedas travam e cada moeda nova reinicia os 3 giros', '🛒 <b>Carrinhos</b> somam valor, enchem um rolo de moedas ou multiplicam o rolo; os dourados <b>voltam em todo giro</b>', 'Prêmio máximo: <b>65.000x</b>'],
+      how: '<p>6 rolos com 6 linhas, das quais só as 3 de cima começam abertas; as de baixo estão escondidas na pedra. Ganhos pagam por caminho e somem (cascata).</p><p>🧨 O <b>xBomb</b> é coringa. Depois do pagamento ele explode, destruindo as casas vizinhas mesmo que não façam parte de um ganho, soma +1 no multiplicador global do giro e abre mais uma linha embaixo, até 6×6. A cascata continua enquanto houver ganho ou explosão.</p>',
+      features: '<p>📦 <b>3, 4 ou 5 baús</b> abrem o <b>Vagão da Sorte</b> com 3, 4 ou 6 linhas de moedas. As moedas travam, e cada moeda nova <b>reinicia os 3 giros</b>. De vez em quando passa um <b>carrinho</b>: o de valor soma uma moeda a cada moeda do rolo, o de carga enche o rolo de moedas e o multiplicador soma +1x no rolo. Um carrinho pode vir <b>dourado</b> e voltar em todos os giros seguintes. Encher a tela dobra tudo. Na compra do bônus, o número de baús (e de linhas) é sorteado com as chances do jogo normal.</p>',
+      make: () => make(3),
+      async spin(rt) { const g = make(3); await rt.spin(g); const sc = await play(rt, g, { m: 1, open: 3 }); if (sc >= 3) { rt.mark(scatters(g)); await rt.wait(1000); await this.bonus(rt, { sc }); } },
+      async bonus(rt, o = {}) { const sc = tierSc(o, [90, 9, 1]); await wagon(rt, { 3: 3, 4: 4 }[sc] || 6); },
     }));
   })();
 
-  /* 28. Sangue e Sombra 2 — barra do ritual */
+  /* 28. Sangue e Sombra 2 — barra do ritual e o Reino do Terror */
   (() => {
     const SY = msyms([['lobo', 'wolf', 'Lobo'], ['serpente', 'snake', 'Serpente'], ['corvo', 'crow', 'Corvo'], ['vela', 'candle', 'Vela']]);
     const WILD = { id: 'w', img: 'eye', name: 'Coringa', wild: true, w: 0.4 };
-    const SC = { id: 'sc', img: 'church', name: 'Igreja', sc: true, w: 0.36, fw: 0.3 };
+    const SC = { id: 'sc', img: 'church', name: 'Igreja', sc: true, w: 0.4, fw: 0.3 };
     const draw = pool([...SY, WILD, SC]);
+    // Reino do Terror: só símbolos altos e coringas
+    const drawR = pool([...SY.slice(0, 4), { ...WILD, w: 0.45 }]);
     const make = wk => grid([5, 5, 5, 5, 5], c => draw(c, wk));
     const LV = [0, 20, 50, 100];
+    const HIGH = SY.slice(0, 4).map(x => x.id);
+    const FULL = 100;
     async function play(rt, g, wk, st) {
       const S2 = st || { pts: 0, sticky: new Set() };
       const lvl = () => LV.filter(v => S2.pts >= v).length - 1;
@@ -324,62 +415,101 @@
       await rt.drop(g);
       await tumble(rt, g, {
         draw: c => draw(c, wk), keep: x => x.wild && x.c === 'sticky',
-        evaluate: gg => { const res = ways(gg, SY); res.wins.forEach(w => { if (SY.indexOf(w.sym) < 4) S2.pts += w.n; }); return res; },
+        evaluate: (gg, step) => {
+          // limite de cascatas: os coringas colantes não podem prender a grade num ganho sem fim
+          if (step >= 8) return { total: 0, wins: [], cells: new Set() };
+          const res = ways(gg, SY);
+          // no jogo base cada ganho alto soma o nº de rolos; nos Giros da Vela, cada símbolo alto vencedor soma 1 ponto
+          if (st) res.cells.forEach(k => { const [c, r] = unkey(k); if (HIGH.includes(gg[c][r].id)) S2.pts++; });
+          else res.wins.forEach(w => { if (SY.indexOf(w.sym) < 4) S2.pts += w.n; });
+          return res;
+        },
         mult: () => [1, 1, 1.5, 2][lvl()],
-        onStep: async () => { const L = lvl(); if (L >= 1 && S2.sticky.size < L) { const k = key(RNG.int(0, 4), RNG.int(0, 4)); S2.sticky.add(k); } rt.chip('rit', 'RITUAL', `Nv ${L} · ${S2.pts}`); },
+        onStep: async () => { const L = lvl(); if (L >= 1 && S2.sticky.size < L) { const k = key(RNG.int(0, 4), RNG.int(0, 4)); S2.sticky.add(k); } rt.chip('rit', 'RITUAL', st ? `Nv ${L} · ${Math.min(S2.pts, FULL)}/${FULL}` : `Nv ${L} · ${S2.pts}`); },
       });
       if (!st) rt.chip('rit', null);
-      return count(g, x => x.sc);
+      return { sc: count(g, x => x.sc), lvl: lvl() };
+    }
+    async function reign(rt) {
+      const sticky = new Map();
+      await rt.fsLoop(6, async () => {
+        const g = grid([5, 5, 5, 5, 5], c => drawR(c));
+        sticky.forEach((x, k) => { const [c, r] = unkey(k); g[c][r] = x; });
+        await rt.spin(g, { tease: false });
+        cells(g, x => x.wild && x.c !== 'sticky').forEach(([c, r]) => { const x = { ...WILD, c: 'sticky' }; sticky.set(key(c, r), x); g[c][r] = x; });
+        await rt.drop(g);
+        await pay(rt, ways(g, SY));
+      }, { title: 'REINO DO TERROR', sub: 'Só símbolos altos · coringas colantes' });
     }
     App.register(K.create({
       id: 'sanguesombra2', name: 'Sangue e Sombra 2', studio: STUDIO, art: 'church', mascot: 'wolf',
-      tag: 'Barra do ritual · coringas colantes', colors: ['#7f1d1d', '#111827'], bg: 'radial-gradient(circle at 50% 20%,#450a0a,#020617 70%)',
+      tag: 'Barra do ritual · Reino do Terror', colors: ['#7f1d1d', '#111827'], bg: 'radial-gradient(circle at 50% 20%,#450a0a,#020617 70%)',
       cols: 5, rows: 5, maxWin: 16161, vol: 5, rtp: '~96,1%', target: 0.961,
       intro: 'Inspirado no "Blood & Shadow 2" (Nolimit City).', hello: 'Complete o ritual...',
       symbols: [...SY, WILD, SC],
       tables: [table('Pagamento por caminho', heads(3, 3, ' rolos'), SY, '5×5 = 3.125 caminhos, com cascata.')],
-      highlights: ['🕯️ 5×5 com 3.125 caminhos e cascata', '🩸 <b>Barra do Ritual:</b> ganhos com os símbolos altos somam pontos; nos níveis 1, 2 e 3 aparecem <b>coringas colantes</b> e o multiplicador vai a <b>x1,5</b> e <b>x2</b>', '⛪ 3+ igrejas = <b>10 Giros da Vela</b> em que a barra do ritual <b>não zera</b>', 'Prêmio máximo: <b>16.161x</b>'],
+      highlights: ['🕯️ 5×5 com 3.125 caminhos e cascata', '🩸 <b>Barra do Ritual:</b> ganhos com os símbolos altos somam pontos; nos níveis 1, 2 e 3 aparecem <b>coringas colantes</b> e o multiplicador vai a <b>x1,5</b> e <b>x2</b>', '⛪ 3 ou 4 igrejas = <b>Giros da Vela</b>: 10 giros, <b>+2 por nível</b> do ritual alcançado no giro que ativou; a barra não zera e cada igreja enche +15', '👁️ Completar a barra nos Giros da Vela (ou 5 igrejas) = <b>Reino do Terror</b>: 6 giros só com símbolos altos e <b>coringas colantes</b>', 'Prêmio máximo: <b>16.161x</b>'],
       how: '<p>Grade 5×5 que paga por caminhos, com cascata. Cada símbolo alto vencedor soma pontos na barra do ritual durante o giro: nível 1 (20 pontos) cria coringas colantes; nível 2 (50) multiplica os ganhos por 1,5; nível 3 (100) dobra.</p>',
-      features: '<p>⛪ <b>3 ou mais igrejas</b> dão <b>10 rodadas grátis</b> em que os pontos do ritual e os coringas colantes ficam de um giro para o outro. 3 igrejas nelas dão +5.</p>',
+      features: `<p>⛪ <b>3 ou 4 igrejas</b> dão os <b>Giros da Vela</b>: 10 rodadas grátis, mais <b>+2 giros por nível</b> que a barra do ritual alcançou no giro que ativou o bônus (até 16). Nelas, os pontos do ritual e os coringas colantes ficam de um giro para o outro: cada símbolo alto vencedor soma 1 ponto, cada igreja soma 15, e 3 igrejas dão +4 giros.</p><p>👁️ Se a barra chegar a <b>${FULL} pontos</b> durante os Giros da Vela, o ritual se completa e, no fim deles, começa o <b>Reino do Terror</b>: 6 giros numa grade 5×5 só com símbolos altos e coringas, em que todo coringa <b>fica preso</b> até o fim. <b>5 igrejas</b> levam direto ao Reino do Terror. Na compra do bônus, o nível de entrada é sorteado com as chances do jogo normal.</p>`,
       make: () => make('w'),
-      async spin(rt) { const g = make('w'); if (await play(rt, g, 'w', null) >= 3) { rt.mark(scatters(g)); await rt.wait(1000); await this.bonus(rt, {}); } },
-      async bonus(rt) { const st = { pts: 0, sticky: new Set() }; await rt.fsLoop(10, async api => { if (await play(rt, make('fw'), 'fw', st) >= 3) api.add(5); }, { title: 'GIROS DA VELA', sub: 'O ritual não zera' }); rt.chip('rit', null); },
+      async spin(rt) { const g = make('w'); const r = await play(rt, g, 'w', null); if (r.sc >= 3) { rt.mark(scatters(g)); await rt.wait(1000); await this.bonus(rt, r); } },
+      async bonus(rt, o = {}) {
+        const sc = tierSc(o, [80, 17, 3]);
+        if (sc >= 5) { await reign(rt); return; }
+        const L = o.buy ? RNG.weighted([{ l: 0, w: 92 }, { l: 1, w: 6 }, { l: 2, w: 1.5 }, { l: 3, w: 0.5 }]).l : o.lvl || 0;
+        const st = { pts: 0, sticky: new Set() };
+        await rt.fsLoop(10 + 2 * L, async api => { const r = await play(rt, make('fw'), 'fw', st); if (r.sc) { st.pts += 15 * r.sc; rt.msg(`⛪ Igreja: +${15 * r.sc} no ritual`); } if (r.sc >= 3) api.add(4); }, { title: 'GIROS DA VELA', sub: 'O ritual não zera' });
+        rt.chip('rit', null);
+        if (st.pts >= FULL && !rt.capped) { await rt.banner('RITUAL COMPLETO', 'Reino do Terror: 6 giros', 1500); await reign(rt); }
+      },
     }));
   })();
 
-  /* 29. Lápide: Sem Piedade — quatro modos de rodadas grátis */
+  /* 29. Lápide: Sem Piedade — o gatilho decide o modo */
   (() => {
     const SY = [S('pistoleiro', 'cowboy', 'Pistoleiro', [1, 3, 10], 3), S('xerife', 'police', 'Xerife', [0.8, 2.5, 8], 4), S('revolver', 'pistol', 'Revólver', [0.6, 2, 6], 4), S('ferradura', 'horseshoe', 'Ferradura', [0.5, 1.5, 5], 5), ...R([[0.15, 0.4, 1.2], [0.15, 0.4, 1.2], [0.1, 0.3, 1], [0.1, 0.3, 1]])];
-    const WILD = { id: 'w', img: 'cowboy', name: 'Fora da lei', wild: true, reels: [1, 2, 3], w: 0.45, fw: 0.6 };
-    const SC = { id: 'sc', img: 'moneybag', name: '$', sc: true, reels: [1, 2, 3], w: 1.8, fw: 0 };
-    const draw = pool([...SY, WILD, SC]);
+    const WILD = { id: 'w', img: 'cowboy', name: 'Fora da lei', wild: true, reels: [1, 2, 3], w: 0.45, fw: 0.95 };
+    const SC = { id: 'sc', img: 'moneybag', name: '$', sc: true, reels: [1, 2, 3], w: 1.6, fw: 0 };
+    const SHERIFF = { id: 'xerifeb', img: 'sheriff', name: 'Distintivo do Xerife', badge: true, noPay: true, reels: [0], w: 0.9, fw: 0 };
+    const MARSHAL = { id: 'marshal', img: 'star2', name: 'Distintivo do Marshal', badge: true, noPay: true, reels: [4], w: 0.9, fw: 0 };
+    const draw = pool([...SY, WILD, SC, SHERIFF, MARSHAL]);
     const make = wk => grid([2, 3, 3, 3, 2], c => draw(c, wk));
-    const MODES = { g: { n: 'Pistoleiro', d: '10 giros · coringas +1' }, j: { n: 'Justiça', d: '8 giros · coringas colantes' }, b: { n: 'Recompensa', d: '8 giros · multiplicador cresce' }, a: { n: 'Ação', d: '6 giros · tudo junto' } };
+    const MODES = {
+      g: { n: 'Pistoleiro', t: '3 $', d: '10 giros · multiplicador xNudge que acumula, sem teto', spins: 10 },
+      j: { n: 'Justiça', t: 'Xerife + Marshal', d: '3 giros · coringas colantes', spins: 3 },
+      b: { n: 'Recompensa', t: 'Distintivos + 3 $', d: '12 giros · os dois juntos', spins: 12 },
+    };
     async function play(rt, g, st) {
       await rt.spin(g, { tease: !st });
       if (st && st.sticky) st.sticky.forEach((m, c) => { g[c] = g[c].map(() => mult({ ...WILD, c: 'sticky' }, m)); });
-      for (let c = 1; c <= 3; c++) if (g[c].some(x => x.wild && !x.m)) { const m = nudgeReel(g, c, WILD, st ? st.add : 0); if (st && st.sticky) st.sticky.set(c, m); }
+      let nudges = 0;
+      for (let c = 1; c <= 3; c++) if (g[c].some(x => x.wild && !x.m)) { const m = nudgeReel(g, c, WILD); nudges += m - 1; if (st && st.sticky) st.sticky.set(c, m); }
+      // Pistoleiro: cada empurrão soma no multiplicador global, que não zera
+      if (st && st.acc) { st.m += nudges; rt.chip('mult', 'MULT.', 'x' + st.m); }
       await rt.drop(g);
-      await pay(rt, ways(g, SY), st && st.grow ? st.m : 1);
-      if (st && st.grow) { st.m++; rt.chip('mult', 'MULT.', 'x' + st.m); }
-      return count(g, x => x.sc);
+      await pay(rt, ways(g, SY), st && st.acc ? st.m : 1);
+      return { sc: count(g, x => x.sc), badges: g[0].some(x => x.badge) && g[4].some(x => x.badge) };
     }
     App.register(K.create({
       id: 'lapidesempiedade', name: 'Lápide: Sem Piedade', studio: STUDIO, art: 'pistol', mascot: 'cowboy',
-      tag: 'xNudge · 4 modos de bônus · 16.480x', colors: ['#b45309', '#0c0a09'], bg: 'linear-gradient(180deg,#9a3412,#292524 60%,#0c0a09)',
+      tag: 'xNudge · 3 bônus pelo gatilho · 16.480x', colors: ['#b45309', '#0c0a09'], bg: 'linear-gradient(180deg,#9a3412,#292524 60%,#0c0a09)',
       cols: 5, rows: 3, maxWin: 16480, vol: 5, rtp: '~96%', target: 0.96,
       intro: 'Inspirado no "Tombstone: No Mercy" (Nolimit City).', hello: 'Sem piedade no faroeste!',
-      symbols: [...SY, WILD, SC],
+      symbols: [...SY, WILD, SC, SHERIFF, MARSHAL],
       tables: [table('Pagamento por caminho', heads(3, 3, ' rolos'), SY, 'Rolos 2-3-3-3-2 = 108 caminhos. Multiplicadores no caminho se multiplicam.')],
-      highlights: ['🤠 2-3-3-3-2 com 108 caminhos', '⬇️ <b>Foras da lei xNudge</b> (rolos 2 a 4): +1 por empurrão; vários se multiplicam', '💰 3 $ = escolha entre <b>Pistoleiro</b>, <b>Justiça</b>, <b>Recompensa</b> ou <b>Ação</b>', 'Prêmio máximo: <b>16.480x</b>'],
-      how: '<p>Rolos 2-3-3-3-2 com 108 caminhos. O fora da lei empurra até cobrir o rolo e soma +1 por empurrão.</p>',
-      features: `<p>💰 <b>3 símbolos $</b> abrem a escolha:</p><table class="paytable"><tr class="si-head"><td>Bônus</td><td>Detalhe</td></tr>${Object.values(MODES).map(m => `<tr><td>${m.n}</td><td>${m.d}</td></tr>`).join('')}</table>`,
+      highlights: ['🤠 2-3-3-3-2 com 108 caminhos', '⬇️ <b>Foras da lei xNudge</b> (rolos 2 a 4): +1 por empurrão; vários se multiplicam', '💰 3 $ = <b>Pistoleiro</b>: 10 giros com multiplicador que acumula todos os empurrões', '⭐ Distintivos do <b>Xerife</b> (rolo 1) e do <b>Marshal</b> (rolo 5) = <b>Justiça</b>: 3 giros com coringas colantes', '🏆 Distintivos + 3 $ = <b>Recompensa</b>: 12 giros com os dois recursos', 'Prêmio máximo: <b>16.480x</b>'],
+      how: '<p>Rolos 2-3-3-3-2 com 108 caminhos. O fora da lei empurra até cobrir o rolo e soma +1 por empurrão. O distintivo do Xerife só cai no rolo 1 e o do Marshal só no rolo 5.</p>',
+      features: `<p>O bônus depende do que cair na tela:</p><table class="paytable"><tr class="si-head"><td>Gatilho</td><td>Bônus</td><td>Detalhe</td></tr>${Object.values(MODES).map(m => `<tr><td>${m.t}</td><td>${m.n}</td><td>${m.d}</td></tr>`).join('')}</table><p>No <b>Pistoleiro</b>, cada empurrão de fora da lei soma +1 num multiplicador global que vale para todos os ganhos e nunca zera. Na <b>Justiça</b>, os rolos de fora da lei ficam presos com o multiplicador até o fim. Na compra do bônus, o modo é sorteado com as chances do jogo normal.</p>`,
       make: () => make('w'),
-      async spin(rt) { const g = make('w'); if (await play(rt, g, null) >= 3) { rt.mark(scatters(g)); await rt.wait(1000); await this.bonus(rt, {}); } },
-      async bonus(rt) {
-        const mode = await rt.choose('ESCOLHA O DUELO', Object.entries(MODES).map(([id, m]) => ({ id, img: 'cowboy', label: m.n, desc: m.d })));
-        const st = { add: mode === 'g' || mode === 'a' ? 1 : 0, sticky: mode === 'j' || mode === 'a' ? new Map() : null, grow: mode === 'b' || mode === 'a', m: 1 };
-        await rt.fsLoop({ g: 10, j: 8, b: 8, a: 6 }[mode], async () => { await play(rt, make('fw'), st); }, { title: MODES[mode].n.toUpperCase(), sub: MODES[mode].d });
+      async spin(rt) {
+        const g = make('w'); const r = await play(rt, g, null);
+        if (r.sc >= 3 || r.badges) { rt.mark(cells(g, x => x.sc || x.badge).map(([c, rr]) => key(c, rr))); await rt.wait(1000); await this.bonus(rt, { mode: r.badges ? (r.sc >= 3 ? 'b' : 'j') : 'g' }); }
+      },
+      async bonus(rt, o = {}) {
+        const mode = o.buy ? RNG.weighted([{ k: 'g', w: 63 }, { k: 'j', w: 35 }, { k: 'b', w: 2 }]).k : o.mode || 'g';
+        const M = MODES[mode];
+        const st = { acc: mode !== 'j', sticky: mode !== 'g' ? new Map() : null, m: 1 };
+        await rt.fsLoop(M.spins, async () => { await play(rt, make('fw'), st); }, { title: M.n.toUpperCase(), sub: M.d });
         rt.chip('mult', null);
       },
     }));
@@ -393,8 +523,9 @@
     const draw = pool([...SY, WILD, SC]);
     /** 5 rolos de 6: a casa de cima e a de baixo são células reforçadas (trancadas) */
     const make = wk => grid(Array(5).fill(6), (c, r) => (r === 0 || r === 5 ? LOCK() : draw(c, wk)));
-    async function play(rt, g, lit) {
+    async function play(rt, g, lit, jump) {
       await rt.spin(g, { tease: !lit });
+      const split = new Set();
       // um scatter (ou o bônus) abre células reforçadas
       const open = count(g, x => x.sc) + (lit || 0);
       for (let i = 0; i < open; i++) {
@@ -403,11 +534,17 @@
         const e = RNG.weighted(ENH).e || 'high';
         if (e === 'wild') g[c] = g[c].map(x => (x.id === 'lock' || x.sc ? x : { ...WILD, c: 'gold', fresh: true }));
         if (e === 'xways') { g[c][r] = { id: 'xw', xw: true, noPay: true, img: 'question' }; xways(g, SY, rt); }
-        if (e === 'split') { for (let rr = 1; rr <= 4; rr++) if (!g[c][rr].sc) xsplit(g, c, rr); rt.msg('🔪 Divisão: o rolo conta em dobro!'); }
+        if (e === 'split') { for (let rr = 1; rr <= 4; rr++) if (!g[c][rr].sc) xsplit(g, c, rr); split.add(c); rt.msg('🔪 Divisão: o rolo conta em dobro!'); }
         if (e === 'high') g[c][r] = { ...RNG.pick(SY.slice(0, 4)), fresh: true };
       }
+      // coringas saltadores: num rolo dividido o multiplicador dobra (até x512)
+      if (jump) jump.forEach(j => {
+        if (split.has(j.c)) j.m = Math.min(512, j.m * 2);
+        g[j.c][j.r] = { ...WILD, m: j.m, t: 'x' + j.m, n: split.has(j.c) ? 2 : 1, c: 'sticky', fresh: true };
+      });
+      if (jump && jump.length) rt.msg(`🗝️ Coringas saltadores: ${jump.map(j => 'x' + j.m).join(' ')}`);
       await rt.drop(g);
-      await pay(rt, ways(g, SY));
+      await pay(rt, ways(g, SY, jump ? { wildMult: 'add' } : {}));
       return count(g, x => x.sc);
     }
     App.register(K.create({
@@ -417,23 +554,35 @@
       intro: 'Inspirado no "San Quentin 2: Death Row" (Nolimit City) — sem cenas violentas.', hello: 'Abra as células reforçadas!',
       symbols: [...SY, WILD, SC],
       tables: [table('Pagamento por caminho', heads(3, 3, ' rolos'), SY, '5×4 (1.024 caminhos), crescendo com células abertas, xWays e divisões.')],
-      highlights: ['🔒 5×4 com 1.024 caminhos e <b>células reforçadas</b> acima e abaixo de cada rolo', '🚨 Cada alarme abre uma célula, que revela <b>rolo coringa</b>, <b>xWays</b>, <b>divisão do rolo</b> (conta em dobro) ou um símbolo alto', '3+ alarmes = <b>10 giros</b> com 2 células abertas garantidas em cada giro', 'Prêmio máximo: <b>200.000x</b>'],
+      highlights: ['🔒 5×4 com 1.024 caminhos e <b>células reforçadas</b> acima e abaixo de cada rolo', '🚨 Cada alarme abre uma célula, que revela <b>rolo coringa</b>, <b>xWays</b>, <b>divisão do rolo</b> (conta em dobro) ou um símbolo alto', '3/4/5 alarmes = <b>8 giros</b> com <b>1, 2 ou 3 coringas saltadores</b>: eles pulam a cada giro e o multiplicador <b>dobra</b> quando caem num rolo dividido (até x512)', 'Prêmio máximo: <b>200.000x</b>'],
       how: '<p>Grade 5×4 que paga por caminhos, com uma célula trancada acima e outra abaixo de cada rolo. Alarmes abrem células aleatórias; o que sai delas pode transformar o rolo inteiro em coringa, revelar xWays ou dividir o rolo (cada símbolo conta duas vezes).</p>',
-      features: '<p>🚨 <b>3 ou mais alarmes</b> dão <b>10 rodadas grátis</b> com duas células reforçadas abertas garantidas por giro (3 alarmes nelas dão +5).</p>',
+      features: '<p>🚨 <b>3, 4 ou 5 alarmes</b> dão <b>8 rodadas grátis</b> com <b>1, 2 ou 3 coringas saltadores</b>. Eles ficam até o fim e, a cada giro, pulam para uma casa aleatória. Sempre que um deles cai num rolo <b>dividido</b>, ele também se divide e o multiplicador dele <b>dobra</b> (x2, x4, x8… até x512). Há duas células reforçadas abertas garantidas por giro, e 3 alarmes nas grátis trazem mais um coringa saltador (até 5). Na compra do bônus, o número de alarmes (e de coringas) é sorteado com as chances do jogo normal.</p>',
       make: () => make('w'),
-      async spin(rt) { const g = make('w'); if (await play(rt, g, 0) >= 3) { rt.mark(scatters(g)); await rt.wait(1000); await this.bonus(rt, {}); } },
-      async bonus(rt) { await rt.fsLoop(10, async api => { if (await play(rt, make('fw'), 2) >= 3) api.add(5); }, { title: 'GIROS DA ALA MÁXIMA', sub: '2 células abertas por giro' }); },
+      async spin(rt) { const g = make('w'); const sc = await play(rt, g, 0); if (sc >= 3) { rt.mark(scatters(g)); await rt.wait(1000); await this.bonus(rt, { sc }); } },
+      async bonus(rt, o = {}) {
+        const n = Math.min(3, tierSc(o, [94, 5, 1]) - 2);
+        // começam sc−2 coringas saltadores, que pulam para uma casa aleatória a cada giro
+        const jump = Array.from({ length: n }, () => ({ m: 1, c: 0, r: 1 }));
+        await rt.fsLoop(8, async api => {
+          jump.forEach(j => { j.c = RNG.int(0, 4); j.r = RNG.int(1, 4); });
+          if (await play(rt, make('fw'), 2, jump) >= 3 && jump.length < 5) { jump.push({ m: 1, c: 0, r: 1 }); rt.msg('🚨 +1 coringa saltador!'); }
+        }, { title: 'GIROS DO CORREDOR DA MORTE', sub: `${n} coringa${n > 1 ? 's' : ''} saltador${n > 1 ? 'es' : ''}` });
+      },
     }));
   })();
 
   /* 31. Cobrinha 2000 — a cobra coringa anda pela tela */
   (() => {
     const SY = msyms([['celular', 'mobile', 'Celular tijolão'], ['disquete', 'floppydisk', 'Disquete'], ['fita', 'videocassette', 'Fita VHS'], ['pager', 'pager', 'Pager']]);
-    const SNAKE = { id: 'w', img: 'snake', name: 'Cobrinha coringa', wild: true, snake: true, w: 0.25, fw: 0.7 };
+    const SNAKE = { id: 'w', img: 'snake', name: 'Cobrinha coringa', wild: true, snake: true, w: 0.25, fw: 0.3 };
     const XW = { id: 'xw', img: 'floppydisk', name: 'xWays', xw: true, noPay: true, w: 0.35 };
     const SC = { id: 'sc', img: 'joystick', name: 'Bônus', sc: true, w: 0.6, fw: 0.3 };
     const draw = pool([...SY, SNAKE, XW, SC]);
     const make = wk => grid([5, 5, 5, 5, 5], c => draw(c, wk));
+    // Super Cobrinha: moedas (valor relativo; COINK converte para a tabela)
+    const COIN = { id: 'moeda', img: 'coin', name: 'Moeda', coin: true, noPay: true };
+    const CV = [{ v: 1, w: 40 }, { v: 2, w: 28 }, { v: 5, w: 18 }, { v: 10, w: 9 }, { v: 25, w: 4 }, { v: 100, w: 1 }];
+    const COINK = 25, MAXLEN = 7, HIGH = SY.slice(0, 4).map(x => x.id);
     const slither = (g, c, r, steps) => { const path = [[c, r]]; let dir = RNG.pick([[1, 0], [0, 1], [0, -1], [-1, 0]]); for (let i = 0; i < steps; i++) { if (RNG.float() < 0.4) dir = RNG.pick([[1, 0], [0, 1], [0, -1], [-1, 0]].filter(d => d[0] !== -dir[0] || d[1] !== -dir[1])); const [a, b] = [path[path.length - 1][0] + dir[0], path[path.length - 1][1] + dir[1]]; if (!g[a] || !g[a][b]) break; path.push([a, b]); } path.forEach(([a, b]) => { if (!g[a][b].sc) g[a][b] = { ...SNAKE, c: 'gold', fresh: true }; }); return path.length; };
     async function play(rt, g, fs) {
       await rt.spin(g, { tease: !fs });
@@ -448,24 +597,59 @@
       tag: 'Cobra coringa que anda · xWays', colors: ['#84cc16', '#1f2937'], bg: 'linear-gradient(180deg,#a3e635,#4d7c0f 50%,#1a2e05)',
       cols: 5, rows: 5, maxWin: 8110, vol: 5, rtp: '~96%', target: 0.96,
       intro: 'Inspirado no "Brick Snake 2000" (Nolimit City) — sem cenas violentas.', hello: 'Lembra do jogo da cobrinha?',
-      symbols: [...SY, SNAKE, XW, SC],
+      symbols: [...SY, SNAKE, XW, SC], extraSprites: ['coin'],
       tables: [table('Pagamento por caminho', heads(3, 3, ' rolos'), SY, '5×5 = 3.125 caminhos (mais com xWays).')],
-      highlights: ['📱 5×5 com 3.125 caminhos, tema retrô dos anos 2000', '🐍 A <b>cobrinha coringa</b> anda de 1 a 5 casas, deixando um rastro de coringas', '💾 <b>xWays</b> no disquete: símbolos com 2 a 4 cópias', '🕹️ 3+ bônus = <b>10 giros</b> com a cobrinha mais frequente e andando de 3 a 9 casas', 'Prêmio máximo: <b>8.110x</b>'],
+      highlights: ['📱 5×5 com 3.125 caminhos, tema retrô dos anos 2000', '🐍 A <b>cobrinha coringa</b> anda de 1 a 5 casas, deixando um rastro de coringas', '💾 <b>xWays</b> no disquete: símbolos com 2 a 4 cópias', '🕹️ 3 ou 4 bônus = <b>Fase Bônus</b>: 10 giros em que a cobrinha <b>fica na tela</b>, anda a cada giro, <b>come símbolos altos e cresce</b>', '🪙 5 bônus = <b>Super Cobrinha</b>: a mesma cobra, agora também <b>comendo moedas</b> que pagam no fim', 'Prêmio máximo: <b>8.110x</b>'],
       how: '<p>Grade 5×5 que paga por caminhos. Quando a cobrinha aparece, ela anda em qualquer direção (menos para trás) e todas as casas por onde passa viram coringa.</p>',
-      features: '<p>🕹️ <b>3 ou mais bônus</b> dão <b>10 rodadas grátis</b> em que a cobrinha aparece mais e anda de 3 a 9 casas (3 bônus dão +5).</p>',
+      features: '<p>🕹️ <b>3 ou 4 bônus</b> dão a <b>Fase Bônus</b>: 10 rodadas grátis com uma cobrinha de 3 casas que <b>não some</b> entre os giros. A cada giro ela anda de 2 a 5 casas, e toda casa do corpo é coringa. Quando a cabeça passa por um símbolo alto, ela o come e <b>cresce</b> uma casa (até 7); cada cobrinha nova que cair também a faz crescer. 3 bônus nelas dão +5 giros.</p><p>🪙 <b>5 bônus</b> dão a <b>Super Cobrinha</b>: tudo igual, mas aparecem <b>moedas</b> na tela. Cada moeda que a cobrinha come a faz crescer e o valor dela é guardado e pago no fim do bônus. Na compra do bônus, o número de bônus (e o modo) é sorteado com as chances do jogo normal.</p>',
       make: () => make('w'),
-      async spin(rt) { const g = make('w'); if (await play(rt, g, false) >= 3) { rt.mark(scatters(g)); await rt.wait(1000); await this.bonus(rt, {}); } },
-      async bonus(rt) { await rt.fsLoop(10, async api => { if (await play(rt, make('fw'), true) >= 3) api.add(5); }, { title: 'FASE BÔNUS', sub: 'Cobrinha turbinada' }); },
+      async spin(rt) { const g = make('w'); const sc = await play(rt, g, false); if (sc >= 3) { rt.mark(scatters(g)); await rt.wait(1000); await this.bonus(rt, { sc }); } },
+      async bonus(rt, o = {}) {
+        const sup = tierSc(o, [94, 5, 1]) >= 5;
+        // a cobrinha fica na tela de um giro para o outro: body = [cauda ... cabeça]
+        let body = [[RNG.int(0, 2), RNG.int(0, 4)]]; body.push([body[0][0] + 1, body[0][1]], [body[0][0] + 2, body[0][1]]);
+        let dir = [1, 0], bank = 0;
+        await rt.fsLoop(10, async api => {
+          const g = make('fw');
+          if (sup) g.forEach((col, c) => col.forEach((x, r) => { if (!x.sc && !x.snake && RNG.float() < 0.12) g[c][r] = { ...COIN, v: RNG.weighted(CV).v }; }));
+          await rt.spin(g, { tease: false });
+          xways(g, SY, rt);
+          // cada cobrinha nova que cai vira comida: a cobra cresce +1
+          let grow = cells(g, x => x.snake).length;
+          const steps = RNG.int(2, 5);
+          for (let i = 0; i < steps; i++) {
+            const inBody = (a, b) => body.slice(grow ? 0 : 1).some(([c, r]) => c === a && r === b);
+            const head = body[body.length - 1];
+            const opts = [[1, 0], [-1, 0], [0, 1], [0, -1]].filter(d => { const a = head[0] + d[0], b = head[1] + d[1]; return a >= 0 && a < 5 && b >= 0 && b < 5 && !inBody(a, b); });
+            if (!opts.length) break;
+            dir = opts.some(d => d[0] === dir[0] && d[1] === dir[1]) && RNG.float() < 0.6 ? dir : RNG.pick(opts);
+            const nx = [head[0] + dir[0], head[1] + dir[1]], y = g[nx[0]][nx[1]];
+            body.push(nx);
+            // come símbolos altos (e moedas, no Super) e cresce
+            if (y.coin) { bank += y.v; grow++; rt.msg(`🪙 A cobrinha comeu uma moeda de ${rt.coins(y.v * COINK)}!`); }
+            else if (HIGH.includes(y.id)) grow++;
+            if (grow) grow--; else body.shift();
+          }
+          body = body.slice(-MAXLEN);
+          body.forEach(([c, r]) => { if (!g[c][r].sc) g[c][r] = { ...SNAKE, c: 'gold', fresh: true }; });
+          rt.chip('snake', 'COBRA', body.length);
+          await rt.drop(g);
+          await pay(rt, ways(g, SY));
+          if (count(g, x => x.sc) >= 3) api.add(5);
+        }, { title: sup ? 'SUPER COBRINHA' : 'FASE BÔNUS', sub: sup ? 'A cobrinha come moedas' : 'A cobrinha fica e cresce' });
+        rt.chip('snake', null);
+        if (bank) { const v = bank * COINK; rt.win(v); rt.msg(`🪙 Moedas da cobrinha: ${rt.coins(v)}`); rt.fx('big'); await rt.wait(900); }
+      },
     }));
   })();
 
   /* 32. Das Nove às Cinco — a sátira do escritório */
   (() => {
     const SY = msyms([['chefe', 'manoffice', 'Chefe'], ['estagiario', 'man', 'Estagiário'], ['cafe', 'teacup', 'Café'], ['grampeador', 'paperclip', 'Grampeador']]);
-    const WILD = { id: 'w', img: 'briefcase', name: 'Coringa xNudge', wild: true, reels: [1, 2, 3], w: 0.35, fw: 0.5 };
+    const WILD = { id: 'w', img: 'briefcase', name: 'Coringa xNudge', wild: true, reels: [1, 2, 3], w: 0.35, fw: 0.9 };
     const XW = { id: 'xw', img: 'question', name: 'xWays', xw: true, noPay: true, w: 0.3 };
-    const SC = { id: 'sc', img: 'alarm', name: 'Relógio de ponto', sc: true, w: 0.65, fw: 0 };
-    const UP = { id: 'demissao', img: 'outbox', name: 'Demissão (+1)', up: 1, noPay: true, w: 0, fw: 0.9 };
+    const SC = { id: 'sc', img: 'alarm', name: 'Relógio de ponto', sc: true, w: 0.72, fw: 0 };
+    const UP = { id: 'demissao', img: 'outbox', name: 'Demissão (+1)', up: 1, noPay: true, w: 0, fw: 1.6 };
     const DN = { id: 'processo', img: 'scales', name: 'Processo (−1)', up: -1, noPay: true, w: 0, fw: 0.15 };
     const OT = { id: 'horaextra', img: 'hourglassflow', name: 'Hora extra (+1 giro)', ot: true, noPay: true, w: 0, fw: 0.2 };
     const draw = pool([...SY, WILD, XW, SC, UP, DN, OT]);
@@ -474,9 +658,10 @@
       await rt.spin(g, { tease: !st });
       xways(g, SY, rt);
       for (let c = 1; c <= 3; c++) if (g[c].some(x => x.wild && !x.m)) nudgeReel(g, c, WILD);
-      if (st) { cells(g, x => x.up || x.ot).forEach(([c, r]) => { const x = g[c][r]; if (x.up) st.m = Math.max(1, st.m + x.up); if (x.ot) st.api.add(1); g[c][r] = { ...RNG.pick(SY.slice(4)) }; }); rt.chip('mult', 'MULT.', 'x' + st.m); }
+      if (st) { cells(g, x => x.up || x.ot).forEach(([c, r]) => { const x = g[c][r]; if (x.up) st.m = Math.max(st.min, st.m + x.up * st.step); if (x.ot) st.api.add(1); g[c][r] = { ...RNG.pick(SY.slice(4)) }; }); rt.chip('mult', 'MULT. FINAL', 'x' + st.m); }
       await rt.drop(g);
-      await pay(rt, ways(g, SY), st ? st.m : 1);
+      // nas grátis os ganhos são pagos sem multiplicador; ele só vale no fim, sobre o total
+      await pay(rt, ways(g, SY));
       return count(g, x => x.sc);
     }
     App.register(K.create({
@@ -486,12 +671,22 @@
       intro: 'Inspirado no "Nine to Five" (Nolimit City).', hello: 'Mais um dia no escritório...',
       symbols: [...SY, WILD, XW, SC, UP, DN, OT],
       tables: [table('Pagamento por caminho', heads(3, 3, ' rolos'), SY, '5×4 = 1.024 caminhos.')],
-      highlights: ['💼 5×4 com 1.024 caminhos', '⬇️ <b>Coringa xNudge</b> (rolos 2 a 4): +1 por empurrão; ❓ <b>xWays</b> com 2 a 4 cópias', '⏰ 3 relógios de ponto = <b>Gerência Média</b>: 10 giros em que <b>demissões</b> sobem o multiplicador, <b>processos</b> baixam e <b>horas extras</b> dão giros', 'Prêmio máximo: <b>9.217x</b>'],
+      highlights: ['💼 5×4 com 1.024 caminhos', '⬇️ <b>Coringa xNudge</b> (rolos 2 a 4): +1 por empurrão; ❓ <b>xWays</b> com 2 a 4 cópias', '⏰ 3 relógios de ponto = <b>Gerência Média</b>: 10 giros em que <b>demissões</b> sobem o multiplicador, <b>processos</b> baixam e <b>horas extras</b> dão giros; o multiplicador é aplicado <b>uma vez, no total do bônus</b>', '🏢 4+ relógios = <b>Torre de Marfim</b>: 12 giros, multiplicador começando em <b>x3</b> e demissões valendo <b>+2</b>', 'Prêmio máximo: <b>9.217x</b>'],
       how: '<p>Grade 5×4 que paga por caminhos, com xNudge e xWays.</p>',
-      features: '<p>⏰ <b>3 relógios de ponto</b> dão <b>10 rodadas grátis</b>. Caem símbolos especiais: demissão (+1 no multiplicador), processo (−1, mínimo x1) e hora extra (+1 giro). O multiplicador vale para todos os ganhos e não zera.</p>',
+      features: '<p>⏰ <b>3 relógios de ponto</b> dão <b>10 rodadas grátis</b> da <b>Gerência Média</b>. Caem símbolos especiais: demissão (+1 no multiplicador), processo (−1, mínimo x1) e hora extra (+1 giro). Os ganhos dos giros são pagos normalmente e, no fim do expediente, o <b>total do bônus</b> é multiplicado pelo valor final do multiplicador.</p><p>🏢 <b>4 ou mais relógios</b> dão a <b>Torre de Marfim</b>: 12 rodadas grátis em que o multiplicador começa em <b>x3</b>, cada demissão soma <b>+2</b> e os processos nunca o deixam abaixo de x3. Na compra do bônus, o modo é sorteado com as chances do jogo normal.</p>',
       make: () => make('w'),
-      async spin(rt) { const g = make('w'); if (await play(rt, g, null) >= 3) { rt.mark(scatters(g)); await rt.wait(1000); await this.bonus(rt, {}); } },
-      async bonus(rt) { const st = { m: 1 }; await rt.fsLoop(10, async api => { st.api = api; await play(rt, make('fw'), st); }, { title: 'GERÊNCIA MÉDIA', sub: 'Demissões sobem o multiplicador' }); rt.chip('mult', null); },
+      async spin(rt) { const g = make('w'); const sc = await play(rt, g, null); if (sc >= 3) { rt.mark(scatters(g)); await rt.wait(1000); await this.bonus(rt, { sc }); } },
+      async bonus(rt, o = {}) {
+        // 4+ relógios = Torre de Marfim: começa em x3, cada demissão vale +2 e processos não baixam abaixo de x3
+        const ivory = tierSc(o, [93, 7]) >= 4;
+        const st = ivory ? { m: 3, min: 3, step: 2 } : { m: 1, min: 1, step: 1 };
+        const t0 = rt.total;
+        rt.chip('mult', 'MULT. FINAL', 'x' + st.m);
+        await rt.fsLoop(ivory ? 12 : 10, async api => { st.api = api; await play(rt, make('fw'), st); }, { title: ivory ? 'TORRE DE MARFIM' : 'GERÊNCIA MÉDIA', sub: 'O multiplicador vale no fim, sobre o total' });
+        const tot = rt.total - t0;
+        if (tot > 0 && st.m > 1 && !rt.capped) { rt.win(tot * (st.m - 1)); rt.msg(`💼 Fim do expediente: total x${st.m} = ${rt.coins(tot * st.m)}`); rt.fx('big'); await rt.wait(1100); }
+        rt.chip('mult', null);
+      },
     }));
   })();
 
@@ -534,11 +729,12 @@
   (() => {
     const SY = msyms([['trailer', 'camping', 'Trailer'], ['caminhonete', 'pickuptruck', 'Caminhonete'], ['churrasqueira', 'cutofmeat', 'Churrasco'], ['bone', 'cap', 'Boné']]);
     const WILD = { id: 'w', img: 'eagle', name: 'Coringa', wild: true, w: 0.45 };
-    const SC = { id: 'sc', img: 'wave', name: 'Onda', sc: true, w: 0.9, fw: 0.3 };
+    const SC = { id: 'sc', img: 'wave', name: 'Onda', sc: true, w: 0.9, fw: 0.5 };
     const draw = pool([...SY, WILD, SC]);
     const make = wk => grid([4, 4, 4, 4], c => draw(c, wk));
     const MODS = [{ k: 'keg', w: 30 }, { k: 'bottle', w: 30 }, { k: 'split', w: 25 }, { k: 'bear', w: 15 }];
-    async function play(rt, g, water) {
+    async function play(rt, g, st) {
+      const water = !!st;
       await rt.spin(g, { tease: !water });
       let m = 1;
       if (RNG.float() < (water ? 0.4 : 0.12)) {
@@ -548,38 +744,56 @@
         if (k === 'split') { const c = RNG.int(0, 3); g[c].forEach((x, r) => { if (!x.wild && !x.sc) xsplit(g, c, r); }); rt.msg('✂️ Sr. Divisão partiu um rolo!'); }
         if (k === 'bear') { const s = RNG.pick(SY.slice(0, 4)); RNG.shuffle([0, 1, 2, 3]).slice(0, 2).forEach(c => { g[c] = g[c].map(() => ({ ...s, c: 'gold', fresh: true })); }); rt.msg(`🐻 O urso empilhou ${s.name}!`); }
       }
-      // na enchente, metade de baixo da grade fica embaixo d'água e conta em dobro
-      if (water) g.forEach((col, c) => col.forEach((x, r) => { if (r >= 2 && !x.wild && !x.sc) xsplit(g, c, r); }));
+      // as linhas de baixo ficam embaixo d'água: na Tsunami elas contam em dobro; na Submersa viram coringa
+      if (st) g.forEach((col, c) => col.forEach((x, r) => { if (r < 4 - st.water || x.wild || x.sc) return; if (st.sub) g[c][r] = { ...WILD, c: 'gold', fresh: true }; else xsplit(g, c, r); }));
       await rt.drop(g);
       await pay(rt, ways(g, SY), m);
       return count(g, x => x.sc);
     }
     App.register(K.create({
       id: 'terraliberdade', name: 'Terra da Liberdade', studio: STUDIO, art: 'pickuptruck', mascot: 'eagle',
-      tag: 'Esteira de modificadores · enchente', colors: ['#1d4ed8', '#dc2626'], bg: 'linear-gradient(180deg,#bfdbfe,#60a5fa 40%,#1e3a8a)',
+      tag: 'Esteira de modificadores · tsunami', colors: ['#1d4ed8', '#dc2626'], bg: 'linear-gradient(180deg,#bfdbfe,#60a5fa 40%,#1e3a8a)',
       cols: 4, rows: 4, maxWin: 57000, vol: 5, rtp: '~96,1%', target: 0.961,
       intro: 'Inspirado no "Land of the Free" (Nolimit City) — numa versão bem-humorada de acampamento.', hello: 'Bem-vindo ao acampamento!',
       symbols: [...SY, WILD, SC],
       tables: [table('Pagamento por caminho', heads(3, 2, ' rolos'), SY, '4×4 = 256 caminhos (mais com divisões).')],
-      highlights: ['🚚 4×4 com 256 caminhos', '🎰 <b>Esteira de modificadores:</b> barril (coringas), garrafas (x2 a x5), Sr. Divisão (rolo conta em dobro) e urso (pilhas)', '🌊 3/4/5 ondas = <b>12/15/20 Giros da Enchente</b>: a metade de baixo fica embaixo d\'água e <b>todo símbolo nela conta em dobro</b>', 'Prêmio máximo: <b>57.000x</b>'],
+      highlights: ['🚚 4×4 com 256 caminhos', '🎰 <b>Esteira de modificadores:</b> barril (coringas), garrafas (x2 a x5), Sr. Divisão (rolo conta em dobro) e urso (pilhas)', '🌊 3/4/5 ondas = <b>12/15/20 Giros da Tsunami</b>: a água começa na linha de baixo, <b>sobe uma linha por onda</b> e todo símbolo alagado <b>conta em dobro</b>', '🤿 Alagou a grade toda? Viram <b>Giros Submersos</b> (+3 giros): a água volta para baixo, mas tudo que fica <b>embaixo d\'água vira coringa</b>', 'Prêmio máximo: <b>57.000x</b>'],
       how: '<p>Grade 4×4 que paga por caminhos. De vez em quando a esteira entrega um modificador antes do pagamento.</p>',
-      features: '<p>🌊 <b>3, 4 ou 5 ondas</b> dão <b>12, 15 ou 20 rodadas grátis</b>. Metade da grade fica alagada: os símbolos das duas linhas de baixo são divididos (contam duas vezes) e os modificadores aparecem bem mais.</p>',
+      features: '<p>🌊 <b>3, 4 ou 5 ondas</b> dão <b>12, 15 ou 20 Giros da Tsunami</b>. A água começa cobrindo a linha de baixo e <b>sobe uma linha a cada onda</b> que cair. Os símbolos alagados são divididos (contam duas vezes), e os modificadores aparecem bem mais. 3 ondas dão +4 giros.</p><p>🤿 Quando a água cobre <b>as 4 linhas</b>, o bônus vira <b>Giros Submersos</b> com +3 giros: a água volta para a linha de baixo (e pode subir até 3) e todo símbolo embaixo d\'água <b>vira coringa</b>. Na compra do bônus, o número de ondas é sorteado com as chances do jogo normal.</p>',
       make: () => make('w'),
-      async spin(rt) { const g = make('w'); const sc = await play(rt, g, false); if (sc >= 3) { rt.mark(scatters(g)); await rt.wait(1000); await this.bonus(rt, { sc }); } },
-      async bonus(rt, { sc = 3 } = {}) { await rt.fsLoop({ 3: 12, 4: 15 }[sc] || 20, async api => { if (await play(rt, make('fw'), true) >= 3) api.add(4); }, { title: 'GIROS DA ENCHENTE', sub: 'Metade de baixo conta em dobro' }); },
+      async spin(rt) { const g = make('w'); const sc = await play(rt, g, null); if (sc >= 3) { rt.mark(scatters(g)); await rt.wait(1000); await this.bonus(rt, { sc }); } },
+      async bonus(rt, o = {}) {
+        const sc = tierSc(o, [94, 5, 1]);
+        const st = { water: 1, sub: false };
+        rt.chip('agua', 'ÁGUA', '1/4');
+        await rt.fsLoop({ 3: 12, 4: 15 }[sc] || 20, async api => {
+          const n = await play(rt, make('fw'), st);
+          if (n >= 3) api.add(4);
+          // cada onda sobe a água uma linha
+          if (n) {
+            st.water = Math.min(st.sub ? 3 : 4, st.water + n);
+            if (!st.sub && st.water >= 4) { st.sub = true; st.water = 1; api.add(3, true); await rt.banner('GIROS SUBMERSOS', 'Tudo embaixo d\'água vira coringa · +3 giros', 1500); }
+            else rt.msg(`🌊 A água subiu: ${st.water} linha${st.water > 1 ? 's' : ''}`);
+          }
+          rt.chip('agua', st.sub ? 'SUBMERSO' : 'ÁGUA', `${st.water}/${st.sub ? 3 : 4}`);
+        }, { title: 'GIROS DA TSUNAMI', sub: 'As linhas alagadas contam em dobro' });
+        rt.chip('agua', null);
+      },
     }));
   })();
 
   /* 35. Dia D — modificadores de batalha e o coringa supremo */
   (() => {
     const SY = msyms([['soldado', 'militaryhelmet', 'Capacete'], ['aviao', 'airplane', 'Avião'], ['navio', 'ship', 'Navio'], ['medalha', 'militarymedal', 'Medalha']]);
-    const WILD = { id: 'w', img: 'star', name: 'Coringa', wild: true, w: 0.45 };
-    const SUP = { id: 'sup', img: 'glowstar', name: 'Coringa supremo', wild: true, w: 0.03, fw: 0.08 };
-    const SC = { id: 'sc', img: 'worldmap', name: 'Mapa', sc: true, w: 0.7, fw: 0 };
+    const WILD = { id: 'w', img: 'star', name: 'Coringa', wild: true, w: 0.45, fw: 1.5 };
+    const SUP = { id: 'sup', img: 'glowstar', name: 'Coringa atômico', wild: true, w: 0.03, fw: 0.3 };
+    const SC = { id: 'sc', img: 'worldmap', name: 'Mapa', sc: true, w: 0.82, fw: 0 };
     const draw = pool([...SY, WILD, SUP, SC]);
     const cell = (c, wk) => { const x = draw(c, wk); if (x.id === 'sup') mult(x, wm(BIG) * 2); return x; };
     const make = wk => grid([3, 4, 5, 4, 3], c => cell(c, wk));
     const MODS = ['avião', 'caça', 'tanque', 'artilharia'];
+    const MIMG = { avião: 'airplane', caça: 'scissors', tanque: 'star', artilharia: 'bomb' };
+    const MDESC = { avião: '3 a 6 coringas', caça: 'divide um rolo', tanque: 'rolo coringa', artilharia: 'x2 a x5' };
     async function mod(rt, g, k) {
       if (k === 'avião') { for (let i = 0; i < RNG.int(3, 6); i++) { const c = RNG.int(0, 4); g[c][RNG.int(0, g[c].length - 1)] = { ...WILD, c: 'gold', fresh: true }; } }
       if (k === 'caça') { const c = RNG.int(1, 3); g[c].forEach((x, r) => { if (!x.wild && !x.sc) xsplit(g, c, r); }); }
@@ -587,50 +801,74 @@
       rt.msg(`🎖️ Modificador: ${k}!`);
       return k === 'artilharia' ? RNG.pick([2, 3, 5]) : 1;
     }
-    async function play(rt, g, n) {
-      await rt.spin(g, { tease: !n });
+    async function play(rt, g, list) {
+      await rt.spin(g, { tease: !list });
       let m = 1;
-      const k = n || (RNG.float() < 0.1 ? 1 : 0);
-      for (const mm of RNG.shuffle(MODS.slice()).slice(0, k)) m *= await mod(rt, g, mm);
+      // nas grátis, a lista vem pronta (os modificadores escolhidos que disparam neste giro)
+      const use = list || (RNG.float() < 0.1 ? [RNG.pick(MODS)] : []);
+      for (const mm of use) m *= await mod(rt, g, mm);
       await rt.drop(g);
       await pay(rt, ways(g, SY, { wildMult: 'add' }), m);
       return count(g, x => x.sc);
     }
     App.register(K.create({
       id: 'diad', name: 'Dia D', studio: STUDIO, art: 'airplane', mascot: 'militaryhelmet',
-      tag: 'Modificadores · coringa supremo', colors: ['#4d7c0f', '#78716c'], bg: 'linear-gradient(180deg,#a8a29e,#57534e 50%,#365314)',
+      tag: 'Modificadores · coringa atômico', colors: ['#4d7c0f', '#78716c'], bg: 'linear-gradient(180deg,#a8a29e,#57534e 50%,#365314)',
       cols: 5, rows: 5, maxWin: 55555, vol: 5, rtp: '~96,1%', target: 0.961,
       intro: 'Inspirado no "D-Day" (Nolimit City) — tema histórico sem cenas de violência.', hello: 'Rumo à praia!',
-      symbols: [...SY, WILD, SUP, SC],
+      symbols: [...SY, WILD, SUP, SC], extraSprites: ['scissors', 'bomb'],
       tables: [table('Pagamento por caminho', heads(3, 3, ' rolos'), SY, 'Rolos 3-4-5-4-3 = 720 caminhos.')],
-      highlights: ['🎖️ Rolos 3-4-5-4-3 com 720 caminhos', '✈️ Quatro <b>modificadores</b> surpresa: avião (coringas), caça (divide um rolo), tanque (rolo coringa) e artilharia (x2 a x5)', '⭐ <b>Coringa supremo</b> com multiplicador de até x200', '🗺️ 3/4/5 mapas = <b>Netuno / Invasão / Overlord</b>: 10 giros com 1, 2 ou 3 modificadores garantidos por giro', 'Prêmio máximo: <b>55.555x</b>'],
+      highlights: ['🎖️ Rolos 3-4-5-4-3 com 720 caminhos', '✈️ Quatro <b>modificadores</b> surpresa: avião (coringas), caça (divide um rolo), tanque (rolo coringa) e artilharia (x2 a x5)', '☢️ <b>Coringa atômico</b> com multiplicador de até x200', '🗺️ 3/4/5 mapas = <b>Netuno / Invasão / Overlord</b>: 8 giros em que você <b>escolhe 1, 2 ou 3 modificadores</b>, cada um garantido pelo menos uma vez; no Overlord o <b>coringa atômico</b> é garantido', 'Prêmio máximo: <b>55.555x</b>'],
       how: '<p>Rolos 3-4-5-4-3 que pagam por caminhos. Em qualquer giro um modificador pode entrar em ação.</p>',
-      features: '<p>🗺️ <b>3, 4 ou 5 mapas</b> dão <b>10 rodadas grátis</b> com <b>1, 2 ou 3 modificadores garantidos</b> em todo giro, e o coringa supremo aparece mais.</p>',
+      features: '<p>🗺️ <b>3, 4 ou 5 mapas</b> dão <b>8 rodadas grátis</b>: <b>Operação Netuno</b>, <b>Invasão</b> ou <b>Overlord</b>. Antes de começar, você <b>escolhe 1, 2 ou 3 modificadores</b> entre avião, caça, tanque e artilharia. Durante o bônus, só os escolhidos entram em ação, e cada um deles sai <b>pelo menos uma vez</b>. O coringa atômico aparece mais nas grátis e, no <b>Overlord</b>, ele é garantido em algum giro. Na compra do bônus, o número de mapas (e o modo) é sorteado com as chances do jogo normal.</p>',
       make: () => make('w'),
-      async spin(rt) { const g = make('w'); const sc = await play(rt, g, 0); if (sc >= 3) { rt.mark(scatters(g)); await rt.wait(1000); await this.bonus(rt, { sc }); } },
-      async bonus(rt, { sc = 3 } = {}) { const n = Math.min(3, sc - 2); await rt.fsLoop(10, async () => { await play(rt, make('fw'), n); }, { title: ['OPERAÇÃO NETUNO', 'INVASÃO', 'OVERLORD'][n - 1], sub: `${n} modificador${n > 1 ? 'es' : ''} por giro` }); },
+      async spin(rt) { const g = make('w'); const sc = await play(rt, g, null); if (sc >= 3) { rt.mark(scatters(g)); await rt.wait(1000); await this.bonus(rt, { sc }); } },
+      async bonus(rt, o = {}) {
+        const n = Math.min(3, tierSc(o, [93, 6, 1]) - 2), title = ['OPERAÇÃO NETUNO', 'INVASÃO', 'OVERLORD'][n - 1];
+        // o jogador escolhe n modificadores; cada um sai pelo menos uma vez nos 8 giros
+        const picks = [];
+        for (let i = 0; i < n; i++) {
+          const left = MODS.filter(k => !picks.includes(k));
+          picks.push(await rt.choose(`${title}: ESCOLHA ${n > 1 ? `O ${i + 1}º MODIFICADOR` : 'O MODIFICADOR'}`, left.map(k => ({ id: k, img: MIMG[k], label: k[0].toUpperCase() + k.slice(1), desc: MDESC[k] }))));
+        }
+        const owed = new Set(picks), atom = n === 3 ? RNG.int(0, 7) : -1;
+        await rt.fsLoop(8, async api => {
+          const g = make('fw');
+          // Overlord: o coringa atômico é garantido em algum giro
+          if (api.i === atom && !g.flat().some(x => x.id === 'sup')) { const c = RNG.int(1, 3); g[c][RNG.int(0, g[c].length - 1)] = mult({ ...SUP }, wm(BIG) * 2); rt.msg('☢️ Coringa atômico garantido!'); }
+          const spinsLeft = api.left + 1;
+          const must = owed.size >= spinsLeft;
+          const use = picks.filter(k => (must && owed.has(k)) || RNG.float() < 0.8);
+          use.forEach(k => owed.delete(k));
+          await play(rt, g, use);
+        }, { title, sub: picks.join(' · ') });
+      },
     }));
   })();
 
   /* 36. Cidade Fantasma R.I.P. — rolo final x2 e xRIP */
   (() => {
     const SY = msyms([['pistoleiro', 'cowboy', 'Pistoleiro'], ['cavalo', 'horse', 'Cavalo'], ['garrafa', 'bottle', 'Garrafa'], ['bota', 'boot', 'Bota']]);
-    const WILD = { id: 'w', img: 'skull', name: 'Coringa xNudge', wild: true, reels: [1, 2, 3], w: 0.22, fw: 1.3 };
+    const WILD = { id: 'w', img: 'skull', name: 'Coringa xNudge', wild: true, reels: [1, 2, 3], w: 0.22, fw: 1.85 };
     const SC = { id: 'sc', img: 'snake', name: 'Cascavel', sc: true, w: 0.8, fw: 0 };
     const SC2 = { id: 'sc2', img: 'motorcycle', name: 'Moto', sc2: true, noPay: true, w: 0.35, fw: 0 };
     const draw = pool([...SY, WILD, SC, SC2]);
     const make = wk => grid([3, 4, 4, 4, 3], c => draw(c, wk));
     async function play(rt, g, st) {
       await rt.spin(g, { tease: !st });
-      if (st && st.sticky) st.sticky.forEach((m, c) => { g[c] = g[c].map(() => mult({ ...WILD, c: 'sticky' }, m)); });
-      for (let c = 1; c <= 3; c++) if (g[c].some(x => x.wild && !x.m)) { const m = nudgeReel(g, c, WILD, st ? st.add : 0); if (st && st.sticky) st.sticky.set(c, m); }
+      // Salvação: o rolo 5 fica todo coringa até o fim
+      if (st && st.sal) g[4] = g[4].map(() => ({ ...WILD, c: 'sticky' }));
+      let nudges = 0;
+      for (let c = 1; c <= 3; c++) if (g[c].some(x => x.wild && !x.m && x.c !== 'sticky')) { const m = nudgeReel(g, c, WILD); nudges += m - 1; }
+      // nas grátis, cada empurrão soma no multiplicador global, que não zera
+      if (st) { st.m += nudges; g.forEach(col => col.forEach(x => { if (x.wild) { x.m = 1; x.t = undefined; } })); rt.chip('mult', 'MULT.', 'x' + st.m); }
       // símbolos no último rolo valem x2
       g[4].forEach(x => { if (x.pays || x.wild) { x.n = 2; x.t = x.t || '×2'; } });
       await rt.drop(g);
       const res = ways(g, SY, { wildMult: 'add' });
       // xRIP: no jogo base, ganhos menores que 1x a aposta não são pagos
       if (!st && res.total * 1 < 0.6) { if (res.total) rt.msg('💀 xRIP: ganho pequeno demais, não pago'); }
-      else await pay(rt, res);
+      else await pay(rt, res, st ? st.m : 1);
       return { sc: count(g, x => x.sc), sc2: count(g, x => x.sc2) };
     }
     App.register(K.create({
@@ -640,12 +878,17 @@
       intro: 'Inspirado no "Deadwood R.I.P" (Nolimit City).', hello: 'Ganhos pequenos? Aqui não...',
       symbols: [...SY, WILD, SC, SC2],
       tables: [table('Pagamento por caminho', heads(3, 3, ' rolos'), SY, 'Rolos 3-4-4-4-3 = 384 caminhos.')],
-      highlights: ['🤠 Rolos 3-4-4-4-3 com 384 caminhos', '✖️ Todo símbolo no <b>último rolo vale x2</b>', '⬇️ <b>Coringas xNudge</b> nos rolos do meio: +1 por empurrão; vários no mesmo caminho se somam', '💀 <b>xRIP:</b> no jogo base, ganhos pequenos (abaixo de ~1x) não são pagos', '🐍 3 cascavéis = <b>8 Giros da Redenção</b>; com a moto junto = <b>10 Giros da Salvação</b> com coringas colantes', 'Prêmio máximo: <b>100.000x</b>'],
+      highlights: ['🤠 Rolos 3-4-4-4-3 com 384 caminhos', '✖️ Todo símbolo no <b>último rolo vale x2</b>', '⬇️ <b>Coringas xNudge</b> nos rolos do meio: +1 por empurrão; vários no mesmo caminho se somam', '💀 <b>xRIP:</b> no jogo base, ganhos pequenos (abaixo de ~1x) não são pagos', '🐍 3 cascavéis = <b>5 Giros da Redenção</b>: cada empurrão soma num <b>multiplicador global</b> que não zera', '🏍️ Com a moto junto = <b>6 Giros da Salvação</b>: além disso, o <b>rolo 5 vira coringa</b> (contando em dobro) até o fim', 'Prêmio máximo: <b>100.000x</b>'],
       how: '<p>Rolos 3-4-4-4-3 que pagam por caminhos. Os coringas xNudge cobrem o rolo e somam +1 por empurrão. Os símbolos do último rolo contam em dobro. Em troca, os ganhos pequenos do jogo base não são pagos (xRIP).</p>',
-      features: '<p>🐍 <b>3 cascavéis</b> dão <b>8 Giros da Redenção</b> (mais coringas, e cada um começa com +1). Se cair também a 🏍️ moto, vira <b>10 Giros da Salvação</b>, em que os rolos de coringa ficam presos até o fim.</p>',
+      features: '<p>🐍 <b>3 cascavéis</b> dão <b>5 Giros da Redenção</b>, com bem mais coringas xNudge. Cada empurrão soma +1 num <b>multiplicador global</b> que vale para todos os ganhos e nunca zera. Se cair também a 🏍️ <b>moto</b>, vira <b>6 Giros da Salvação</b>: o mesmo multiplicador global e, além disso, o <b>rolo 5 fica todo coringa</b> até o fim (e, como último rolo, cada casa conta em dobro). Na compra do bônus, o modo é sorteado com as chances do jogo normal.</p>',
       make: () => make('w'),
       async spin(rt) { const g = make('w'); const r = await play(rt, g, null); if (r.sc >= 3) { rt.mark(scatters(g)); await rt.wait(1000); await this.bonus(rt, { sal: r.sc2 > 0 }); } },
-      async bonus(rt, { sal = false } = {}) { const st = { add: 1, sticky: sal ? new Map() : null }; await rt.fsLoop(sal ? 10 : 8, async () => { await play(rt, make('fw'), st); }, { title: sal ? 'GIROS DA SALVAÇÃO' : 'GIROS DA REDENÇÃO', sub: sal ? 'Coringas colantes' : 'Coringas com +1' }); },
+      async bonus(rt, o = {}) {
+        const sal = o.buy ? RNG.float() < 0.08 : !!o.sal;
+        const st = { m: 1, sal };
+        await rt.fsLoop(sal ? 6 : 5, async () => { await play(rt, make('fw'), st); }, { title: sal ? 'GIROS DA SALVAÇÃO' : 'GIROS DA REDENÇÃO', sub: sal ? 'Rolo 5 coringa · multiplicador global' : 'Multiplicador global que não zera' });
+        rt.chip('mult', null);
+      },
     }));
   })();
 
@@ -694,22 +937,26 @@
   /* 38. Pescaria Bizarra — células reforçadas e troféus */
   (() => {
     const SY = msyms([['peixe3olhos', 'fish', 'Peixe esquisito'], ['bagre', 'shark', 'Bagre gigante'], ['bota', 'boot', 'Bota velha'], ['lata', 'can', 'Lata']]);
-    const FISHER = { id: 'w', img: 'fishingpole', name: 'Pescador coringa', wild: true, fisher: true, w: 0.3, fw: 0.55 };
-    const TROPHY = { id: 'trofeu', img: 'tropicalfish', name: 'Troféu', trophy: true, noPay: true, w: 0.5, fw: 0.9 };
-    const SC = { id: 'sc', img: 'tackle', name: 'Isca', sc: true, w: 0.85, fw: 0.35 };
+    const FISHER = { id: 'w', img: 'fishingpole', name: 'Pescador coringa', wild: true, fisher: true, w: 0.3, fw: 2.2 };
+    const TROPHY = { id: 'trofeu', img: 'tropicalfish', name: 'Troféu', trophy: true, noPay: true, w: 0.5, fw: 2.2 };
+    const SC = { id: 'sc', img: 'tackle', name: 'Isca', sc: true, w: 0.95, fw: 0.35 };
     const draw = pool([...SY, FISHER, TROPHY, SC]);
     const TV = [{ v: 2, w: 50 }, { v: 5, w: 28 }, { v: 25, w: 14 }, { v: 250, w: 1.2 }, { v: 1000, w: 0.15 }];
     const cell = (c, wk) => { const x = draw(c, wk); if (x.trophy) { x.v = RNG.weighted(TV).v; x.t = x.v + 'x'; } return x; };
-    const make = wk => grid(Array(5).fill(5), (c, r) => (r === 0 || r === 4 ? LOCK() : cell(c, wk)));
+    // nas grátis, as células abertas (st.open) ficam abertas até o fim
+    const make = (wk, st) => grid(Array(5).fill(5), (c, r) => ((r === 0 || r === 4) && !(st && st.open.has(key(c, r))) ? LOCK() : cell(c, wk)));
+    const LVM = [1, 2, 3, 10];
     async function play(rt, g, wk, lit, st) {
       await rt.spin(g, { tease: !st });
       const open = count(g, x => x.sc) + (lit || 0);
-      for (let i = 0; i < open; i++) { const c = RNG.int(0, 4), r = RNG.pick([0, 4]); if (g[c][r].id === 'lock') g[c][r] = RNG.float() < 0.4 ? { ...FISHER, c: 'gold', fresh: true } : cell(c, wk); }
+      for (let i = 0; i < open; i++) { const c = RNG.int(0, 4), r = RNG.pick([0, 4]); if (g[c][r].id === 'lock') { g[c][r] = RNG.float() < 0.4 ? { ...FISHER, c: 'gold', fresh: true } : cell(c, wk); if (st) st.open.add(key(c, r)); } }
       xways(g, SY, rt);
       await rt.drop(g);
       await pay(rt, ways(g, SY));
       const f = count(g, x => x.fisher), tv = g.flat().filter(x => x.trophy).reduce((s, x) => s + x.v, 0);
-      if (f && tv) { const v = tv * f * (st ? st.m : 1) / 4; rt.win(v); rt.msg(`🎣 Pescaria: troféus de ${rt.coins(tv / 4)}${f > 1 ? ` × ${f}` : ''}`); rt.fx('coin'); await rt.wait(800); if (st) { st.got += f; if (st.got >= 4) { st.got -= 4; st.m = Math.min(10, st.m * 2); st.api.add(5); rt.msg(`🎣 Nível do pescador: x${st.m} e +5 giros`); } } }
+      if (f && tv) { const v = tv * f * (st ? st.m : 1) / 4; rt.win(v); rt.msg(`🎣 Pescaria: troféus de ${rt.coins(tv / 4)}${f > 1 ? ` × ${f}` : ''}`); rt.fx('coin'); await rt.wait(800); }
+      // a cada 4 pescadores o Troll sobe de nível: x2, x3 e x10
+      if (st && f) { st.got += f; while (st.got >= 4 && st.lvl < 3) { st.got -= 4; st.lvl++; st.m = LVM[st.lvl]; st.api.add(2); rt.msg(`🧌 Nível do Troll ${st.lvl}: pescarias x${st.m} e +2 giros`); rt.fx('big'); } rt.chip('troll', 'TROLL', st.lvl < 3 ? `x${st.m} · ${st.got}/4` : 'x10'); }
       return count(g, x => x.sc);
     }
     App.register(K.create({
@@ -719,46 +966,93 @@
       intro: 'Inspirado no "Ugliest Catch" (Nolimit City).', hello: 'O lago é estranho, mas os prêmios são reais!',
       symbols: [...SY, FISHER, TROPHY, SC],
       tables: [table('Pagamento por caminho', heads(3, 3, ' rolos'), SY, '5×3 (243 caminhos) que cresce até 5×5 com as células abertas.')],
-      highlights: ['🎣 5×3 com 243 caminhos e <b>células reforçadas</b> em cima e embaixo', '🪱 Iscas abrem células que podem trazer <b>pescadores coringa</b>, troféus ou xWays', '🐠 <b>Troféus</b> de 2x a 1.000x: um pescador coringa na tela recolhe todos', '3+ iscas = <b>10 giros</b> com 2 células abertas garantidas; a cada 4 pescadores o prêmio dobra (até x10) e +5 giros', 'Prêmio máximo: <b>50.000x</b>'],
+      highlights: ['🎣 5×3 com 243 caminhos e <b>células reforçadas</b> em cima e embaixo', '🪱 Iscas abrem células que podem trazer <b>pescadores coringa</b>, troféus ou xWays', '🐠 <b>Troféus</b> de 2x a 1.000x: um pescador coringa na tela recolhe todos', '3/4/5 iscas = <b>8/9/10 giros</b> com <b>6/8/10 células abertas</b> até o fim', '🧌 A cada 4 pescadores o <b>Troll</b> sobe de nível: pescarias <b>x2</b>, depois <b>x3</b> e <b>x10</b> (+2 giros por nível)', 'Prêmio máximo: <b>50.000x</b>'],
       how: '<p>Grade 5×3 com células trancadas acima e abaixo (até 5×5). Cada isca abre uma célula. Com pescador coringa e troféus na tela, os valores são recolhidos.</p>',
-      features: '<p>🪱 <b>3 ou mais iscas</b> dão <b>10 rodadas grátis</b> com duas células abertas por giro. Cada 4 pescadores coletados dobram o valor das pescarias (até x10) e dão +5 giros.</p>',
+      features: '<p>🪱 <b>3, 4 ou 5 iscas</b> dão <b>8, 9 ou 10 rodadas grátis</b> começando com <b>6, 8 ou 10 células reforçadas abertas</b>, que ficam abertas até o fim (iscas nas grátis abrem mais). A cada <b>4 pescadores</b> coletados, o <b>Troll</b> sobe de nível e multiplica todas as pescarias seguintes: nível 1 = <b>x2</b>, nível 2 = <b>x3</b> e nível 3 = <b>x10</b>, com +2 giros por nível. Na compra do bônus, o número de iscas é sorteado com as chances do jogo normal.</p>',
       make: () => make('w'),
-      async spin(rt) { const g = make('w'); if (await play(rt, g, 'w', 0, null) >= 3) { rt.mark(scatters(g)); await rt.wait(1000); await this.bonus(rt, {}); } },
-      async bonus(rt) { const st = { got: 0, m: 1 }; await rt.fsLoop(10, async api => { st.api = api; await play(rt, make('fw'), 'fw', 2, st); }, { title: 'GIROS DO PESQUEIRO', sub: '2 células abertas por giro' }); },
+      async spin(rt) { const g = make('w'); const sc = await play(rt, g, 'w', 0, null); if (sc >= 3) { rt.mark(scatters(g)); await rt.wait(1000); await this.bonus(rt, { sc }); } },
+      async bonus(rt, o = {}) {
+        const sc = Math.min(5, tierSc(o, [92, 7, 1])), n = { 3: 6, 4: 8, 5: 10 }[sc];
+        const all = []; [0, 4].forEach(r => { for (let c = 0; c < 5; c++) all.push(key(c, r)); });
+        const st = { got: 0, lvl: 0, m: 1, open: new Set(RNG.shuffle(all).slice(0, n)) };
+        rt.chip('troll', 'TROLL', 'x1 · 0/4');
+        await rt.fsLoop(5 + sc, async api => { st.api = api; await play(rt, make('fw', st), 'fw', 0, st); }, { title: 'GIROS DO PESQUEIRO', sub: `${n} células abertas` });
+        rt.chip('troll', null);
+      },
     }));
   })();
 
-  /* 39. Encruzilhada — crosslink em volta do coringa central */
+  /* 39. Encruzilhada — crosslink em volta do coringa central e Giros da Redenção com moedas */
   (() => {
     const SY = msyms([['violao', 'guitar', 'Violão'], ['chapeu', 'tophat', 'Chapéu'], ['gaita', 'saxophone', 'Gaita'], ['dado', 'dice2', 'Dados']]);
     const WILD = { id: 'w', img: 'imp', name: 'Coringa da encruzilhada', wild: true, w: 0.3 };
-    const SC = { id: 'sc', img: 'crossmark', name: 'Encruzilhada', sc: true, w: 0.5, fw: 0.35 };
+    const SC = { id: 'sc', img: 'crossmark', name: 'Encruzilhada', sc: true, w: 1.15 };
     const draw = pool([...SY, WILD, SC]);
-    const make = wk => grid([5, 5, 5, 5, 5], (c, r) => (c === 2 && r === 2 && (wk === 'fw' || RNG.float() < 0.3) ? { ...WILD, c: 'gold', center: true } : draw(c, wk)));
-    async function play(rt, g, st) {
-      await rt.spin(g, { tease: !st });
+    const make = () => grid([5, 5, 5, 5, 5], (c, r) => (c === 2 && r === 2 && RNG.float() < 0.3 ? { ...WILD, c: 'gold', center: true } : draw(c)));
+    async function play(rt, g) {
+      await rt.spin(g);
       // símbolos vizinhos do centro ativam o multiplicador cruzado
-      let m = 1 + (st ? st.m : 0);
+      let m = 1;
       if (RNG.float() < 0.25) { const k = RNG.int(1, 3); m += k; rt.msg(`😈 Multiplicador cruzado +${k}`); }
-      if (RNG.float() < (st ? 0.2 : 0.08)) { [[1, 2], [3, 2], [2, 1], [2, 3]].forEach(([c, r]) => { g[c][r] = { ...WILD, c: 'gold', fresh: true }; }); rt.msg('✝️ Coringas em cruz!'); }
+      if (RNG.float() < 0.08) { [[1, 2], [3, 2], [2, 1], [2, 3]].forEach(([c, r]) => { g[c][r] = { ...WILD, c: 'gold', fresh: true }; }); rt.msg('✝️ Coringas em cruz!'); }
       await rt.drop(g);
       await pay(rt, ways(g, SY), m);
-      if (st) { st.m += count(g, x => x.sc); rt.chip('mult', 'MULT.', 'x' + (1 + st.m)); }
       return count(g, x => x.sc);
+    }
+    const U = 13;
+    const CV = [{ v: 1, w: 34 }, { v: 2, w: 26 }, { v: 3, w: 16 }, { v: 5, w: 12 }, { v: 10, w: 8 }, { v: 25, w: 3 }, { v: 100, w: 0.6 }];
+    const COIN = () => ({ id: 'moeda', img: 'coin', name: 'Moeda', coin: true, noPay: true, v: U * RNG.weighted(CV).v });
+    const EMPTY = () => ({ id: 'vazio', img: null, c: 'empty', noPay: true });
+    const MODS = [{ k: 'alma', w: 40 }, { k: 'blues', w: 40 }, { k: 'volta', w: 20 }];
+    async function redemption(rt, g0) {
+      rt.stat('hold');
+      await rt.banner('GIROS DA REDENÇÃO', 'Moedas travam · cada moeda nova reinicia os 3 giros', 1500);
+      const g = grid([5, 5, 5, 5, 5], (c, r) => (g0 && g0[c][r].sc ? COIN() : RNG.float() < 0.12 ? COIN() : EMPTY()));
+      while (count(g, x => x.coin) < 4) g[RNG.int(0, 4)][RNG.int(0, 4)] = COIN();
+      let left = 3, m = 1;
+      const done = new Set();
+      rt.show(g);
+      for (let guard = 0; left > 0 && guard < 200 && !rt.capped; guard++) {
+        rt.chip('fs', 'GIROS', left);
+        left--;
+        let got = 0;
+        g.forEach((col, c) => col.forEach((x, r) => { if (!x.coin && RNG.float() < 0.07) { g[c][r] = { ...COIN(), fresh: true }; got++; } }));
+        await rt.drop(g);
+        if (got) left = 3;
+        // coluna cheia de moedas destrava um modificador
+        for (let c = 0; c < 5; c++) {
+          if (done.has(c) || !g[c].every(x => x.coin)) continue;
+          done.add(c);
+          const k = RNG.weighted(MODS).k;
+          if (k === 'alma') { m++; rt.msg(`😈 Coluna ${c + 1} cheia: Pacto da Alma, total x${m}!`); rt.chip('mult', 'MULT.', 'x' + m); }
+          if (k === 'blues') { g.forEach(col => col.forEach(x => { if (x.coin) x.v += U; })); rt.msg(`🎸 Coluna ${c + 1} cheia: Blues do Diabo, toda moeda ganha +${rt.coins(U)}!`); }
+          if (k === 'volta') { left = 4; rt.msg(`✝️ Coluna ${c + 1} cheia: Segunda Chance, 4 giros!`); }
+          rt.fx('big');
+          await rt.wait(600);
+        }
+        if (g.every(col => col.every(x => x.coin))) { m *= 2; rt.msg('TELA CHEIA! Tudo x2'); break; }
+        await rt.wait(350);
+      }
+      rt.chip('fs', null); rt.chip('mult', null);
+      const v = g.flat().filter(x => x.coin).reduce((a, x) => a + x.v, 0) * m;
+      rt.win(v);
+      rt.msg(`✝️ Redenção: ${rt.coins(v)}`);
+      rt.fx('big');
+      await rt.wait(900);
     }
     App.register(K.create({
       id: 'encruzilhada', name: 'Encruzilhada', studio: STUDIO, art: 'imp', mascot: 'guitar',
-      tag: 'Crosslink · Giros da Redenção', colors: ['#dc2626', '#1c1917'], bg: 'radial-gradient(circle at 50% 50%,#7f1d1d,#0c0a09 70%)',
+      tag: 'Crosslink · Giros da Redenção com moedas', colors: ['#dc2626', '#1c1917'], bg: 'radial-gradient(circle at 50% 50%,#7f1d1d,#0c0a09 70%)',
       cols: 5, rows: 5, maxWin: 13180, vol: 5, rtp: '~96,1%', target: 0.961,
       intro: 'Inspirado no "Devil\'s Crossroad" (Nolimit City) — a lenda do blues na encruzilhada.', hello: 'Um pacto na encruzilhada...',
-      symbols: [...SY, WILD, SC],
+      symbols: [...SY, WILD, SC], extraSprites: ['coin'],
       tables: [table('Pagamento por caminho', heads(3, 3, ' rolos'), SY, '5×5; o centro pode virar coringa.')],
-      highlights: ['🎸 5×5 em que o <b>centro da encruzilhada</b> acende como coringa', '😈 <b>Multiplicador cruzado</b> de surpresa (+1 a +3) e <b>coringas em cruz</b> em volta do centro', '✝️ 3+ encruzilhadas = <b>10 Giros da Redenção</b>: cada encruzilhada soma +1 num multiplicador que não zera', 'Prêmio máximo: <b>13.180x</b>'],
-      how: '<p>Grade 5×5 que paga por caminhos. A casa central acende como coringa em cerca de 30% dos giros (sempre, nas grátis). Em alguns giros as quatro casas em cruz em volta dela também viram coringa, ou um multiplicador extra é aplicado.</p>',
-      features: '<p>✝️ <b>3 ou mais encruzilhadas</b> dão <b>10 Giros da Redenção</b>. Cada encruzilhada que cair durante eles aumenta em +1 o multiplicador, que vale para todos os ganhos seguintes.</p>',
-      make: () => make('w'),
-      async spin(rt) { const g = make('w'); if (await play(rt, g, null) >= 3) { rt.mark(scatters(g)); await rt.wait(1000); await this.bonus(rt, {}); } },
-      async bonus(rt) { const st = { m: 0 }; await rt.fsLoop(10, async () => { await play(rt, make('fw'), st); }, { title: 'GIROS DA REDENÇÃO', sub: 'Encruzilhadas sobem o multiplicador' }); rt.chip('mult', null); },
+      highlights: ['🎸 5×5 em que o <b>centro da encruzilhada</b> acende como coringa', '😈 <b>Multiplicador cruzado</b> de surpresa (+1 a +3) e <b>coringas em cruz</b> em volta do centro', '✝️ 4+ encruzilhadas = <b>Giros da Redenção</b>: moedas travam e cada moeda nova <b>reinicia os 3 giros</b>', '🪙 Encher uma <b>coluna</b> de moedas destrava um modificador: <b>x+1 no total</b>, <b>+1 moeda em cada moeda</b> ou <b>4 giros</b>', 'Prêmio máximo: <b>13.180x</b>'],
+      how: '<p>Grade 5×5 que paga por caminhos. A casa central acende como coringa em cerca de 30% dos giros. Em alguns giros as quatro casas em cruz em volta dela também viram coringa, ou um multiplicador extra é aplicado.</p>',
+      features: '<p>✝️ <b>4 ou mais encruzilhadas</b> abrem os <b>Giros da Redenção</b>: as encruzilhadas viram moedas e travam, junto com algumas moedas extras. Você tem <b>3 giros</b>, e cada moeda nova que cair trava e <b>reinicia os 3 giros</b>.</p><p>🪙 Sempre que uma <b>coluna inteira</b> se enche de moedas, ela destrava um modificador: <b>Pacto da Alma</b> (+1 no multiplicador do total), <b>Blues do Diabo</b> (todas as moedas na tela ganham +1 moeda de valor) ou <b>Segunda Chance</b> (os giros voltam para 4). Encher a tela inteira dobra tudo. No fim, o valor de todas as moedas é pago.</p>',
+      make: () => make(),
+      async spin(rt) { const g = make(); if (await play(rt, g) >= 4) { rt.mark(scatters(g)); await rt.wait(1000); await this.bonus(rt, { g }); } },
+      async bonus(rt, { g } = {}) { await redemption(rt, g); },
     }));
   })();
 
