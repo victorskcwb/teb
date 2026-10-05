@@ -180,10 +180,10 @@
   (() => {
     const SY = lsyms([['bastet', 'cat', 'Bastet'], ['horus', 'eagle', 'Hórus'], ['ankh', 'ankh', 'Ankh'], ['olho', 'eye', 'Olho']]);
     // 'fa' = Angústia de Anúbis (mais coringas e escaravelhos); 'fw' = Reino de Rá (coringas colantes)
-    const WILD = { id: 'w', img: 'pyramid', name: 'Coringa', wild: true, w: 0.9, fw: 1.3, fa: 3 };
-    const SCAR = { id: 'esc', img: 'scarab', name: 'Escaravelho dourado', wild: true, scarab: true, reels: [1, 2, 3], w: 0.22, fw: 0.3, fa: 1.2 };
-    const SCA = { id: 'sca', img: 'jackal', name: 'Anúbis bônus', sc: true, kind: 'a', w: 0.55, fw: 0, fa: 0.3 };
-    const SCR = { id: 'scr', img: 'sunbehind', name: 'Rá bônus', sc: true, kind: 'r', w: 0.55, fw: 0.3, fa: 0 };
+    const WILD = { id: 'w', img: 'pyramid', name: 'Coringa', wild: true, w: 0.9, fw: 1.8, fa: 4.5 };
+    const SCAR = { id: 'esc', img: 'scarab', name: 'Escaravelho dourado', wild: true, scarab: true, reels: [1, 2, 3], w: 0.22, fw: 0.45, fa: 1.8 };
+    const SCA = { id: 'sca', img: 'jackal', name: 'Anúbis bônus', sc: true, kind: 'a', w: 0.65, fw: 0, fa: 0.3 };
+    const SCR = { id: 'scr', img: 'sunbehind', name: 'Rá bônus', sc: true, kind: 'r', w: 0.65, fw: 0.3, fa: 0 };
     const draw = pool([...SY, WILD, SCAR, SCA, SCR]);
     const make = wk => grid([4, 4, 4, 4, 4], c => draw(c, wk));
     const FS = { 3: 10, 4: 12, 5: 14 }, RETRIG = { 2: 2, 3: 4 };
@@ -240,12 +240,13 @@
     SY.forEach(s => { s.pays = s.pays.map(p => p * 0.4); });
     // 'fw' = Keep 'Em Comin' (mais Get'em e Cash'em); 'fk' = Keep Your Friends Close (o dinheiro fica)
     const COIN = { id: 'moeda', img: 'coin', name: "Cash'em", coin: true, noPay: true, w: 1.3, fw: 4, fk: 3.5 };
-    const GET = { id: 'get', img: 'magnet', name: "Get'em", get: true, noPay: true, reels: [0, 5], w: 0.5, fw: 1.4, fk: 0.35 };
+    const GET = { id: 'get', img: 'magnet', name: "Get'em", get: true, noPay: true, reels: [0, 5], w: 0.5, fw: 2.5, fk: 0.5 };
     const SC = { id: 'sc', img: 'fourleaf', name: 'Bônus', sc: true, w: 0.55, fw: 0.45, fk: 0.45 };
     const DROP = { id: 'dropfill', img: 'down', name: 'Drop & Fill', noPay: true, c: 'tint-green' };
     const draw = pool([...SY, COIN, GET, SC]);
     const VALS = [{ v: 0.2, w: 40 }, { v: 0.5, w: 30 }, { v: 1, w: 15 }, { v: 2, w: 8 }, { v: 5, w: 4 }, { v: 10, w: 2 }, { v: 25, w: 0.6 }, { v: 100, w: 0.1 }];
-    const cell = (c, wk) => { const x = draw(c, wk); if (x.coin) { x.v = RNG.weighted(VALS).v; x.t = K.short(x.v) + 'x'; } return x; };
+    const VM = { w: 1, fw: 8, fk: 16 };
+    const cell = (c, wk) => { const x = draw(c, wk); if (x.coin) { x.v = RNG.weighted(VALS).v * VM[wk]; x.t = K.short(x.v) + 'x'; } return x; };
     const make = wk => grid([5, 5, 5, 5, 5, 5], c => cell(c, wk));
     const P_DROP = { w: 0.035, fw: 0.05, fk: 0.05 };
     /** Drop & Fill: tudo abaixo do modificador no rolo some e as casas vazias se enchem com um único símbolo pagante sorteado. */
@@ -413,9 +414,11 @@
   /* 8. Os Respinners — banda que dá respins; a banda inteira no palco abre as rodadas grátis */
   (() => {
     const BAND = [S('vocal', 'microphone', 'Vocalista', [1, 3, 10], 5), S('guitarra', 'guitar', 'Guitarrista', [0.8, 2.5, 8], 5), S('baixo', 'violin', 'Baixista', [0.6, 2, 6], 5), S('bateria', 'drum', 'Baterista', [0.5, 1.5, 5], 5)];
+    const PF = 0.022;
+    BAND.forEach(s => { s.pays = s.pays.map(p => p * PF); });
     const EMO = { vocal: '🎤', guitarra: '🎸', baixo: '🎻', bateria: '🥁' };
-    const SY = [...BAND, ...R([[0.15, 0.4, 1.2], [0.15, 0.4, 1.2], [0.1, 0.3, 1], [0.1, 0.3, 1]])];
-    const WILD = { id: 'w', img: 'guitar2', name: 'Coringa', wild: true, w: 0.9 };
+    const SY = [...BAND, ...K.ROYALS([[0.15, 0.4, 1.2], [0.15, 0.4, 1.2], [0.1, 0.3, 1], [0.1, 0.3, 1]], [4, 4, 4, 4]).map(s => ({ ...s, pays: s.pays.map(p => p * PF) }))];
+    const WILD = { id: 'w', img: 'guitar2', name: 'Coringa', wild: true, w: 1.2 };
     const draw = pool([...SY, WILD]);
     const make = (wk = 'w') => grid([4, 4, 4, 4, 4], c => draw(c, wk));
     const showMult = (rt, st) => rt.chip('band', 'BANDA', BAND.map(b => `${EMO[b.id]}x${st.m[b.id]}`).join(' '));
@@ -478,7 +481,7 @@
     const SY = csyms([['piramide', 'pyramid', 'Pirâmide'], ['jaguar', 'leopard', 'Jaguar'], ['serpente', 'snake', 'Serpente'], ['cacau', 'chestnut', 'Cacau'], ['jade', 'greenheart', 'Jade'], ['pena', 'feather', 'Pena'], ['milho', 'corn', 'Milho']]).map((x, i) => ({ ...x, pays: x.pays.map(p => p * PF), fw: x.w * (i >= 4 ? 2 : 1) }));
     const SC = { id: 'sc', img: 'sun', name: 'Sol', sc: true, w: 0.55, fw: 0.3 };
     const WILD = { id: 'w', img: 'eagle', name: 'Coringa', wild: true, w: 0.35 };
-    const MASK = { id: 'mask', img: 'moai', name: 'Máscara dourada', mask: true, noPay: true, c: 'gold', w: 0, fw: 0.2 };
+    const MASK = { id: 'mask', img: 'moai', name: 'Máscara dourada', mask: true, noPay: true, c: 'gold', w: 0, fw: 0.35 };
     const LOCKC = () => ({ id: 'lock', img: 'locked', name: 'Linha trancada', c: 'locked', noPay: true });
     const CYL = [10, 20, 30, 50, 100, 200, 500];
     const draw = pool([...SY, SC, WILD, MASK]);
@@ -545,8 +548,8 @@
     const SC = { id: 'sc', img: 'flower2', name: 'Flor bônus', sc: true, w: 0.8, fw: 0 };
     const BLUE = { id: 'azul', img: 'butterfly', name: 'Borboleta azul', bf: 'b', noPay: true, c: 'mk-blue', w: 0, fw: 0.55 };
     const GREEN = { id: 'verde', img: 'butterfly', name: 'Borboleta verde', bf: 'g', noPay: true, c: 'mk-green', w: 0, fw: 0.15 };
-    const TORN = { id: 'coleta', img: 'cyclone', name: 'Tornado coletor', bf: 't', noPay: true, c: 'gold', w: 0, fw: 0.2 };
-    const BV = [{ v: 1, w: 40 }, { v: 2, w: 25 }, { v: 3, w: 15 }, { v: 5, w: 10 }, { v: 10, w: 6 }, { v: 25, w: 3 }, { v: 100, w: 0.5 }];
+    const TORN = { id: 'coleta', img: 'cyclone', name: 'Tornado coletor', bf: 't', noPay: true, c: 'gold', w: 0, fw: 0.3 };
+    const BV = [{ v: 2, w: 40 }, { v: 4, w: 25 }, { v: 6, w: 15 }, { v: 10, w: 10 }, { v: 20, w: 6 }, { v: 50, w: 3 }, { v: 200, w: 0.5 }];
     const GM = [{ m: 2, w: 70 }, { m: 3, w: 22 }, { m: 5, w: 8 }];
     const draw = pool([...SY, WILD, SC, BLUE, GREEN, TORN]);
     const make = wk => grid([5, 5, 5, 5, 5], c => {
@@ -829,7 +832,7 @@
     const WILD = { id: 'w', img: 'pigface', name: 'Porco coringa', wild: true, w: 0.4 };
     const STAR = { id: 'estrela', img: 'star', name: 'Estrela', star: 1, noPay: true, w: 0, fw: 1 };
     const SSTAR = { id: 'superestrela', img: 'glowstar', name: 'Super estrela', star: 3, noPay: true, w: 0, fw: 0.3 };
-    const SC = { id: 'sc', img: 'magicball', name: 'Bônus', sc: true, w: 0.6, fw: 0 };
+    const SC = { id: 'sc', img: 'magicball', name: 'Bônus', sc: true, w: 0.7, fw: 0 };
     const draw = pool([...SY, PIG, HAT, WILD, STAR, SSTAR, SC]);
     const make = wk => grid([5, 5, 5, 5, 5], c => draw(c, wk));
     const BILL = [{ v: 1, w: 40 }, { v: 2, w: 25 }, { v: 5, w: 15 }, { v: 10, w: 9 }, { v: 25, w: 5 }, { v: 50, w: 3 }, { v: 100, w: 1.5 }, { v: 1000, w: 0.05 }];
@@ -1026,7 +1029,8 @@
     async function mostWanted(rt) {
       const posters = Array.from({ length: 6 }, () => RNG.pick([1, 2, 3, 5]));
       let bonusBullets = 0;
-      const showP = () => rt.head(posters.map(v => '🎯 ' + (rt.xs(v) || K.short(v))));
+      // a faixa tem 5 colunas: os 6 cartazes ficam em 2 fileiras de 3 (colunas 1, 3 e 5)
+      const showP = () => { const t = posters.map((v, i) => `🎯${i + 1} ${rt.xs(v) || K.short(v)}`); rt.head([t[0], '', t[1], '', t[2], t[3], '', t[4], '', t[5]]); };
       const g = grid([4, 4, 4, 4, 4], () => EMPTY());
       showP();
       await hold(rt, g, {
@@ -1134,63 +1138,69 @@
     }));
   })();
 
-  /* 19. Punho da Destruição — punhos (VS) viram rolos coringa com o multiplicador do vencedor */
+  /* 19. Punho da Destruição — punhos sobem pelo rolo; Níveis de Vitória no Desafio */
   (() => {
     const RED = [S('lutador1', 'boxing', 'Lutador vermelho', [2, 5, 15], 3), S('lutadora1', 'womanfight', 'Lutadora vermelha', [1.5, 4, 12], 4)];
     const BLUE = [S('lutador2', 'martialarts', 'Lutador azul', [2, 5, 15], 3), S('lutadora2', 'ninja', 'Lutadora azul', [1.5, 4, 12], 4)];
     RED.forEach(s => { s.team = 'r'; }); BLUE.forEach(s => { s.team = 'b'; });
     const SY = [...RED, ...BLUE, ...R([[0.3, 0.8, 2], [0.3, 0.8, 2], [0.2, 0.6, 1.5], [0.2, 0.6, 1.5]])];
     const WILD = { id: 'w', img: 'star', name: 'Coringa', wild: true, w: 0.6 };
-    const FIST = { id: 'punho', img: 'oncomingfist', name: 'Punho', fist: true, noPay: true, reels: [1, 2, 3], w: 0.22, fw: 0.6 };
+    const FR = { id: 'pr', img: 'boxingglove', name: 'Punho vermelho', fist: 'r', noPay: true, reels: [1, 2, 3], w: 0.3, fw: 1.4 };
+    const FB = { id: 'pb', img: 'oncomingfist', name: 'Punho azul', fist: 'b', noPay: true, reels: [1, 2, 3], w: 0.3, fw: 1.4 };
     const SC = { id: 'sc', img: 'trophy', name: 'Troféu', sc: true, w: 0.75, fw: 0 };
-    const draw = pool([...SY, WILD, FIST, SC]);
+    const draw = pool([...SY, WILD, FR, FB, SC]);
     const make = wk => grid([4, 4, 4, 4, 4], c => draw(c, wk));
-    const FM = [{ m: 1, w: 35 }, { m: 2, w: 30 }, { m: 3, w: 15 }, { m: 5, w: 10 }, { m: 10, w: 6 }, { m: 25, w: 3 }, { m: 50, w: 0.8 }, { m: 100, w: 0.2 }];
-    // níveis de vitória do Desafio: pontos (duelos) necessários e punhos garantidos por giro
-    const VL = [{ at: 0, n: 0, t: '—' }, { at: 6, n: 3, t: '3+' }, { at: 14, n: 4, t: '4+' }, { at: 24, n: 5, t: '5+' }];
-    const FMF = [{ m: 1, w: 60 }, { m: 2, w: 25 }, { m: 3, w: 10 }, { m: 5, w: 4 }, { m: 10, w: 1 }];
+    // multiplicadores por golpe nas grátis (no jogo base, x2 a x200)
+    const FMF = [{ m: 1, w: 50 }, { m: 2, w: 30 }, { m: 3, w: 12 }, { m: 5, w: 6 }, { m: 10, w: 2 }];
+    // Níveis de Vitória do Desafio: vitórias (socos) necessárias e punhos garantidos por giro
+    const VL = [{ at: 0, n: 0, t: '—' }, { at: 3, n: 3, t: '3+' }, { at: 8, n: 4, t: '4+' }, { at: 15, n: 5, t: '5+' }];
     async function fists(rt, g, st) {
       // garantia do nível de vitória: completa os punhos que faltam nos rolos 2 a 4
       if (st && VL[st.lv].n) {
-        for (let k = count(g, x => x.fist), guard = 0; k < VL[st.lv].n && guard < 50; guard++) {
+        for (let k = count(g, x => x.fist), guard = 0; k < VL[st.lv].n && guard < 60; guard++) {
           const c = RNG.int(1, 3), r = RNG.int(0, 3);
-          if (g[c][r].fist) continue;
-          g[c][r] = { ...FIST, fresh: true }; k++;
+          if (g[c][r].fist || g[c][r].sc) continue;
+          g[c][r] = { ...(RNG.float() < 0.5 ? FR : FB), fresh: true }; k++;
         }
       }
-      const reel = new Map();
-      for (const [c] of cells(g, x => x.fist)) {
-        // duelo: lutador vermelho contra azul, cada um com um multiplicador; o maior vence
-        const mr = wm(st ? FMF : FM), mb = wm(st ? FMF : FM), red = mr > mb || (mr === mb && RNG.float() < 0.5), m = red ? mr : mb;
-        reel.set(c, (reel.get(c) || 0) + m);
-        if (st) st.pts++;
-        rt.msg(`👊 Rolo ${c + 1}: vermelho x${mr} contra azul x${mb}, vence o ${red ? 'vermelho' : 'azul'}!`); rt.fx('boom');
+      for (const [c, r] of cells(g, x => x.fist)) {
+        const team = g[c][r].fist;
+        if (!team) continue;
+        // o punho sobe pelo rolo: coringas e lutadores do time rival atingidos viram multiplicador
+        let m = 0;
+        for (let rr = 0; rr <= r; rr++) { const x = g[c][rr]; if (x.wild || (x.team && x.team !== team)) m += wm(st ? FMF : HUGE); }
+        const test = g.map(col => col.slice());
+        for (let rr = 0; rr <= r; rr++) test[c][rr] = m ? mult({ ...WILD, c: 'duel' }, m) : { ...WILD, c: 'duel' };
+        if (lines(test, L14, SY, { mult: 'add' }).total > lines(g, L14, SY, { mult: 'add' }).total) {
+          g[c] = test[c].map((x, rr) => (rr <= r ? { ...x, fresh: true } : x));
+          if (st) st.pts++;
+          rt.msg(`👊 Punho ${team === 'r' ? 'vermelho' : 'azul'} no rolo ${c + 1}${m ? ` · x${m}` : ''}!`); rt.fx('boom');
+        } else g[c][r] = { ...RNG.pick(SY) };
       }
-      reel.forEach((m, c) => { g[c] = g[c].map(() => (m > 1 ? mult({ ...WILD, c: 'duel', fresh: true }, m) : { ...WILD, c: 'duel', fresh: true })); });
       if (st) {
-        while (st.lv < VL.length - 1 && st.pts >= VL[st.lv + 1].at) { st.lv++; rt.msg(`🏆 Nível de vitória ${VL[st.lv].t}: ${VL[st.lv].n} punhos garantidos por giro!`); rt.fx('rise'); }
+        while (st.lv < VL.length - 1 && st.pts >= VL[st.lv + 1].at) { st.lv++; rt.msg(`🏆 Nível de Vitória ${VL[st.lv].t}: ${VL[st.lv].n} punhos garantidos por giro!`); rt.fx('rise'); }
         rt.chip('vl', 'VITÓRIA', `${VL[st.lv].t} · ${st.pts}`);
       }
       await rt.drop(g);
     }
     App.register(K.create({
       id: 'punhodestruicao', name: 'Punho da Destruição', studio: STUDIO, art: 'oncomingfist', mascot: 'boxing',
-      tag: 'Duelos viram rolos coringa até x100', colors: ['#dc2626', '#2563eb'], bg: 'linear-gradient(90deg,#7f1d1d,#111827 50%,#1e3a8a)',
+      tag: 'Punhos viram coringas até x200 · Níveis de Vitória', colors: ['#dc2626', '#2563eb'], bg: 'linear-gradient(90deg,#7f1d1d,#111827 50%,#1e3a8a)',
       cols: 5, rows: 4, maxWin: 10000, vol: 4, rtp: '~96,3%', target: 0.963,
       intro: 'Inspirado no "Fist of Destruction" (Hacksaw Gaming).', hello: 'Vermelho contra azul!',
-      symbols: [...SY, WILD, FIST, SC],
+      symbols: [...SY, WILD, FR, FB, SC],
       lineList: { cols: 5, rows: 4, list: L14, text: '14 linhas fixas.' },
       tables: [table('Pagamento por linha', heads(3, 3), SY, 'Multiplicadores na mesma linha se somam.')],
-      highlights: ['👊 O <b>punho</b> (rolos 2 a 4) cobre o rolo inteiro como <b>coringa</b>', '🥊 Um lutador vermelho e um azul duelam, cada um com <b>x1 a x100</b>; o multiplicador do vencedor vale para o rolo, e vários rolos na mesma linha <b>se somam</b>', '🏆 3 troféus = <b>Desafio</b>: 10 rodadas grátis em que os duelos sobem os <b>Níveis de Vitória</b> (3+, 4+ e 5+ punhos garantidos por giro)', '🏆 4 troféus = <b>Desafio Supremo</b>, que já começa no nível <b>4+</b>', 'Prêmio máximo: <b>10.000x</b>'],
-      how: '<p>Grade 5×4 com 14 linhas. Quando um punho cai nos rolos 2, 3 ou 4, ele cobre o rolo inteiro e vira coringa. Um lutador vermelho e um azul duelam, cada um com um multiplicador sorteado; o maior vence e o multiplicador dele vale para o rolo. Dois punhos no mesmo rolo somam os multiplicadores, e rolos de punho na mesma linha também se somam.</p>',
-      features: `<p>🏆 <b>3 troféus</b> dão o <b>Desafio</b>: 10 rodadas grátis em que cada duelo vale 1 ponto de vitória. Com ${VL[1].at}, ${VL[2].at} e ${VL[3].at} pontos você sobe para os <b>Níveis de Vitória 3+, 4+ e 5+</b>, que garantem pelo menos esse número de punhos em todo giro até o fim.</p><p>🏆 <b>4 troféus</b> dão o <b>Desafio Supremo</b>, que já começa no nível <b>4+</b>.</p><p class="muted small">Na compra, o bônus é sorteado (o Desafio Supremo é o mais raro).</p>`,
+      highlights: ['👊 Punhos (rolos 2 a 4) sobem pelo rolo e viram <b>coringas</b> se isso der ganho', 'Cada <b>coringa</b> ou <b>lutador do time rival</b> atingido soma <b>x2 a x200</b>', '🏆 3 troféus = <b>Desafio</b>: 10 rodadas grátis em que cada soco conta uma vitória e sobe os <b>Níveis de Vitória</b> (3+, 4+ e 5+ punhos garantidos por giro)', '🏆 4 troféus = <b>Desafio Supremo</b>, que já começa no nível <b>4+</b>', 'Prêmio máximo: <b>10.000x</b>'],
+      how: '<p>Grade 5×4 com 14 linhas. Os punhos vermelho e azul só funcionam se ajudarem num ganho: sobem do lugar onde caíram até o topo do rolo, transformando tudo em coringa. Coringas e lutadores do time adversário no caminho viram multiplicadores (x2 a x200), que se somam.</p>',
+      features: `<p>🏆 <b>3 troféus</b> dão o <b>Desafio</b>: 10 rodadas grátis em que cada soco que vira coringa conta <b>1 vitória</b> para os times. Com ${VL[1].at}, ${VL[2].at} e ${VL[3].at} vitórias você sobe para os <b>Níveis de Vitória 3+, 4+ e 5+</b>, que garantem pelo menos esse número de punhos em <b>todo giro</b> até o fim. Nas grátis cada golpe vale de x1 a x10.</p><p>🏆 <b>4 troféus</b> dão o <b>Desafio Supremo</b>, que já começa no nível <b>4+</b>.</p><p class="muted small">Na compra, o bônus é sorteado (o Desafio Supremo é o mais raro).</p>`,
       make: () => make('w'),
       async spin(rt) { const g = make('w'); await rt.spin(g); await fists(rt, g, null); await pay(rt, lines(g, L14, SY, { mult: 'add' })); const sc = count(g, x => x.sc); if (sc >= 3) { rt.mark(scatters(g)); await rt.wait(1000); await this.bonus(rt, { sc }); } },
       async bonus(rt, { sc = 3, buy = false } = {}) {
         if (buy) sc = pickTier([[3, 85], [4, 15]]);
         const st = sc >= 4 ? { lv: 2, pts: VL[2].at } : { lv: 0, pts: 0 };
         rt.chip('vl', 'VITÓRIA', `${VL[st.lv].t} · ${st.pts}`);
-        await rt.fsLoop(10, async () => { const g = make('fw'); await rt.spin(g, { tease: false }); await fists(rt, g, st); await pay(rt, lines(g, L14, SY, { mult: 'add' })); }, sc >= 4 ? { title: 'DESAFIO SUPREMO!', sub: 'Começa no nível de vitória 4+' } : { title: 'DESAFIO!', sub: 'Duelos sobem os níveis de vitória' });
+        await rt.fsLoop(10, async () => { const g = make('fw'); await rt.spin(g, { tease: false }); await fists(rt, g, st); await pay(rt, lines(g, L14, SY, { mult: 'add' })); }, sc >= 4 ? { title: 'DESAFIO SUPREMO!', sub: 'Começa no Nível de Vitória 4+' } : { title: 'DESAFIO!', sub: 'Socos sobem os Níveis de Vitória' });
         rt.chip('vl', null);
       },
     }));
@@ -1201,8 +1211,8 @@
     const L10 = K.linesFor(4, 10);
     const SY = lsyms([['samurai', 'ninja', 'Samurai'], ['gueixa', 'geisha', 'Gueixa'], ['coruja', 'owl2', 'Coruja'], ['ponte', 'bridge', 'Ponte']]);
     const WILD = { id: 'w', img: 'cherryblossom', name: 'Coringa', wild: true, w: 0.6 };
-    const D = [{ id: 'd1', img: 'bird', name: 'Densho azul', dens: [2, 10], tier: 0, w: 0.3, fw: 0.9 }, { id: 'd2', img: 'crane', name: 'Densho verde', dens: [5, 50], tier: 1, w: 0.1, fw: 0.3 }, { id: 'd3', img: 'phoenix', name: 'Densho vermelho', dens: [10, 100], tier: 2, w: 0.03, fw: 0.08 }].map(x => ({ ...x, noPay: true, reels: [1, 2, 3] }));
-    const SC = { id: 'sc', img: 'torii', name: 'Torii', sc: true, w: 0.8, fw: 0.3 };
+    const D = [{ id: 'd1', img: 'bird', name: 'Densho azul', dens: [2, 10], tier: 0, w: 0.3, fw: 1.4 }, { id: 'd2', img: 'crane', name: 'Densho verde', dens: [5, 50], tier: 1, w: 0.1, fw: 0.5 }, { id: 'd3', img: 'phoenix', name: 'Densho vermelho', dens: [10, 100], tier: 2, w: 0.03, fw: 0.12 }].map(x => ({ ...x, noPay: true, reels: [1, 2, 3] }));
+    const SC = { id: 'sc', img: 'torii', name: 'Torii', sc: true, w: 0.9, fw: 0.3 };
     const draw = pool([...SY, WILD, ...D, SC]);
     const make = wk => grid([4, 4, 4, 4, 4], c => draw(c, wk));
     const RETRIG = { 2: 2, 3: 4 };
