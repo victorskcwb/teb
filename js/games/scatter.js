@@ -392,10 +392,10 @@
       ['gem', 'gem', 'Rubi'], ['bluegem', 'bluediamond', 'Safira'], ['orangegem', 'orangediamond', 'Topázio'], ['purple', 'purpleheart', 'Ametista'], ['green', 'greenheart', 'Esmeralda'],
     ]), 1.05),
     scatter: { id: 'sc', img: 'voltage', name: 'Raio de Zeus', w: 1.25 },
-    orbImg: 'crystal', orbs: ORBS, orbBase: 0.0048, orbFS: 0.03,
-    fsCount: 10, buyX: 60, accumulate: true,
+    orbImg: 'crystal', orbs: ORBS, orbBase: 0.0048, orbFS: 0.02,
+    fsCount: 15, buyX: 60, accumulate: true,
     maxWin: 5000, vol: 4, hit: '~1 em 3 giros (32%)', fsEvery: 295,
-    highlights: ['⚡ Orbes de <b>2x a 100x</b> podem cair em qualquer giro', 'Nas rodadas grátis os orbes <b>acumulam</b> e valem para todos os ganhos seguintes', '4+ raios = <b>10 rodadas grátis</b>', 'Prêmio máximo: <b>5.000x</b>'],
+    highlights: ['⚡ Orbes de <b>2x a 100x</b> podem cair em qualquer giro', 'Nas rodadas grátis os orbes <b>acumulam</b> e valem para todos os ganhos seguintes', '4+ raios = <b>15 rodadas grátis</b>', 'Prêmio máximo: <b>5.000x</b>'],
   }));
 
   App.register(createScatterSlot({
@@ -408,10 +408,10 @@
       ['heart', 'heart', 'Coração'], ['blue', 'blueheart', 'Coração azul'], ['purple', 'purpleheart', 'Coração roxo'], ['green', 'greenheart', 'Coração verde'], ['yellow', 'yellowheart', 'Coração dourado'],
     ]), 1.05),
     scatter: { id: 'sc', img: 'shootingstar', name: 'Estrela cadente', w: 1.25 },
-    orbImg: 'glowstar', orbs: ORBS, orbBase: 0.0048, orbFS: 0.03,
-    fsCount: 10, buyX: 65, accumulate: true,
+    orbImg: 'glowstar', orbs: ORBS, orbBase: 0.0048, orbFS: 0.02,
+    fsCount: 15, buyX: 65, accumulate: true,
     maxWin: 5000, vol: 4, hit: '~1 em 3 giros (32%)', fsEvery: 295,
-    highlights: ['🌟 Estrelas de <b>2x a 100x</b> podem cair em qualquer giro', 'Nas rodadas grátis as estrelas <b>acumulam</b> e valem para todos os ganhos seguintes', '4+ estrelas cadentes = <b>10 rodadas grátis</b>', 'Prêmio máximo: <b>5.000x</b>'],
+    highlights: ['🌟 Estrelas de <b>2x a 100x</b> podem cair em qualquer giro', 'Nas rodadas grátis as estrelas <b>acumulam</b> e valem para todos os ganhos seguintes', '4+ estrelas cadentes = <b>15 rodadas grátis</b>', 'Prêmio máximo: <b>5.000x</b>'],
   }));
 
   App.register(createScatterSlot({

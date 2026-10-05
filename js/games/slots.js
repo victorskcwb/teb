@@ -4,7 +4,7 @@
    Slots 3×3 com 5 linhas (estilo "Fortune" da PG Soft)
    - Tigrinho: recurso "Carta do Tigre" (respins até ganhar, tela cheia = x10)
    - Ratinho: rolo do meio vira coringa e os outros giram até ganhar
-   - Dragãozinho: multiplicador aleatório em todo giro (x1, x2, x5, x10)
+   - Dragãozinho: multiplicador em todo giro e Sopro da Fortuna (8 giros, 3 multiplicadores somados)
    - Touro: rolo do meio trava um símbolo e as pontas fazem respins
    - Coelho: cenouras com prêmio (5+ pagam) e rodadas só de cenouras
    Pagamentos em "x da aposta por linha" (aposta total / 5).
@@ -252,6 +252,43 @@
           return { grid, mult: 1 };
         }
 
+        /* Recurso do Dragão: 8 giros em que o rolo de multiplicador mostra 3 valores que se somam */
+        async function dragonFeature(bet) {
+          el.classList.add('feature');
+          mascot.classList.add('roar');
+          msg(`SOPRO DA FORTUNA! ${cfg.dragonSpins} giros com 3 multiplicadores somados 🔥`);
+          Sfx.big();
+          UI.confetti(30, [cfg.art, 'coin', 'star']);
+          await ctx.sleep(1300);
+          let total = 0, grid = [], mult = 1;
+          for (let k = cfg.dragonSpins; k > 0; k--) {
+            cells.forEach(c => c.classList.remove('win', 'dim'));
+            const ms = [0, 1, 2].map(() => RNG.weighted(cfg.dragonMults).m);
+            mult = ms.reduce((a, b) => a + b, 0);
+            grid = Array.from({ length: 9 }, draw);
+            const t = ctx.interval(() => { multEl.textContent = 'x' + RNG.pick(cfg.dragonMults).m * 3; }, 90);
+            await animateTo(grid);
+            ctx.clear(t);
+            multEl.textContent = `${ms.join('+')} = x${mult}`;
+            multEl.classList.add('hot');
+            const wins = evaluate(grid);
+            const w = round2(wins.reduce((s, x) => s + x.sym.pay, 0) * (bet / 5) * mult);
+            if (k > 1 && w > 0) {
+              total = round2(total + w);
+              wins.forEach(x => x.cells.forEach(i => cells[i].classList.add('win')));
+              winEl.textContent = fmt(total);
+              Sfx.coin();
+            }
+            msg(`Sopro da Fortuna: ${k - 1} restante${k - 1 === 1 ? '' : 's'} · x${mult} · 🪙 ${fmt(total + (k === 1 ? w : 0))}`);
+            await ctx.sleep(w > 0 ? Speed.pick(450, 900) : Speed.pick(200, 400));
+            if (total >= cfg.maxWin * bet) break;
+          }
+          mascot.classList.remove('roar');
+          el.classList.remove('feature');
+          // o último giro é pago pelo fluxo normal (com o multiplicador dele); os anteriores vão em bonus
+          return { grid, mult, bonus: total };
+        }
+
         async function normalSpin() {
           const grid = Array.from({ length: 9 }, draw);
           let mult = 1, multTimer = null;
@@ -286,7 +323,7 @@
           msg(free ? '🎁 Rodada grátis!' : 'Girando...');
 
           const isFeature = cfg.featureChance && RNG.float() < cfg.featureChance;
-          const features = { mouse: mouseFeature, rabbit: rabbitFeature, ox: lockFeature, tiger: lockFeature };
+          const features = { mouse: mouseFeature, rabbit: rabbitFeature, ox: lockFeature, tiger: lockFeature, dragon: dragonFeature };
           const res = isFeature ? await Speed.bonus(() => features[cfg.feature || 'tiger'](bet)) : await normalSpin();
 
           const wins = evaluate(res.grid);
@@ -432,20 +469,23 @@
 
   App.register(createSlot({
     id: 'dragaozinho', name: 'Dragãozinho', art: 'dragon', mascot: 'dragon-full',
-    tag: 'Multiplicador até x10', colors: ['#e11d48', '#6d28d9'], rtp: '~96%',
-    intro: 'Inspirado no "jogo do dragãozinho".',
-    featureRules: `<p><b>🔥 Sopro do Dragão:</b> todo giro sorteia um multiplicador (x1, x2, x5 ou x10) mostrado no topo, aplicado a todos os ganhos daquele giro.</p>`,
-    maxWin: 1000, vol: 2, hit: '~1 em 3,5 giros (29%)',
-    highlights: ['🔥 Todo giro sorteia um multiplicador: <b>x1, x2, x5 ou x10</b>', 'O multiplicador vale para todas as linhas do giro', 'Tela cheia de Dragões com x10 = <b>1.000x</b>'],
+    tag: 'Multiplicador até x10 · Sopro da Fortuna até x30', colors: ['#e11d48', '#6d28d9'], rtp: '~96%',
+    intro: 'Inspirado no "Fortune Dragon" (PG Soft), o jogo do dragãozinho.',
+    featureRules: `<p><b>🔥 Rolo de multiplicador:</b> todo giro sorteia um multiplicador (x1, x2, x5 ou x10) mostrado no topo, aplicado a todos os ganhos daquele giro.</p>
+      <p><b>🐉 Sopro da Fortuna:</b> pode começar em qualquer giro (≈1 em 80). São <b>8 giros</b> em que o rolo mostra <b>3 multiplicadores</b> (x2, x5 ou x10) que <b>se somam</b>: de x6 até <b>x30</b>.</p>`,
+    maxWin: 2500, vol: 3, hit: '~1 em 3,5 giros (29%)',
+    feature: 'dragon', featureChance: 1 / 80, featureName: 'Sopro da Fortuna', dragonSpins: 8,
+    dragonMults: [{ m: 2, w: 50 }, { m: 5, w: 35 }, { m: 10, w: 15 }],
+    highlights: ['🔥 Todo giro sorteia um multiplicador: <b>x1, x2, x5 ou x10</b>', '🐉 <b>Sopro da Fortuna</b> (≈1 em 80 giros): 8 giros com 3 multiplicadores somados, até <b>x30</b>', 'Prêmio máximo: <b>2.500x</b>'],
     multipliers: [{ m: 1, w: 60 }, { m: 2, w: 25 }, { m: 5, w: 11 }, { m: 10, w: 4 }],
     symbols: [
-      { id: 'dragao', img: 'dragon', name: 'Dragão', w: 2, pay: 100, wild: true },
-      { id: 'diamante', img: 'gem', name: 'Diamante', w: 3, pay: 50 },
-      { id: 'coroa', img: 'crown', name: 'Coroa', w: 4, pay: 25 },
-      { id: 'orbe', img: 'crystal', name: 'Orbe', w: 6, pay: 12 },
-      { id: 'vaso', img: 'amphora', name: 'Vaso', w: 8, pay: 8 },
-      { id: 'pessego', img: 'peach', name: 'Pêssego', w: 10, pay: 5 },
-      { id: 'trevo', img: 'clover', name: 'Trevo', w: 12, pay: 3 },
+      { id: 'dragao', img: 'dragon', name: 'Dragão', w: 2, pay: 62, wild: true },
+      { id: 'diamante', img: 'gem', name: 'Diamante', w: 3, pay: 31 },
+      { id: 'coroa', img: 'crown', name: 'Coroa', w: 4, pay: 15.5 },
+      { id: 'orbe', img: 'crystal', name: 'Orbe', w: 6, pay: 7.5 },
+      { id: 'vaso', img: 'amphora', name: 'Vaso', w: 8, pay: 5 },
+      { id: 'pessego', img: 'peach', name: 'Pêssego', w: 10, pay: 3.1 },
+      { id: 'trevo', img: 'clover', name: 'Trevo', w: 12, pay: 1.9 },
     ],
   }));
 })();

@@ -227,64 +227,74 @@
       S('rubi', 'gem', 'Rubi', [0.5, 1, 2, 4, 10, 40], 7), S('safira', 'bluediamond', 'Safira', [0.4, 0.8, 1.5, 3, 8, 30], 8),
       S('topazio', 'orangediamond', 'Topázio', [0.3, 0.6, 1.2, 2.5, 6, 25], 9), S('ametista', 'purpleheart', 'Ametista', [0.25, 0.5, 1, 2, 5, 20], 10),
       S('esmeralda', 'greenheart', 'Esmeralda', [0.2, 0.4, 0.8, 1.6, 4, 15], 11),
+      S('perola', 'pearl', 'Pérola', [0.15, 0.3, 0.6, 1.2, 3, 12], 12), S('citrino', 'yellowheart', 'Citrino', [0.15, 0.3, 0.6, 1.2, 3, 12], 12),
     ];
     const WILD = { id: 'w', img: 'sparkles', name: 'Coringa', wild: true, w: 0 };
-    const SC = { id: 'sc', img: 'gemsparkle', name: 'Bônus', sc: true, w: 0.25, fw: 0.18 };
+    const SC = { id: 'sc', img: 'gemsparkle', name: 'Bônus', sc: true, w: 0.36, fw: 0.25 };
     const all = [...SY, WILD, SC];
     const draw = pool(SY), drawSC = pool([...SY, SC]);
+    // ordem fixa de execução
     const MODS = [
-      { id: 'nuclear', c: 'mk-blue', name: 'Nuclear', w: 3 }, { id: 'wildgem', c: 'mk-pink', name: 'Joia Coringa', w: 2 },
-      { id: 'squares', c: 'mk-brown', name: 'Quadrados', w: 3 }, { id: 'colossal', c: 'mk-red', name: 'Colossal', w: 2 },
-      { id: 'lucky', c: 'mk-green', name: 'Coringas da Sorte', w: 2 },
+      { id: 'nuclear', c: 'mk-blue', name: 'Nuclear' }, { id: 'wildgem', c: 'mk-pink', name: 'Joia Coringa' },
+      { id: 'squares', c: 'mk-yellow', name: 'Quadrados' }, { id: 'colossal', c: 'mk-red', name: 'Colossal' },
+      { id: 'lucky', c: 'mk-green', name: 'Coringas da Sorte' },
     ];
     const FEVER = [[114, 2], [116, 4], [120, 6], [125, 8], [132, 10]];
     const FS_T = n => (n >= 5 ? 20 : n === 4 ? 15 : 12);
     const make = (wk = 'w') => Array.from({ length: 8 }, (_, c) => Array.from({ length: 8 }, () => drawSC(c, wk)));
     const nSC = g => count(g, x => x.sc);
 
-    // um giro completo (cascatas + modificadores). st guarda a contagem da Febre do Ouro:
-    // no giro normal zera a cada giro; nas rodadas grátis acumula durante todo o bônus.
+    // um giro completo. As 5 marcas (uma de cada cor) ficam fixas na POSIÇÃO, no fundo da grade.
+    // st.n conta os símbolos estourados (no giro normal zera a cada giro; nas grátis acumula).
     async function play(rt, g, st) {
-      const P = st.markP;
-      const markOne = x => { if (!x.sc && !x.mk && RNG.float() < P) { const m = RNG.weighted(MODS); x.mk = m.id; x.c = m.c; } return x; };
-      g.forEach(col => col.forEach(markOne));
-      await rt.drop(g);
-      const queued = new Set();
-      const drawM = c => markOne(draw(c));
+      const marks = {};
+      RNG.shuffle(Array.from({ length: 64 }, (_, i) => i)).slice(0, 5).forEach((i, k) => { marks[key(i % 8, Math.floor(i / 8))] = MODS[k]; });
+      const flags = {};
+      const paint = gg => gg.forEach((col, c) => col.forEach((x, r) => { const m = marks[key(c, r)]; x.c = m ? m.c : undefined; }));
       const show = () => { if (st.fever > 1) rt.chip('fever', 'FEBRE', 'x' + st.fever); rt.chip('cnt', 'SÍMBOLOS', st.n); };
+      const run = () => tumble(rt, g, {
+        draw: c => draw(c),
+        mult: () => st.fever,
+        evaluate: gg => {
+          const res = payClusters(clusters(gg, 5), T);
+          res.cells.forEach(k => { if (marks[k]) { flags[marks[k].id] = true; delete marks[k]; } });
+          return res;
+        },
+        onStep: async (step, gg, res) => {
+          st.n += res.cells.size;
+          paint(gg);
+          const lv = FEVER.filter(([t]) => st.n >= t).pop();
+          if (lv && lv[1] > st.fever) {
+            st.fever = lv[1];
+            MODS.forEach(m => { flags[m.id] = true; });
+            show();
+            rt.msg(`🔥 FEBRE DO OURO x${st.fever}! Todos os modificadores ativados! (${st.n} símbolos)`);
+            rt.fx('big');
+            await rt.wait(900);
+          } else show();
+        },
+      });
+      paint(g);
+      await rt.drop(g);
       show();
-      for (let round = 0; round < 12 && !rt.capped; round++) {
-        await tumble(rt, g, {
-          draw: drawM,
-          mult: () => st.fever,
-          evaluate: gg => {
-            const res = payClusters(clusters(gg, 5), T);
-            res.cells.forEach(k => { const [c, r] = K.unkey(k); if (gg[c][r].mk) queued.add(gg[c][r].mk); });
-            return res;
-          },
-          onStep: async (step, gg, res) => {
-            st.n += res.cells.size;
-            const lv = FEVER.filter(([t]) => st.n >= t).pop();
-            if (lv && lv[1] > st.fever) { st.fever = lv[1]; show(); rt.msg(`🔥 FEBRE DO OURO x${st.fever}! (${st.n} símbolos)`); rt.fx('big'); await rt.wait(800); }
-            else show();
-          },
-        });
-        if (!queued.size) break;
-        const order = MODS.map(m => m.id).filter(id => queued.has(id));
-        queued.clear();
-        for (const id of order) {
-          const m = MODS.find(x => x.id === id);
-          rt.msg(`🎨 ${m.name}!`);
-          rt.fx('big');
-          const put = (c, r, x) => { if (!g[c][r].sc) g[c][r] = x; };
-          if (id === 'nuclear') { g.forEach((col, c) => col.forEach((_, r) => put(c, r, { ...draw(c), fresh: true }))); }
-          if (id === 'wildgem') { const s = RNG.pick(g.flat().filter(x => !x.wild && !x.sc)); g.forEach((col, c) => col.forEach((x, r) => { if (x.id === s.id) g[c][r] = { ...WILD, fresh: true }; })); }
-          if (id === 'squares') { const s = RNG.pick(SY); for (let i = RNG.int(2, 4); i > 0; i--) { const c0 = RNG.int(0, 6), r0 = RNG.int(0, 6); for (let a = 0; a < 2; a++) for (let b = 0; b < 2; b++) put(c0 + a, r0 + b, { ...s, fresh: true }); } }
-          if (id === 'colossal') { const s = RNG.pick(SY), z = RNG.weighted([{ z: 3, w: 6 }, { z: 4, w: 3 }, { z: 5, w: 1 }]).z; const c0 = RNG.int(0, 8 - z), r0 = RNG.int(0, 8 - z); for (let a = 0; a < z; a++) for (let b = 0; b < z; b++) put(c0 + a, r0 + b, { ...s, fresh: true }); }
-          if (id === 'lucky') { for (let i = RNG.int(5, 15); i > 0; i--) put(RNG.int(0, 7), RNG.int(0, 7), { ...WILD, fresh: true }); }
-          await rt.drop(g);
-          await rt.wait(500);
-        }
+      await run();
+      // a cada "cascata morta" roda UM modificador (na ordem fixa) e a cascata recomeça
+      for (let guard = 0; guard < 25 && !rt.capped; guard++) {
+        const m = MODS.find(x => flags[x.id]);
+        if (!m) break;
+        flags[m.id] = false;
+        rt.msg(`🎨 ${m.name}!`);
+        rt.fx('big');
+        const put = (c, r, x) => { if (c >= 0 && c < 8 && r >= 0 && r < 8 && !g[c][r].sc) g[c][r] = x; };
+        if (m.id === 'nuclear') g.forEach((col, c) => col.forEach((_, r) => put(c, r, { ...draw(c), fresh: true })));
+        if (m.id === 'wildgem') { const pool = g.flat().filter(x => !x.wild && !x.sc); if (pool.length) { const s = RNG.pick(pool).id; g.forEach((col, c) => col.forEach((x, r) => { if (x.id === s) g[c][r] = { ...WILD, fresh: true }; })); } }
+        if (m.id === 'squares') { for (let i = RNG.int(2, 4); i > 0; i--) { const s = RNG.pick(SY), c0 = RNG.int(0, 6), r0 = RNG.int(0, 6); for (let a = 0; a < 2; a++) for (let b = 0; b < 2; b++) put(c0 + a, r0 + b, { ...s, fresh: true }); } }
+        if (m.id === 'colossal') { const z = RNG.weighted([{ z: 3, w: 75 }, { z: 4, w: 21 }, { z: 5, w: 4 }]).z; const c0 = RNG.int(0, 8 - z), r0 = RNG.int(0, 8 - z); for (let a = 0; a < z; a++) for (let b = 0; b < z; b++) put(c0 + a, r0 + b, { ...WILD, fresh: true }); }
+        if (m.id === 'lucky') { for (let i = RNG.int(5, 10); i > 0; i--) put(RNG.int(0, 7), RNG.int(0, 7), { ...WILD, fresh: true }); }
+        paint(g);
+        await rt.drop(g);
+        await rt.wait(450);
+        await run();
       }
     }
 
@@ -296,28 +306,29 @@
       hello: 'Ganhe em cima das marcas coloridas!',
       symbols: all,
       tables: [table('Pagamento por tamanho do grupo', ['5–6', '7–8', '9–10', '11–12', '13–14', '15+'], SY, 'Grupos de 5+ iguais encostados. Grupos diferentes se somam.')],
-      highlights: ['💎 Grade <b>8×8</b> com grupos de 5+ e cascata', '🎨 Ganhe em cima de uma <b>marca colorida</b> para ativar um dos 5 modificadores', '🔥 <b>Febre do Ouro:</b> 114+ símbolos vencedores numa sequência liberam multiplicador de <b>x2 até x10</b>', '🎁 3+ joias bônus: <b>12 a 20 rodadas grátis</b> com a Febre do Ouro acumulando o bônus inteiro', 'Prêmio máximo: <b>10.000x</b>'],
+      highlights: ['💎 Grade <b>8×8</b> com 9 joias, grupos de 5+ e cascata', '🎨 5 marcas coloridas fixas por giro: ganhe em cima delas para ativar os modificadores', '🔥 <b>Febre do Ouro:</b> 114+ símbolos estourados no giro liberam <b>x2 até x10</b> e reativam todos os modificadores', '🎁 3+ joias bônus: <b>12 a 20 rodadas grátis</b> com a Febre do Ouro acumulando o bônus inteiro', 'Prêmio máximo: <b>10.000x</b>'],
       how: `<p>Grade <b>8×8</b>: grupos de <b>5 ou mais</b> joias iguais encostadas pagam, com <b>cascata</b>.</p>
-        <p>Algumas casas aparecem com uma <b>marca colorida</b> atrás da joia. Se um ganho acontece em cima dela, o modificador da cor é guardado e roda quando as cascatas param.</p>`,
-      features: `<h4>Modificadores (rodam nesta ordem)</h4><ul class="si-list">
+        <p>Todo giro sorteia <b>5 casas com marcas coloridas</b> (uma de cada cor). A marca fica presa na casa, no fundo da grade, mesmo com as joias caindo. Se um grupo vencedor passar por cima dela, o modificador da cor é ativado e a marca some.</p>
+        <p>Os modificadores só rodam quando a cascata para: <b>um de cada vez</b>, na ordem abaixo, e depois de cada um a cascata recomeça.</p>`,
+      features: `<h4>Modificadores (um por vez, nesta ordem)</h4><ul class="si-list">
         <li><b class="mkt mk-blue">Nuclear (azul)</b>: troca a grade inteira por novas joias.</li>
         <li><b class="mkt mk-pink">Joia Coringa (rosa)</b>: um tipo de joia da tela vira coringa em todas as posições.</li>
-        <li><b class="mkt mk-brown">Quadrados (marrom)</b>: blocos 2×2 de uma mesma joia aparecem na grade.</li>
-        <li><b class="mkt mk-red">Colossal (vermelho)</b>: um bloco gigante 3×3, 4×4 ou 5×5 de uma joia.</li>
-        <li><b class="mkt mk-green">Coringas da Sorte (verde)</b>: de 5 a 15 coringas caem em posições aleatórias.</li></ul>
-        <h4>Febre do Ouro</h4><p>Conte os símbolos vencedores de uma mesma sequência de cascatas: ao passar de <b>114</b> o resto dos ganhos dessa sequência vale <b>x2</b>; com 116 vale x4, 120 x6, 125 x8 e <b>132 x10</b>.</p>
-        <h4>Rodadas grátis</h4><p>${ico('gemsparkle')} <b>3, 4 ou 5+ joias bônus</b> na tela dão <b>12, 15 ou 20 rodadas grátis</b>. Nelas as marcas coloridas aparecem com mais frequência e a contagem da <b>Febre do Ouro não zera</b> entre os giros: ela acumula durante todo o bônus. 3+ joias bônus nas grátis dão <b>+5 giros</b>.</p>`,
+        <li><b class="mkt mk-yellow">Quadrados (amarelo)</b>: blocos 2×2 de uma mesma joia aparecem na grade.</li>
+        <li><b class="mkt mk-red">Colossal (vermelho)</b>: um bloco gigante de <b>coringas</b> 3×3, 4×4 ou 5×5.</li>
+        <li><b class="mkt mk-green">Coringas da Sorte (verde)</b>: de 5 a 10 coringas caem em posições aleatórias.</li></ul>
+        <h4>Febre do Ouro</h4><p>O medidor conta todos os símbolos estourados no giro. Nos níveis <b>114, 116, 120, 125 e 132</b> o multiplicador passa a <b>x2, x4, x6, x8 e x10</b> e, a cada nível novo, <b>os 5 modificadores são ativados de novo</b>, recomeçando a fila do Nuclear aos Coringas da Sorte.</p>
+        <h4>Rodadas grátis</h4><p>${ico('gemsparkle')} <b>3, 4 ou 5+ joias bônus</b> na tela dão <b>12, 15 ou 20 rodadas grátis</b>. Nelas a contagem da <b>Febre do Ouro não zera</b> entre os giros: ela acumula durante todo o bônus. 3+ joias bônus nas grátis dão <b>+5 giros</b>.</p>`,
       make,
       async spin(rt) {
         const g = make();
-        await play(rt, g, { n: 0, fever: 1, markP: 0.022 });
+        await play(rt, g, { n: 0, fever: 1 });
         rt.chip('fever', null);
         rt.chip('cnt', null);
         const n = nSC(g);
         if (n >= 3) { rt.mark(scatters(g)); await rt.wait(1000); await this.bonus(rt, { n }); }
       },
       async bonus(rt, { n = 3 } = {}) {
-        const st = { n: 0, fever: 1, markP: 0.07 };
+        const st = { n: 0, fever: 1 };
         await rt.fsLoop(FS_T(n), async api => {
           const g = make('fw');
           await play(rt, g, st);
@@ -331,56 +342,115 @@
 
   /* =========================================================
      5. Madame Destino Megaways (Madame Destiny Megaways)
+     6 rolos de 2 a 7 símbolos + linha horizontal no topo dos rolos 2 a 5
+     (até 7×8×8×8×8×7 = 200.704 caminhos), com cascata.
      ========================================================= */
   (() => {
     const SY = [
-      S('bola', 'crystal', 'Bola de cristal', [1, 2, 5, 10], 4), S('gato', 'blackcat', 'Gato preto', [0.8, 1.5, 4, 8], 5),
-      S('coruja', 'owl', 'Coruja', [0.6, 1.2, 3, 6], 5), S('vela', 'candle', 'Vela', [0.5, 1, 2.5, 5], 6), S('olho', 'nazar', 'Olho grego', [0.4, 0.8, 2, 4], 6),
+      S('gato', 'blackcat', 'Gato preto', [1, 2, 5, 10], 4), S('coruja', 'owl', 'Coruja', [0.8, 1.5, 4, 8], 5),
+      S('vela', 'candle', 'Vela', [0.6, 1.2, 3, 6], 5), S('calice', 'trophy', 'Cálice', [0.5, 1, 2.5, 5], 6), S('olho', 'nazar', 'Olho grego', [0.4, 0.8, 2, 4], 6),
       ...SUITS([[0.15, 0.3, 0.6, 1.2], [0.15, 0.3, 0.6, 1.2], [0.1, 0.2, 0.4, 0.8], [0.1, 0.2, 0.4, 0.8]]),
     ];
-    const WILD = { id: 'w', img: 'eye', name: 'Madame', wild: true, m: 2, reels: [1, 2, 3, 4], w: 1.1, fw: 1.8 };
-    const SC = { id: 'sc', img: 'dizzystar', name: 'Destino', sc: true, w: 0.68, fw: 0.5 };
+    // coringa só nos rolos 2 a 6 (nunca no 1º); qualquer combinação com coringa vale x2 (uma vez só)
+    const WILD = { id: 'w', img: 'eye', name: 'Madame', wild: true, m: 2, reels: [1, 2, 3, 4, 5], w: 1.1, fw: 3.6 };
+    const SC = { id: 'sc', img: 'crystal', name: 'Bola de cristal', sc: true, w: 0.45, fw: 0.36 };
     const all = [...SY, WILD, SC];
     const draw = pool(all);
-    const SPINS = [{ v: 8, w: 20 }, { v: 10, w: 26 }, { v: 12, w: 24 }, { v: 15, w: 18 }, { v: 20, w: 12 }];
-    const MULTS = [{ v: 1, w: 30 }, { v: 2, w: 30 }, { v: 3, w: 22 }, { v: 4, w: 12 }, { v: 5, w: 6 }];
-    const make = (wk = 'w') => K.stack(randHeights(6, 2, 7).map((hh, c) => Array.from({ length: hh }, () => draw(c, wk))), 0.3);
+    const SC_PAY = { 3: 5, 4: 10, 5: 20, 6: 100 };
+    const SPINS = [{ v: 5, w: 30 }, { v: 8, w: 32 }, { v: 10, w: 24 }, { v: 12, w: 14 }];
+    const MULTS = [{ v: 2, w: 30 }, { v: 3, w: 26 }, { v: 5, w: 20 }, { v: 8, w: 10 }, { v: 10, w: 8 }, { v: 15, w: 4 }, { v: 25, w: 2 }];
+    const TRK = [1, 2, 3, 4];
+    const isT = c => TRK.includes(c);
+    const cell = (c, wk, top) => { const x = { ...draw(c, wk), fresh: true }; if (top) x.c = 'trk'; return x; };
+    // rolos 2 a 5 ganham 1 casa extra no topo (a linha horizontal)
+    const make = (wk = 'w') => {
+      const g = K.stack(randHeights(6, 2, 7).map((hh, c) => Array.from({ length: hh }, () => draw(c, wk))), 0.3);
+      TRK.forEach(c => g[c].unshift(cell(c, wk, true)));
+      return g;
+    };
+    const ev = g => ways(g, SY, { wildMult: 'once', onceM: 2 });
+    // cascata: nos rolos caem de cima para baixo; na linha do topo deslizam da direita para a esquerda
+    function fall(g, rm, wk) {
+      g.forEach((col, c) => {
+        const r0 = isT(c) ? 1 : 0;
+        const body = col.slice(r0).filter((x, i) => !rm.has(key(c, i + r0)));
+        const add = Array.from({ length: col.length - r0 - body.length }, () => cell(c, wk, false));
+        g[c] = [...col.slice(0, r0), ...add, ...body];
+      });
+      const top = TRK.map(c => g[c][0]);
+      const keep = top.filter((x, i) => !rm.has(key(TRK[i], 0)));
+      while (keep.length < TRK.length) keep.push(cell(TRK[keep.length], wk, true));
+      TRK.forEach((c, i) => { g[c][0] = keep[i]; });
+    }
+    async function play(rt, g, M, wk) {
+      for (let step = 0; step < 40 && !rt.capped; step++) {
+        const res = ev(g);
+        if (!res.total) break;
+        await pay(rt, res, M);
+        if (rt.capped) break;
+        rt.mark(res.cells, 'burst');
+        await rt.wait(200);
+        fall(g, res.cells, wk);
+        await rt.drop(g);
+      }
+      const sc = count(g, x => x.sc);
+      if (sc >= 3 && SC_PAY[Math.min(6, sc)]) {
+        const v = SC_PAY[Math.min(6, sc)];
+        rt.mark(scatters(g));
+        rt.win(v);
+        rt.msg(`🔮 ${sc} bolas de cristal: ${v}x a aposta = ${rt.coins(v)}`);
+        rt.fx('big');
+        await rt.wait(900);
+      }
+      return sc;
+    }
+    async function wheel(rt, title) {
+      const si = SPINS.indexOf(RNG.weighted(SPINS)), mi = MULTS.indexOf(RNG.weighted(MULTS));
+      await rt.reveal(`${title}: GIROS`, SPINS.map(s => ({ img: 'crystal', t: `${s.v} giros` })), si);
+      await rt.reveal(`${title}: MULTIPLICADOR`, MULTS.map(s => ({ img: 'sparkles', t: `x${s.v}` })), mi);
+      return { n: SPINS[si].v, m: MULTS[mi].v };
+    }
 
     App.register(K.create({
       id: 'madamedestino', name: 'Madame Destino Megaways', studio: STUDIO, art: 'crystal', mascot: 'crystal',
-      tag: 'Roda do destino · multiplicador crescente', colors: ['#7e22ce', '#0f766e'], bg: 'radial-gradient(circle at 50% 0%,#6d28d9,#1e1b4b 70%)',
-      cols: 6, rows: 7, maxWin: 5000, vol: 4, rtp: '~96,5%', target: 0.965,
+      tag: 'Megaways 200.704 · Roda do Destino até x25', colors: ['#7e22ce', '#0f766e'], bg: 'radial-gradient(circle at 50% 0%,#6d28d9,#1e1b4b 70%)',
+      cols: 6, rows: 8, maxWin: 5000, vol: 4, rtp: '~96,5%', target: 0.965,
       intro: 'Inspirado no "Madame Destiny Megaways" (Pragmatic Play).',
-      hello: 'A Madame dobra cada ganho que toca!',
+      hello: 'A Madame dobra cada combinação que toca!',
       symbols: all,
-      tables: [table('Pagamento por caminho', heads(3, 4, ' rolos'), SY, 'Megaways: até 200.704 caminhos. A Madame (coringa x2) dobra o caminho em que entra; várias se somam.')],
-      highlights: ['🔮 Megaways com até <b>200.704</b> caminhos', '👁️ Coringa da Madame (rolos 2 a 5) vale <b>x2</b>', '✨ 3+ scatters giram a <b>Roda do Destino</b>: define as rodadas grátis e o multiplicador inicial (x1 a x5)', '📈 Nas grátis o multiplicador <b>sobe +1 a cada combinação vencedora</b> e nunca volta', 'Prêmio máximo: <b>5.000x</b>'],
-      how: `<p><b>6 rolos Megaways</b> (2 a 7 símbolos cada). Iguais em rolos seguidos a partir da esquerda pagam por caminho.</p><p>${ico('eye')} <b>Madame</b> é o coringa (rolos 2 a 5) e multiplica por <b>x2</b> as combinações em que entra.</p>`,
-      features: `<p>${ico('dizzystar')} <b>3 ou mais scatters</b> giram a <b>Roda do Destino</b> duas vezes: a primeira define as rodadas grátis (8 a 20) e a segunda o <b>multiplicador inicial</b> (x1 a x5).</p>
-        <p>📈 Cada giro grátis com ganho paga com o multiplicador atual e depois ele <b>sobe +1 para cada combinação vencedora</b> do giro. O multiplicador nunca volta durante o bônus.</p>
-        <p>3+ scatters durante as rodadas giram a roda de giros de novo (giros extras, sem limite).</p>`,
+      tables: [table('Pagamento por caminho', heads(3, 4, ' rolos'), SY, 'Megaways: até 200.704 caminhos. Combinação com a Madame vale x2 (várias Madames na mesma combinação continuam valendo x2).')],
+      highlights: ['🔮 Megaways com até <b>200.704</b> caminhos e <b>cascata</b>', '👁️ Madame (coringa, rolos 2 a 6): combinação com ela vale <b>x2</b>', '🎡 3+ bolas de cristal giram a <b>Roda do Destino</b>: 5 a 12 giros e multiplicador de <b>x2 a x25</b> para o bônus todo', '🔁 Reativação: a roda gira de novo e <b>soma giros e multiplicador</b>', 'Prêmio máximo: <b>5.000x</b>'],
+      how: `<p><b>6 rolos</b> com 2 a 7 símbolos cada e uma <b>linha horizontal no topo</b> dos rolos 2 a 5 (esses rolos chegam a 8 símbolos): até <b>7×8×8×8×8×7 = 200.704</b> caminhos. Iguais em rolos seguidos a partir da esquerda pagam por caminho.</p>
+        <p><b>Cascata:</b> os vencedores somem; nos rolos os símbolos caem de cima para baixo e na linha do topo eles <b>deslizam da direita para a esquerda</b>. Repete até não haver mais ganho.</p>
+        <p>${ico('eye')} <b>Madame</b> é o coringa (rolos 2 a 6, nunca no 1º). Toda combinação que tem pelo menos uma Madame vale <b>x2</b>; duas ou mais na mesma combinação <b>não</b> se multiplicam.</p>`,
+      features: `<p>${ico('crystal')} <b>Bola de cristal</b> (scatter) paga em qualquer posição: 3 = <b>5x</b>, 4 = <b>10x</b>, 5 = <b>20x</b>, 6 = <b>100x</b> a aposta, e 3+ abrem a <b>Roda do Destino</b>.</p>
+        <p>🎡 <b>Roda do Destino</b> (dois anéis independentes): o de dentro sorteia <b>5, 8, 10 ou 12 giros</b> e o de fora um <b>multiplicador de x2, x3, x5, x8, x10, x15 ou x25</b> que vale para <b>todos</b> os ganhos do bônus. Se a combinação tiver Madame, os dois se multiplicam (ex.: x10 com Madame = <b>x20</b>).</p>
+        <p>🔁 3+ bolas nas rodadas grátis giram a roda de novo: os giros sorteados <b>somam</b> aos que faltam e o multiplicador sorteado <b>soma</b> ao atual (x5 + x8 = x13). Sem limite.</p>
+        <p class="muted small">Ao atingir 5.000x a aposta o bônus termina na hora.</p>`,
       make,
       async spin(rt) {
         const g = make();
         await rt.spin(g);
-        await pay(rt, ways(g, SY, { wildMult: 'add' }));
-        if (count(g, x => x.sc) >= 3) { rt.mark(scatters(g)); await rt.wait(1000); await this.bonus(rt, {}); }
+        const sc = await play(rt, g, 1, 'w');
+        if (sc >= 3 && !rt.capped) { await rt.wait(600); await this.bonus(rt, {}); }
       },
       async bonus(rt) {
-        const si = SPINS.indexOf(RNG.weighted(SPINS)), mi = MULTS.indexOf(RNG.weighted(MULTS));
-        await rt.reveal('RODA DO DESTINO: GIROS', SPINS.map(s => ({ img: 'crystal', t: `${s.v} giros` })), si);
-        await rt.reveal('RODA DO DESTINO: MULTIPLICADOR', MULTS.map(s => ({ img: 'sparkles', t: `x${s.v}` })), mi);
-        let M = MULTS[mi].v;
+        const w = await wheel(rt, 'RODA DO DESTINO');
+        let M = w.m;
         rt.chip('mult', 'MULT.', 'x' + M);
-        await rt.fsLoop(SPINS[si].v, async api => {
+        await rt.fsLoop(w.n, async api => {
           const g = make('fw');
           await rt.spin(g, { tease: false });
-          const res = ways(g, SY, { wildMult: 'add' });
-          await pay(rt, res, M);
-          // cada combinação vencedora (símbolo pago) faz o multiplicador subir +1
-          if (res.total && !rt.capped) { M += res.wins.length; rt.chip('mult', 'MULT.', 'x' + M); rt.msg(`📈 +${res.wins.length} · multiplicador agora x${M}!`); await rt.wait(450); }
-          if (count(g, x => x.sc) >= 3) { const r = RNG.weighted(SPINS); await rt.reveal('MAIS GIROS!', SPINS.map(s => ({ img: 'crystal', t: `+${s.v}` })), SPINS.indexOf(r)); api.add(r.v); }
-        }, { sub: `${SPINS[si].v} giros · começa em x${M} e sobe a cada ganho` });
+          const sc = await play(rt, g, M, 'fw');
+          if (sc >= 3 && !rt.capped) {
+            const r = await wheel(rt, 'NOVA RODA');
+            M += r.m;
+            api.add(r.n);
+            rt.chip('mult', 'MULT.', 'x' + M);
+            rt.msg(`🎡 +${r.n} giros e multiplicador agora x${M}!`);
+            await rt.wait(700);
+          }
+        }, { sub: `${w.n} giros · tudo x${M}` });
         rt.chip('mult', null);
       },
     }));
@@ -617,13 +687,13 @@
     const WM = [{ m: 2, w: 55 }, { m: 3, w: 30 }, { m: 5, w: 15 }];
 
     async function play(rt, g, fs) {
-      let acc = 0;
+      let acc = 1;
       if (fs) g.forEach(col => col.forEach(x => { if (x.wild) x.m = RNG.weighted(WM).m; }));
       const r = await tumble(rt, g, {
         draw: c => { const x = draw(c, fs ? 'fw' : 'w'); if (fs && x.wild) x.m = RNG.weighted(WM).m; return x; },
         evaluate: gg => {
           const res = ways(gg, SY);
-          if (fs) res.cells.forEach(k => { const [c, rr] = K.unkey(k); const x = gg[c][rr]; if (x.wild && x.m && !x.used) { acc += x.m; x.used = true; rt.chip('mult', 'MULT.', 'x' + acc); } });
+          if (fs) res.cells.forEach(k => { const [c, rr] = K.unkey(k); const x = gg[c][rr]; if (x.wild && x.m && !x.used) { acc *= x.m; x.used = true; rt.chip('mult', 'MULT.', 'x' + acc); } });
           // os multiplicadores só valem no fim da sequência: pagamos sem eles aqui
           if (fs) res.total = ways(gg.map(col => col.map(x => (x.wild ? { ...x, m: 1 } : x))), SY).total;
           return res;
@@ -631,7 +701,7 @@
       });
       if (fs && acc > 1 && r.total > 0) {
         rt.win(r.total * (acc - 1));
-        rt.msg(`🌅 Multiplicadores somados x${acc}! ${rt.coins(r.total)} → ${rt.coins(r.total * acc)}`);
+        rt.msg(`🌅 Multiplicadores x${acc}! ${rt.coins(r.total)} → ${rt.coins(r.total * acc)}`);
         rt.fx('big');
         await rt.wait(1100);
       }
@@ -646,10 +716,10 @@
       hello: 'Até 200.704 caminhos e cascata!',
       symbols: all,
       tables: [table('Pagamento por caminho', heads(3, 4, ' rolos'), SY, 'Megaways com cascata: vencedores somem e novos símbolos caem.')],
-      highlights: ['🦬 Megaways com até <b>200.704</b> caminhos e <b>cascata</b>', '🪙 4+ moedas = <b>12 a 22 rodadas grátis</b> (+5 a cada 4 moedas)', '🌅 Nas rodadas grátis cada coringa traz <b>x2, x3 ou x5</b>; os multiplicadores da sequência <b>se somam</b> e valem no fim', 'Prêmio máximo: <b>5.000x</b>'],
+      highlights: ['🦬 Megaways com até <b>200.704</b> caminhos e <b>cascata</b>', '🪙 4+ moedas = <b>12 a 22 rodadas grátis</b> (+5 com 3 moedas nas grátis)', '🌅 Nas rodadas grátis cada coringa traz <b>x2, x3 ou x5</b>; os multiplicadores da sequência <b>se multiplicam</b> e valem no fim', 'Prêmio máximo: <b>5.000x</b>'],
       how: `<p><b>6 rolos Megaways</b> (rolos 1 e 6 com 2 a 7 símbolos, rolos 2 a 5 com 2 a 8). Iguais em rolos seguidos pagam por caminho e as <b>cascatas</b> continuam até não haver mais ganho.</p><p>${ico('sunset')} Coringa nos rolos 2 a 5.</p>`,
-      features: `<p>${ico('coin')} <b>4 a 9 moedas</b> dão <b>12, 14, 16, 18, 20 ou 22 rodadas grátis</b>. Nelas, 4+ moedas dão +5 giros (sem limite).</p>
-        <p>Durante as rodadas cada coringa vem com <b>x2, x3 ou x5</b>. Os multiplicadores dos coringas que participam de ganhos numa sequência de cascatas <b>se somam</b> e multiplicam o ganho total da sequência quando ela termina.</p>`,
+      features: `<p>${ico('coin')} <b>4 a 9 moedas</b> dão <b>12, 14, 16, 18, 20 ou 22 rodadas grátis</b>. Nelas, 3+ moedas dão +5 giros (sem limite).</p>
+        <p>Durante as rodadas cada coringa vem com <b>x2, x3 ou x5</b>. Os multiplicadores dos coringas que participam de ganhos numa sequência de cascatas <b>se multiplicam entre si</b> (x2 e x3 = x6) e multiplicam o ganho total da sequência quando ela termina.</p>`,
       make,
       async spin(rt) {
         const g = make();
@@ -663,7 +733,7 @@
           const g = make('fw');
           await rt.spin(g, { tease: false });
           await play(rt, g, true);
-          if (count(g, x => x.sc) >= 4) api.add(5);
+          if (count(g, x => x.sc) >= 3) { rt.msg('+5 rodadas grátis!'); api.add(5); }
         }, { sub: 'Coringas com multiplicador!' });
       },
     }));

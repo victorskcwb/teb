@@ -83,11 +83,13 @@ const SlotKit = (() => {
    * Cada rolo contribui com a soma de (cópias × multiplicador) das células
    * que batem, então coringas multiplicadores multiplicam os caminhos.
    */
-  function ways(grid, syms, { min = 3, wildMult = 'mul' } = {}) {
+  function ways(grid, syms, { min = 3, wildMult = 'mul', onceM = 2 } = {}) {
     let total = 0;
     const wins = [], hit = new Set();
     for (const s of syms) {
       let prod = 1, n = 0, real = false;
+      // modo 'once': caminho com 1+ coringa vale onceM uma única vez (coringas não se multiplicam)
+      let T = 1, P = 1;
       // modo 'add': multiplicadores de coringa no mesmo caminho se somam
       // (A = caminhos sem coringa, B = com coringa, C = soma dos multiplicadores desses)
       let A = 1, B = 0, C = 0;
@@ -104,10 +106,13 @@ const SlotKit = (() => {
         });
         if (!sum) break;
         prod *= sum;
+        T *= nn + nw;
+        P *= nn;
         [A, B, C] = [A * nn, B * (nn + nw) + A * nw, C * (nn + nw) + B * M + A * M];
         n++;
       }
       if (wildMult === 'add') prod = A + C;
+      else if (wildMult === 'once') prod = P + onceM * (T - P);
       const m = s.min || min;
       if (n < m || !real) continue;
       const p = s.pays[Math.min(n - m, s.pays.length - 1)] * prod;
@@ -488,9 +493,13 @@ const SlotKit = (() => {
           if (x.letter) cls.push('lt', 'lt-' + x.letter);
           if (x.hi) cls.push('hi');
           if (x.mid) cls.push('mid');
+          if (x.v && !x.sc && !x.wild) cls.push('cash');
+          else if (x.m > 1 && !x.wild && !x.sc) cls.push('mulx');
           if (x.fresh && delay != null) cls.push('drop');
           const lb = label(x);
-          return `<div class="${cls.join(' ')}"${x.fresh && delay != null ? ` style="animation-delay:${delay}ms"` : ''}>${face(x)}${lb !== '' ? `<b>${lb}</b>` : ''}</div>`;
+          // etiqueta de símbolo especial, como nos slots reais (WILD / BÔNUS)
+          const tag = x.sc ? `<i class="stag">${x.tagTxt || 'BÔNUS'}</i>` : x.wild && !x.noTag ? `<i class="stag w">${x.tagTxt || 'WILD'}</i>` : '';
+          return `<div class="${cls.join(' ')}"${x.fresh && delay != null ? ` style="animation-delay:${delay}ms"` : ''}>${face(x)}${tag}${lb !== '' ? `<b>${lb}</b>` : ''}</div>`;
         };
         let cur = null;
         function render(grid, anim = false) {
