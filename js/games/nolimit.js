@@ -550,20 +550,22 @@
           // giros amaldiçoados: os coringas ficam presos até o fim
           stuck.forEach((x, k) => { const [c, r] = K.unkey(k); g[c][r] = { ...x }; });
           await rt.spin(g, { tease: false });
+          let steps = 0;
           await tumble(rt, g, {
             draw: c => (cursed ? mkPool(HI) : d)(c),
-            evaluate: gg => ways(gg, SY),
+            // nos amaldiçoados os coringas presos podem encadear sem fim: no máximo 8 cascatas por giro
+            evaluate: gg => (cursed && steps++ >= 8 ? { total: 0, wins: [], cells: new Set() } : ways(gg, SY)),
             keep: cursed ? (x => !!x.wild) : null,
             onStep: async (s, gg, res) => {
               bar += res.cells.size;
-              while (bar >= 30 && level < 5) {
-                bar -= 30;
+              while (bar >= 40 && level < 5) {
+                bar -= 40;
                 level++;
                 if (level <= 4 && lows.length) { const gone = lows.pop(); lows = lows.slice(); d = mkPool([...HI, ...lows]); rt.msg(`🩸 Ritual nível ${level}: ${gone.name} sai das fitas! +2 giros`); api.add(2, true); }
                 if (level === 5) { rt.msg('🩸 RITUAL COMPLETO! +6 giros amaldiçoados com coringas presos'); api.add(6, true); }
                 rt.fx('big');
               }
-              rt.chip('ritual', 'RITUAL', `Nv ${level} · ${bar}/30`);
+              rt.chip('ritual', 'RITUAL', `Nv ${level} · ${bar}/40`);
             },
           });
           if (cursed) cells(g, x => x.wild).forEach(([c, r]) => stuck.set(key(c, r), { ...g[c][r], c: 'sticky', fresh: false }));
