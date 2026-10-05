@@ -403,10 +403,11 @@
     const SC = { id: 'sc', img: 'church', name: 'Igreja', sc: true, w: 0.36, fw: 0.3 };
     const draw = pool([...SY, WILD, SC]);
     // Reino do Terror: só símbolos altos e coringas
-    const drawR = pool([...SY.slice(0, 4), { ...WILD, w: 0.55 }]);
+    const drawR = pool([...SY.slice(0, 4), { ...WILD, w: 0.45 }]);
     const make = wk => grid([5, 5, 5, 5, 5], c => draw(c, wk));
     const LV = [0, 20, 50, 100];
-    const FULL = 300;
+    const HIGH = SY.slice(0, 4).map(x => x.id);
+    const FULL = 100;
     async function play(rt, g, wk, st) {
       const S2 = st || { pts: 0, sticky: new Set() };
       const lvl = () => LV.filter(v => S2.pts >= v).length - 1;
@@ -414,7 +415,15 @@
       await rt.drop(g);
       await tumble(rt, g, {
         draw: c => draw(c, wk), keep: x => x.wild && x.c === 'sticky',
-        evaluate: gg => { const res = ways(gg, SY); res.wins.forEach(w => { if (SY.indexOf(w.sym) < 4) S2.pts += w.n; }); return res; },
+        evaluate: (gg, step) => {
+          // limite de cascatas: os coringas colantes não podem prender a grade num ganho sem fim
+          if (step >= 8) return { total: 0, wins: [], cells: new Set() };
+          const res = ways(gg, SY);
+          // no jogo base cada ganho alto soma o nº de rolos; nos Giros da Vela, cada símbolo alto vencedor soma 1 ponto
+          if (st) res.cells.forEach(k => { const [c, r] = unkey(k); if (HIGH.includes(gg[c][r].id)) S2.pts++; });
+          else res.wins.forEach(w => { if (SY.indexOf(w.sym) < 4) S2.pts += w.n; });
+          return res;
+        },
         mult: () => [1, 1, 1.5, 2][lvl()],
         onStep: async () => { const L = lvl(); if (L >= 1 && S2.sticky.size < L) { const k = key(RNG.int(0, 4), RNG.int(0, 4)); S2.sticky.add(k); } rt.chip('rit', 'RITUAL', st ? `Nv ${L} · ${Math.min(S2.pts, FULL)}/${FULL}` : `Nv ${L} · ${S2.pts}`); },
       });
@@ -447,9 +456,9 @@
       async bonus(rt, o = {}) {
         const sc = tierSc(o, [80, 17, 3]);
         if (sc >= 5) { await reign(rt); return; }
-        const L = o.buy ? RNG.weighted([{ l: 0, w: 55 }, { l: 1, w: 25 }, { l: 2, w: 12 }, { l: 3, w: 8 }]).l : o.lvl || 0;
+        const L = o.buy ? RNG.weighted([{ l: 0, w: 92 }, { l: 1, w: 6 }, { l: 2, w: 1.5 }, { l: 3, w: 0.5 }]).l : o.lvl || 0;
         const st = { pts: 0, sticky: new Set() };
-        await rt.fsLoop(6 + 2 * L, async api => { if ((await play(rt, make('fw'), 'fw', st)).sc >= 3) api.add(4); }, { title: 'GIROS DA VELA', sub: 'O ritual não zera' });
+        await rt.fsLoop(10 + 2 * L, async api => { const r = await play(rt, make('fw'), 'fw', st); if (r.sc) { st.pts += 15 * r.sc; rt.msg(`⛪ Igreja: +${15 * r.sc} no ritual`); } if (r.sc >= 3) api.add(4); }, { title: 'GIROS DA VELA', sub: 'O ritual não zera' });
         rt.chip('rit', null);
         if (st.pts >= FULL && !rt.capped) { await rt.banner('RITUAL COMPLETO', 'Reino do Terror: 6 giros', 1500); await reign(rt); }
       },

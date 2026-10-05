@@ -25,7 +25,7 @@
     ];
     const WILD = { id: 'w', img: 'bandage', name: 'xNudge', wild: true, reels: [1, 2, 3], w: 0.5 };
     const XW = { id: 'xw', img: 'eyes', name: 'xWays', xw: true, w: 0.55, fw: 0.9 };
-    const SC = { id: 'sc', img: 'scorpion', name: 'Escorpião', sc: true, w: 1.0, fw: 0 };
+    const SC = { id: 'sc', img: 'scorpion', name: 'Escorpião', sc: true, w: 1.05, fw: 0 };
     // aranha: sozinha não faz nada; junto com 3 escorpiões sobe o nível do bônus
     const SPIDER = { id: 'aranha', img: 'spider', name: 'Aranha', spider: true, noPay: true, reels: [0, 4], w: 2.4, fw: 0 };
     const all = [...SY, WILD, XW, SC, SPIDER];
@@ -225,25 +225,29 @@
       S('xerife', 'boot', 'Bota', [2, 6, 20], 3), S('cavalo', 'moose', 'Alce', [1.5, 4, 15], 3), S('distintivo', 'medal', 'Medalha', [1, 3, 10], 4),
       S('whisky', 'beers', 'Cervejas', [0.8, 2, 6], 4), ...SUITS([[0.3, 0.8, 2.5], [0.3, 0.8, 2.5], [0.2, 0.6, 2], [0.2, 0.6, 2]]),
     ];
-    const WILD = { id: 'w', img: 'bullseye', name: 'Caçador xNudge', wild: true, w: 0.45, fw: 0.7 };
+    const WILD = { id: 'w', img: 'bullseye', name: 'Caçador xNudge', wild: true, w: 0.45, fw: 1.3 };
     const SC = { id: 'sc', img: 'railway', name: 'Ferrovia', sc: true, w: 0.85, fw: 0 };
-    const all = [...SY, WILD, SC];
+    // distintivo do xerife: só nas rodadas grátis, cada um dá +1 giro
+    const BADGE = { id: 'badge', img: 'sheriff', name: 'Distintivo', badge: true, noPay: true, w: 0, fw: 0.3 };
+    const all = [...SY, WILD, SC, BADGE];
     const draw = pool(all);
     const H = [3, 4, 4, 4, 3];
     const make = (wk = 'w') => grid(H, c => draw(c, wk));
-    async function play(rt, g, sticky, force) {
+    /** st.gm: multiplicador global do Pistoleiro (soma cada empurrão, nunca zera). */
+    async function play(rt, g, st, force) {
       if (force && !g.some(col => col.some(x => x.wild))) { const c = RNG.int(0, 4); g[c][RNG.int(0, H[c] - 1)] = { ...WILD }; }
+      const gun = st && st.gm != null;
+      let pushes = 0;
       for (let c = 0; c < 5; c++) {
-        const has = g[c].some(x => x.wild);
-        if (!has && !(sticky && sticky[c])) continue;
-        let m = sticky && sticky[c] ? sticky[c] : 0;
-        if (has) m += nudge(WILD, H[c]).m;
-        if (sticky) sticky[c] = m;
-        fillReel(g, c, { ...WILD, m, t: 'x' + m, c: 'duel' });
+        if (!g[c].some(x => x.wild)) continue;
+        const nd = nudge(WILD, H[c]);
+        pushes += nd.n;
+        // no Pistoleiro os empurrões vão para o multiplicador global (o rolo não fica preso)
+        fillReel(g, c, gun ? { ...WILD, c: 'duel' } : { ...WILD, m: nd.m, t: 'x' + nd.m, c: 'duel' });
       }
-      if (sticky) rt.head(H.map((_, c) => (sticky[c] ? 'x' + sticky[c] : '')));
+      if (gun && pushes) { st.gm += pushes; rt.chip('mult', 'MULT.', 'x' + st.gm); rt.msg(`🔫 ${pushes} empurrão${pushes > 1 ? 'ões' : ''}: multiplicador x${st.gm}`); }
       await rt.drop(g);
-      await pay(rt, ways(g, SY, { wildMult: 'add' }));
+      await pay(rt, ways(g, SY, { wildMult: 'add' }), gun ? st.gm : 1);
     }
     App.register(K.create({
       id: 'cidadefantasma', name: 'Cidade Fantasma', studio: STUDIO, art: 'pistol', mascot: 'cowboy',
@@ -252,9 +256,9 @@
       intro: 'Inspirado no "Deadwood" (Nolimit City).', hello: 'Caçadores empurram os rolos!',
       symbols: all,
       tables: [table('Pagamento por caminho', heads(3, 3, ' rolos'), SY, 'Rolos 3-4-4-4-3 = 576 caminhos.')],
-      highlights: ['🤠 Rolos <b>3-4-4-4-3</b> (576 caminhos)', '🔫 <b>Caçador xNudge</b>: coringa de 4 de altura que sempre empurra até aparecer inteiro; cada empurrão <b>+1</b>', 'Vários xNudge na mesma combinação <b>somam</b> os multiplicadores', '🌵 3 bônus: escolha <b>Caçador</b> (xNudge em todo giro) ou <b>Pistoleiro</b> (xNudge presos que crescem)', 'Prêmio máximo: <b>13.950x</b>'],
+      highlights: ['🤠 Rolos <b>3-4-4-4-3</b> (576 caminhos)', '🔫 <b>Caçador xNudge</b>: coringa de 4 de altura que sempre empurra até aparecer inteiro; cada empurrão <b>+1</b>', 'Vários xNudge na mesma combinação <b>somam</b> os multiplicadores', '🌵 3 bônus: escolha <b>Caçador</b> (xNudge em todo giro) ou <b>Pistoleiro</b> (um multiplicador global sem limite que nunca zera)', 'Prêmio máximo: <b>13.950x</b>'],
       how: '<p>Rolos <b>3-4-4-4-3</b> com <b>576 caminhos</b>. 🔫 O <b>Caçador xNudge</b> pode cair em qualquer rolo: ele empurra até cobrir o rolo e cada empurrão soma +1 no multiplicador. Caçadores na mesma combinação <b>somam</b>.</p>',
-      features: '<p>🌵 <b>3 scatters</b> e você escolhe 8 rodadas grátis:</p><ul class="si-list"><li><b>Caçador:</b> pelo menos 1 xNudge garantido em todo giro (o multiplicador zera a cada giro).</li><li><b>Pistoleiro:</b> rolos xNudge ficam presos e cada novo empurrão no mesmo rolo <b>soma</b>.</li></ul>',
+      features: '<p>🌵 <b>3 scatters</b> e você escolhe 8 rodadas grátis:</p><ul class="si-list"><li><b>Caçador:</b> pelo menos 1 xNudge garantido em todo giro (o multiplicador zera a cada giro).</li><li><b>Pistoleiro:</b> um <b>multiplicador global</b> começa em x1 e cada empurrão de xNudge soma +1 nele, <b>sem limite</b> e sem zerar até o fim; ele vale para todos os ganhos. Os rolos não ficam presos.</li></ul><p>⭐ Nas duas, cada <b>distintivo do xerife</b> que cair dá <b>+1 rodada grátis</b>.</p>',
       make: () => make(),
       async spin(rt) {
         const g = make();
@@ -265,11 +269,18 @@
       async bonus(rt) {
         const mode = await rt.choose('ESCOLHA O BÔNUS', [
           { id: 'cacador', img: 'pistol', label: 'Caçador', desc: 'xNudge garantido em todo giro' },
-          { id: 'pistoleiro', img: 'cowboy', label: 'Pistoleiro', desc: 'xNudge presos que crescem' },
+          { id: 'pistoleiro', img: 'cowboy', label: 'Pistoleiro', desc: 'Multiplicador global sem limite' },
         ]);
-        const sticky = mode === 'pistoleiro' ? {} : null;
-        await rt.fsLoop(8, async () => { const g = make('fw'); await rt.spin(g, { tease: false }); await play(rt, g, sticky, mode === 'cacador'); }, { title: mode === 'cacador' ? 'GIROS DO CAÇADOR' : 'GIROS DO PISTOLEIRO', sub: '8 giros' });
-        rt.head(null);
+        const st = mode === 'pistoleiro' ? { gm: 1 } : null;
+        if (st) rt.chip('mult', 'MULT.', 'x1');
+        await rt.fsLoop(8, async api => {
+          const g = make('fw');
+          await rt.spin(g, { tease: false });
+          const b = count(g, x => x.badge);
+          if (b) { api.add(b); rt.fx('coin'); }
+          await play(rt, g, st, mode === 'cacador');
+        }, { title: mode === 'cacador' ? 'GIROS DO CAÇADOR' : 'GIROS DO PISTOLEIRO', sub: '8 giros · distintivo = +1' });
+        rt.chip('mult', null);
       },
     }));
   })();
@@ -298,18 +309,18 @@
     async function play(rt, g, st) {
       for (let guard = 0; guard < 40 && !rt.capped; guard++) {
         const res = ways(g, SY);
-        if (!res.total) break;
-        await pay(rt, res, st.m);
+        // xBomb: coringa que dispara sozinho (não precisa de ganho) depois de pagar
+        const bombs = cells(g, x => x.bomb);
+        if (!res.total && !bombs.length) break;
+        if (res.total) await pay(rt, res, st.m);
         const rm = new Set(res.cells);
-        let boom = 0;
-        res.cells.forEach(k => {
-          const [c, r] = K.unkey(k);
-          if (!g[c][r].bomb) return;
-          boom++;
+        bombs.forEach(([c, r]) => {
           for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) { const y = g[c + a] && g[c + a][r + b]; if (y && y.id !== 'lock') rm.add(key(c + a, r + b)); }
         });
+        const boom = bombs.length;
         const before = st.open;
-        st.open = Math.min(R, st.open + 1 + boom);
+        // cada colapso com ganho abre 1 linha e cada xBomb abre mais 1
+        st.open = Math.min(R, st.open + (res.total ? 1 : 0) + boom);
         if (boom) { st.m += boom; rt.chip('mult', 'MULT.', 'x' + st.m); rt.msg(`💣 xBomb! Multiplicador x${st.m}`); rt.fx('v_fire'); rt.fx('boom'); }
         if (st.open > before) rt.chip('rows', 'LINHAS', st.open);
         refill(g, rm, st.open);
@@ -349,8 +360,8 @@
       intro: 'Inspirado no "Fire in the Hole xBomb" (Nolimit City).', hello: 'Cada ganho abre mais uma linha da mina!',
       symbols: all, extraSprites: ['locked', 'coin'],
       tables: [table('Pagamento por caminho', heads(3, 4, ' rolos'), SY, 'Começa com 3 linhas abertas (729 caminhos) e pode abrir até 6 (46.656).')],
-      highlights: ['⛏️ Grade 6×6 que começa com <b>3 linhas abertas</b>; cada cascata com ganho <b>abre mais uma</b>', '💣 <b>xBomb</b> coringa explode os vizinhos, abre linhas e soma <b>+1 no multiplicador</b> (sem limite)', '🛒 3/4/5 vagões = <b>Lucky Wagon Spins</b> com 2, 3 ou 4 linhas de moedas', 'Prêmio máximo: <b>60.000x</b>'],
-      how: '<p>Grade <b>6×6</b>: só as <b>3 linhas de baixo</b> começam abertas. Ganhos em caminhos causam colapso (cascata) e cada colapso <b>desbloqueia uma linha</b> (até 6, 46.656 caminhos).</p><p>💣 <b>xBomb</b> é coringa: ao ganhar ele explode as casas vizinhas, abre mais linhas e o multiplicador global sobe +1 até o fim do giro.</p>',
+      highlights: ['⛏️ Grade 6×6 que começa com <b>3 linhas abertas</b>; cada cascata com ganho <b>abre mais uma</b>', '💣 <b>xBomb</b> é coringa e <b>dispara mesmo sem ganho</b>: destrói os vizinhos, abre uma linha embaixo e soma <b>+1 no multiplicador</b> (sem limite)', '🛒 3/4/5 vagões = <b>Lucky Wagon Spins</b> com 2, 3 ou 4 linhas de moedas', 'Prêmio máximo: <b>60.000x</b>'],
+      how: '<p>Grade <b>6×6</b>: só as <b>3 linhas de baixo</b> começam abertas. Ganhos em caminhos causam colapso (cascata) e cada colapso <b>desbloqueia uma linha</b> (até 6, 46.656 caminhos).</p><p>💣 <b>xBomb</b> é coringa e dispara <b>mesmo sem ganho</b>: destrói as casas vizinhas, desbloqueia mais uma linha escondida e o multiplicador global sobe +1 até o fim do giro.</p>',
       features: '<p>🛒 <b>3, 4 ou 5 vagões</b> abrem os <b>Lucky Wagon Spins</b> numa grade de 2, 3 ou 4 linhas: moedas travam e cada moeda nova <b>reinicia os 3 giros</b>. O anão pode multiplicar todas as moedas e encher a grade vale <b>x4</b>.</p>',
       make: () => make(),
       async spin(rt) {
@@ -378,43 +389,58 @@
       S('capitao', 'militaryhelmet', 'Capitão', [2, 6, 20], 3), S('navio', 'ship', 'Navio', [1.5, 4, 15], 3), S('ancora', 'wave', 'Onda', [1, 3, 10], 4),
       S('bussola', 'shark', 'Tubarão', [0.8, 2, 6], 4), ...SUITS([[0.3, 0.8, 2.5], [0.3, 0.8, 2.5], [0.2, 0.6, 2], [0.2, 0.6, 2]]),
     ];
-    const WILD = { id: 'w', img: 'divingmask', name: 'Periscópio xNudge', wild: true, reels: [1, 2, 3], w: 0.45 };
-    const TORP = { id: 'torp', img: 'rocket', name: 'Torpedo', wild: true, reels: [1, 2, 3, 4], w: 0, fw: 0.9 };
-    const SC = { id: 'sc', img: 'satellite', name: 'Radar', sc: true, w: 0.65, fw: 0 };
+    const WILD = { id: 'w', img: 'divingmask', name: 'Periscópio xNudge', wild: true, reels: [1, 2, 3], w: 0.45, fw: 0.6 };
+    const TORP = { id: 'torp', img: 'rocket', name: 'Torpedo', wild: true, reels: [1, 2, 3, 4], w: 0, fw: 0 };
+    const SC = { id: 'sc', img: 'satellite', name: 'Radar', sc: true, w: 0.65, fw: 0.12 };
     const all = [...SY, WILD, TORP, SC];
     const draw = pool(all);
-    const make = (wk = 'w') => grid([4, 4, 4, 4, 4], c => draw(c, wk));
+    const make = (wk = 'w', H = [4, 4, 4, 4, 4]) => grid(H, c => draw(c, wk));
+    const periscope = g => { for (let c = 1; c <= 3; c++) if (g[c].some(x => x.id === 'w')) { const nd = nudge(WILD, g[c].length); fillReel(g, c, { ...WILD, m: nd.m, t: 'x' + nd.m, c: 'duel' }); } };
     App.register(K.create({
       id: 'submarino', name: 'Das Submarino', studio: STUDIO, art: 'ship', mascot: 'militaryhelmet',
-      tag: 'Torpedos sobem e multiplicam', colors: ['#1e3a8a', '#0f766e'], bg: 'linear-gradient(180deg,#0c4a6e,#083344 60%,#020617)',
+      tag: 'Torpedos sobem · 2 bônus', colors: ['#1e3a8a', '#0f766e'], bg: 'linear-gradient(180deg,#0c4a6e,#083344 60%,#020617)',
       cols: 5, rows: 4, maxWin: 55200, vol: 4, rtp: '~96%', target: 0.96,
       intro: 'Inspirado no "Das xBoot" (Nolimit City).', hello: 'O radar procura torpedos...',
       symbols: all,
-      tables: [table('Pagamento por caminho', heads(3, 3, ' rolos'), SY, '5×4 = 1.024 caminhos.')],
-      highlights: ['⚓ 5×4 com <b>1.024 caminhos</b>', '🔭 <b>Periscópio xNudge</b>: coringa de 4 de altura, +1 por empurrão', '📡 3 radares = <b>8 giros</b> com <b>torpedos</b> que nascem embaixo e <b>sobem uma linha por giro</b>, somando +1 no multiplicador', 'Prêmio máximo: <b>55.200x</b>'],
+      tables: [table('Pagamento por caminho', heads(3, 3, ' rolos'), SY, '5×4 = 1.024 caminhos (2.048 com o rolo 3 de 8 casas).')],
+      highlights: ['⚓ 5×4 com <b>1.024 caminhos</b>', '🔭 <b>Periscópio xNudge</b>: coringa de 4 de altura, +1 por empurrão', '📡 3 radares = <b>Silent Hunter</b> (8 giros, rolo 3 com 8 casas e torpedos lançados pelo periscópio); 4+ = <b>Wolf Pack</b> com torpedos xWays de x2 a x9', 'Cada radar nas rodadas grátis dá <b>+2 giros</b>', 'Prêmio máximo: <b>55.200x</b>'],
       how: '<p>Grade <b>5×4</b> com <b>1.024 caminhos</b>. 🔭 O <b>periscópio xNudge</b> (rolos 2 a 4) empurra até cobrir o rolo e cada empurrão soma +1. Coringas na mesma combinação somam os multiplicadores.</p>',
-      features: '<p>📡 <b>3 radares</b> abrem os <b>Wolf Pack Spins</b> (8 giros). 🚀 <b>Torpedos</b> coringa podem cair nos rolos 2 a 5: eles ficam na tela, <b>sobem uma linha a cada giro</b> e o multiplicador deles cresce +1 a cada subida, até saírem pelo topo.</p>',
+      features: '<p>📡 Os radares abrem 8 rodadas grátis, e cada radar que cair nelas dá <b>+2 giros</b>:</p><ul class="si-list"><li><b>3 radares — Silent Hunter:</b> o <b>rolo 3 cresce para 8 casas</b>. Todo ganho com um periscópio <b>lança um torpedo</b> 🚀 coringa no fundo de um rolo; ele fica na tela, <b>sobe uma linha a cada giro</b> e ganha +1 no multiplicador a cada subida, até sair pelo topo.</li><li><b>4+ radares — Wolf Pack:</b> torpedos aparecem sozinhos no fundo dos rolos 2 a 5 e são <b>xWays</b>: começam valendo <b>x2</b> caminhos e ganham +1 a cada subida, até <b>x9</b>.</li></ul><p class="muted small">A compra do bônus sorteia o tipo com as mesmas chances do jogo normal.</p>',
       make: () => make(),
       async spin(rt) {
         const g = make();
         await rt.spin(g);
-        for (let c = 1; c <= 3; c++) if (g[c].some(x => x.wild)) { const nd = nudge(WILD, 4); fillReel(g, c, { ...WILD, m: nd.m, t: 'x' + nd.m, c: 'duel' }); }
+        periscope(g);
         await rt.drop(g);
         await pay(rt, ways(g, SY, { wildMult: 'add' }));
-        if (count(g, x => x.sc) >= 3) { rt.mark(scatters(g)); await rt.wait(1000); await this.bonus(rt, {}); }
+        const sc = count(g, x => x.sc);
+        if (sc >= 3) { rt.mark(scatters(g)); await rt.wait(1000); await this.bonus(rt, { sc }); }
       },
-      async bonus(rt) {
+      async bonus(rt, { sc = 3, buy = false } = {}) {
+        if (buy) sc = RNG.float() < 0.1 ? 4 : 3;
+        const wolf = sc >= 4;
+        const H = wolf ? [4, 4, 4, 4, 4] : [4, 4, 8, 4, 4];
         let torps = [];
-        await rt.fsLoop(8, async () => {
-          const g = make('fw').map(col => col.map(x => (x.id === 'torp' || x.id === 'w' ? RNG.pick(SY) : x)));
-          torps = torps.map(t => ({ c: t.c, r: t.r - 1, m: t.m + 1 })).filter(t => t.r >= 0);
-          // novos torpedos nascem na linha de baixo
-          for (let c = 1; c <= 4; c++) if (RNG.float() < 0.16 && !torps.some(t => t.c === c && t.r === 3)) torps.push({ c, r: 3, m: 1 });
-          torps.forEach(t => { g[t.c][t.r] = { ...TORP, m: t.m, t: 'x' + t.m, c: 'sticky' }; });
+        await rt.fsLoop(8, async api => {
+          const g = make('fw', H).map(col => col.map(x => (wolf && x.id === 'w' ? RNG.pick(SY) : x)));
+          // torpedos sobem uma linha por giro e saem pelo topo
+          torps = torps.map(t => ({ ...t, r: t.r - 1, m: wolf ? t.m : t.m + 1, n: wolf ? Math.min(9, t.n + 1) : 1 })).filter(t => t.r >= 0);
+          if (wolf) for (let c = 1; c <= 4; c++) if (RNG.float() < 0.16 && !torps.some(t => t.c === c && t.r === H[c] - 1)) torps.push({ c, r: H[c] - 1, m: 1, n: 2 });
+          torps.forEach(t => { g[t.c][t.r] = wolf ? { ...TORP, n: t.n, t: '×' + t.n, c: 'xways' } : { ...TORP, m: t.m, t: 'x' + t.m, c: 'sticky' }; });
           await rt.spin(g, { tease: false });
+          if (!wolf) periscope(g);
+          await rt.drop(g);
           if (torps.length) rt.msg(`🚀 ${torps.length} torpedo${torps.length > 1 ? 's' : ''} subindo!`);
-          await pay(rt, ways(g, SY, { wildMult: 'add' }));
-        }, { title: 'WOLF PACK SPINS', sub: 'Torpedos sobem a cada giro' });
+          const res = ways(g, SY, { wildMult: 'add' });
+          await pay(rt, res);
+          // Silent Hunter: ganho com periscópio lança um torpedo no fundo de um rolo livre
+          if (!wolf && res.total && [...res.cells].some(k => { const [c, r] = K.unkey(k); return g[c][r].id === 'w'; })) {
+            const free = [1, 2, 3, 4].filter(c => !torps.some(t => t.c === c && t.r === H[c] - 1));
+            if (free.length) { const c = RNG.pick(free); torps.push({ c, r: H[c], m: 0, n: 1 }); rt.msg(`🔭 Periscópio acertou: torpedo lançado no rolo ${c + 1}!`); rt.fx('rise'); }
+          }
+          const s2 = count(g, x => x.sc);
+          if (s2) api.add(2 * s2);
+        }, { title: wolf ? 'WOLF PACK SPINS' : 'SILENT HUNTER', sub: wolf ? 'Torpedos xWays de x2 a x9' : 'Rolo 3 com 8 casas · periscópio lança torpedos' });
       },
     }));
   })();
@@ -503,9 +529,9 @@
       intro: 'Inspirado no "Blood & Shadow" (Nolimit City).', hello: 'O ritual transforma os baixos em altos...',
       symbols: all,
       tables: [table('Pagamento por caminho', heads(3, 3, ' rolos'), SY, '5×4 = 1.024 caminhos com cascata (5×5 = 3.125 nos giros amaldiçoados).')],
-      highlights: ['🕯️ 5×4 com <b>1.024 caminhos</b> e cascata', '🕸️ 3+ scatters = <b>6 Candle Spins</b>', '🩸 Cada ganho enche a <b>Barra do Ritual</b>: a cada nível um símbolo baixo vira <b>alto amaldiçoado</b> e você ganha <b>+2 giros</b>', 'No nível 5 começam os <b>Giros Amaldiçoados</b>: grade 5×5 só com símbolos altos', 'Prêmio máximo: <b>6.666x</b>'],
+      highlights: ['🕯️ 5×4 com <b>1.024 caminhos</b> e cascata', '🕸️ 3+ scatters = <b>6 Candle Spins</b>', '🩸 Cada ganho enche a <b>Barra do Ritual</b>: a cada nível um símbolo baixo vira <b>alto amaldiçoado</b> e você ganha <b>+2 giros</b>', 'No nível 5: <b>+6 Giros Amaldiçoados</b> na grade 5×5 só com símbolos altos e <b>coringas presos</b>', 'Prêmio máximo: <b>6.666x</b>'],
       how: '<p>Grade <b>5×4</b> com <b>1.024 caminhos</b>. Os vencedores somem e novos caem (<b>cascata</b>). 🩸 é coringa.</p>',
-      features: '<p>🕸️ <b>3 ou mais scatters</b> dão <b>6 Candle Spins</b>. Cada símbolo eliminado enche a <b>Barra do Ritual</b> (20 por nível). A cada nível, o símbolo baixo mais fraco que restar é <b>trocado por um alto</b> e você ganha <b>+2 giros</b> (até o nível 4).</p><p>No <b>nível 5</b> os giros que sobram viram <b>Giros Amaldiçoados</b>: uma linha extra (5×5, 3.125 caminhos) e só símbolos altos.</p>',
+      features: '<p>🕸️ <b>3 ou mais scatters</b> dão <b>6 Candle Spins</b>. Cada símbolo eliminado enche a <b>Barra do Ritual</b> (20 por nível). A cada nível, o símbolo baixo mais fraco que restar é <b>trocado por um alto</b> e você ganha <b>+2 giros</b> (até o nível 4).</p><p>No <b>nível 5</b> o ritual se completa: você ganha <b>+6 giros</b> e todos os que sobram viram <b>Giros Amaldiçoados</b>, com uma linha extra (5×5, 3.125 caminhos), só símbolos altos e <b>coringas presos</b>: todo coringa que cair fica no lugar até o fim do bônus.</p>',
       make: () => make(),
       async spin(rt) {
         const g = make();
@@ -516,26 +542,31 @@
       async bonus(rt) {
         let lows = LO.slice(), bar = 0, level = 0;
         let d = mkPool([...HI, ...lows]);
+        const stuck = new Map();
         rt.chip('ritual', 'RITUAL', 'Nv 0');
         await rt.fsLoop(6, async api => {
           const cursed = level >= 5;
           const g = cursed ? make(mkPool(HI), 5) : make(d);
+          // giros amaldiçoados: os coringas ficam presos até o fim
+          stuck.forEach((x, k) => { const [c, r] = K.unkey(k); g[c][r] = { ...x }; });
           await rt.spin(g, { tease: false });
           await tumble(rt, g, {
             draw: c => (cursed ? mkPool(HI) : d)(c),
             evaluate: gg => ways(gg, SY),
+            keep: cursed ? (x => !!x.wild) : null,
             onStep: async (s, gg, res) => {
               bar += res.cells.size;
               while (bar >= 20 && level < 5) {
                 bar -= 20;
                 level++;
                 if (level <= 4 && lows.length) { const gone = lows.pop(); lows = lows.slice(); d = mkPool([...HI, ...lows]); rt.msg(`🩸 Ritual nível ${level}: ${gone.name} sai das fitas! +2 giros`); api.add(2, true); }
-                if (level === 5) rt.msg('🩸 RITUAL COMPLETO! Giros amaldiçoados');
+                if (level === 5) { rt.msg('🩸 RITUAL COMPLETO! +6 giros amaldiçoados com coringas presos'); api.add(6, true); }
                 rt.fx('big');
               }
               rt.chip('ritual', 'RITUAL', `Nv ${level} · ${bar}/20`);
             },
           });
+          if (cursed) cells(g, x => x.wild).forEach(([c, r]) => stuck.set(key(c, r), { ...g[c][r], c: 'sticky', fresh: false }));
         }, { title: 'CANDLE SPINS', sub: '6 giros · encha o ritual' });
         rt.chip('ritual', null);
       },
