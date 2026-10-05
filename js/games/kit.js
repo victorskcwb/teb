@@ -352,7 +352,7 @@ const SlotKit = (() => {
 
     return {
       id: cfg.id, name: cfg.name, art: cfg.art, category: 'slots', studio: cfg.studio, tag: cfg.tag, colors: cfg.colors,
-      sprites: [...new Set([...cfg.symbols.map(s => s.img), cfg.mascot, ...(cfg.extraSprites || [])])],
+      sprites: [...new Set([...cfg.symbols.map(s => s.img), cfg.mascot, ...(cfg.extraSprites || [])])].filter(Boolean),
       logic: cfg,
       rules: `<p>${cfg.intro}</p>${cfg.how}${cfg.features}`,
       info: {
