@@ -147,8 +147,8 @@
     colors: ['#b91c1c', '#f59e0b'], bg: 'linear-gradient(180deg,#7f1d1d,#b91c1c 50%,#431407)', maxWin: 7106, rtp: '~96,7%',
     intro: 'Inspirado no "Ways of the Qilin" (PG Soft).', hello: 'Rolos de 2 a 6 símbolos!',
     syms: mk([['qilin', 'qilin', 'Qilin'], ['lingote', 'goldingot', 'Lingote'], ['lanterna', 'izakaya', 'Lanterna'], ['moeda', 'coin', 'Moeda'], ['nó', 'knot', 'Nó chinês']], P6),
-    wildImg: 'dragonface', scImg: 'fireworks', scName: 'Fogos', scW: 1.1, scMin: 4, fsConc: 2,
-    heights: () => Array.from({ length: 6 }, () => RNG.int(2, 6)), silver: [0.05, 0.32],
+    wildImg: 'dragonface', scImg: 'fireworks', scName: 'Fogos', scW: 1.3, scFW: 0.88, scMin: 4, fsConc: 2.3,
+    heights: () => Array.from({ length: 6 }, () => RNG.int(2, 6)), silver: [0.05, 0.42],
     baseM: { start: 1, add: 1 }, fsM: { start: 1, add: 1, persist: true }, fsCount: s => 5 + (s - 4) * 2, retrig: s => 2 + (s - 4) * 2,
     highlights: ['🐉 6 rolos de 2 a 6 símbolos: até <b>46.656 caminhos</b>, com cascata', 'Multiplicador <b>+1 a cada cascata com ganho</b>', '🖼️ Molduras prata nos rolos 2 a 5 → douradas → <b>coringa</b>', '🎆 4+ fogos = <b>5 rodadas grátis</b> (+2 por extra) com multiplicador <b>sem teto e sem zerar</b>', 'Prêmio máximo: <b>7.106x</b>'],
     how: `<p>6 rolos com altura aleatória (2 a 6 símbolos). Iguais em rolos seguidos pagam por caminho e somem (cascata). O multiplicador começa em x1, sobe +1 a cada cascata com ganho e zera no próximo giro. ${silverTxt}</p>`,
@@ -218,8 +218,8 @@
   (() => {
     const SY = mk([['capitao', 'captain', 'Capitão'], ['champanhe', 'champagne', 'Champanhe'], ['boia', 'ringbuoy', 'Boia'], ['ancora', 'anchor', 'Âncora'], ['concha', 'shell', 'Concha']], P6);
     const WILD = { id: 'w', img: 'passengership', name: 'Coringa viajante', wild: true, w: 0 };
-    const TOPW = { id: 'tw', img: 'passengership', name: 'Coringa viajante', wild: true, travel: true, w: 0.8, fw: 1.2 };
-    const SC = { id: 'sc', img: 'ticket', name: 'Bilhete', sc: true, w: 1.0, fw: 0.6 };
+    const TOPW = { id: 'tw', img: 'passengership', name: 'Coringa viajante', wild: true, travel: true, w: 0.8, fw: 2.5 };
+    const SC = { id: 'sc', img: 'ticket', name: 'Bilhete', sc: true, w: 1.25, fw: 0.6 };
     const draw = pool([...SY, SC]), topDraw = pool([...SY, TOPW]);
     const make = fs => grid([4, 4, 4, 4, 4, 4], c => draw(c, fs ? 'fw' : 'w'));
     /** a linha de cima (horizontal) pode trazer coringas que descem na diagonal para a esquerda */
@@ -278,7 +278,7 @@
     const P = [[0.5, 1, 2, 5, 15, 50], [0.4, 0.8, 1.5, 4, 10, 30], [0.3, 0.6, 1.2, 3, 8, 25], [0.25, 0.5, 1, 2.5, 6, 20], [0.2, 0.4, 0.8, 2, 5, 15], [0.15, 0.3, 0.6, 1.5, 4, 12]];
     const SY = [['bala', 'candy', 'Bala'], ['pirulito', 'lollipop', 'Pirulito'], ['chocolate', 'candybar', 'Chocolate'], ['bolinho', 'cupcake', 'Cupcake'], ['rosquinha', 'doughnut', 'Rosquinha'], ['biscoito', 'cookie', 'Biscoito'], ['gelatina', 'jelly', 'Gelatina'], ['marsh', 'marshmallow', 'Marshmallow']].map(([id, img, name], i) => S(id, img, name, P[Math.min(i, 5)].map(p => p * (i >= 6 ? 0.8 : 1)), [5, 6, 7, 8, 9, 10, 11, 12][i]));
     const SC = { id: 'sc', img: 'gumball', name: 'Máquina de doces', sc: true, w: 0.5, fw: 0.25 };
-    const WILD = { id: 'w', img: 'rainbow', name: 'Coringa', wild: true, w: 0.15, fw: 0.3 };
+    const WILD = { id: 'w', img: 'rainbow', name: 'Coringa', wild: true, w: 0.15, fw: 1.0 };
     const draw = pool([...SY, SC, WILD]);
     const make = fs => grid([6, 6, 6, 6, 6, 6], c => draw(c, fs ? 'fw' : 'w'));
     const TT = n => (n < 4 ? -1 : n <= 5 ? 0 : n <= 7 ? 1 : n <= 9 ? 2 : n <= 12 ? 3 : n <= 15 ? 4 : 5);
@@ -561,8 +561,8 @@
   (() => {
     const L25 = K.linesFor(4, 25);
     const SY = [S('vaca', 'cow', 'Vaca', [3, 10, 50], 3), S('ovelha', 'sheep', 'Ovelha', [2, 8, 40], 4), S('porco', 'pig', 'Porco', [1.5, 6, 30], 4), S('galinha', 'chicken', 'Galinha', [1, 4, 20], 5), S('feno', 'herb', 'Feno', [0.5, 2, 8], 6), ...R([[0.3, 1, 3], [0.3, 1, 3], [0.2, 0.8, 2], [0.2, 0.8, 2]])];
-    const WILD = { id: 'w', img: 'alien', name: 'Alien', wild: true, reels: [1, 2, 3, 4], w: 0.55, fw: 1.1 };
-    const SC = { id: 'sc', img: 'ufo', name: 'Disco voador', sc: true, w: 0.8 };
+    const WILD = { id: 'w', img: 'alien', name: 'Alien', wild: true, reels: [1, 2, 3, 4], w: 0.55, fw: 1.8 };
+    const SC = { id: 'sc', img: 'ufo', name: 'Disco voador', sc: true, w: 0.85, fw: 0.8 };
     const draw = pool([...SY, WILD, SC]);
     const make = wk => grid([4, 4, 4, 4, 4], c => draw(c, wk));
     /** cada alien vale x2 no jogo base e +5 nas grátis (conta só os aliens deste giro e dos seus respins) */
@@ -705,7 +705,7 @@
     tag: 'Pratos multiplicadores acumulam', colors: ['#dc2626', '#f59e0b'], bg: 'linear-gradient(180deg,#fef3c7,#fdba74 50%,#9a3412)',
     intro: 'Inspirado no "Diner Delights" (PG Soft).', maxWin: 2989, rtp: '~96,8%', target: 0.968,
     syms: [['lagosta', 'lobster', 'Lagosta'], ['bife', 'cutofmeat', 'Bife'], ['massa', 'spaghetti', 'Espaguete'], ['pizza', 'pizza', 'Pizza'], ['burger', 'hamburger', 'Hambúrguer'], ['sopa', 'stew', 'Sopa'], ['salada', 'salad', 'Salada'], ['batata', 'fries', 'Batata frita'], ['bolo', 'cake', 'Bolo']].map(([id, img, name], i) => S(id, img, name, [[10, 25, 50], [2.5, 10, 25], [2, 5, 15], [1.5, 2, 12], [1, 1.5, 10], [0.8, 1.2, 8], [0.5, 1, 5], [0.4, 0.9, 4], [0.25, 0.75, 2]][i].map(p => p * 0.8), [3, 4, 5, 6, 8, 9, 10, 11, 12][i])),
-    scImg: 'bellhop', scName: 'Sino de serviço', scW: 0.32, scMin: 3, fsCount: 10, retrig: { min: 2, add: 5 },
+    scImg: 'bellhop', scName: 'Sino de serviço', scW: 0.37, scMin: 3, fsCount: 10, retrig: { min: 2, add: 5 },
     orbImg: 'plate', orbName: 'Pratos', orbs: [{ m: 2, w: 50 }, { m: 3, w: 28 }, { m: 4, w: 14 }, { m: 5, w: 8 }], orbBase: 0.008, orbFS: 0.025, accumulate: true,
     highlights: ['🍽️ 6×6 que paga em qualquer lugar (8+ iguais) com cascata', '🍲 Pratos multiplicadores de <b>x2 a x5</b> se somam no fim da cascata', '🛎️ 3+ sinos = <b>10 rodadas grátis</b>: os multiplicadores <b>acumulam e não zeram</b>; 2 sinos nelas dão <b>+5</b>', 'Prêmio máximo: <b>2.989x</b>'],
   }));
