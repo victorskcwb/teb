@@ -398,7 +398,7 @@
     const page = Pages[id];
     document.body.classList.toggle('in-game', !!game);
     if (game) {
-      if (window.LITE) (game.sprites || []).forEach(s => { const i = new Image(); i.src = IMG(s); });
+      if (window.LITE) (game.sprites || []).forEach(s => { if (!s) return; const i = new Image(); i.src = IMG(s); });
       const el = renderGame(game);
       app.append(el);
       ctx = new GameCtx(game);
@@ -440,7 +440,7 @@
   window.addEventListener('load', () => {
     const slugs = new Set();
     // no celular (modo leve) só as capas: os símbolos de cada jogo carregam quando ele é aberto
-    App.games.forEach(g => { slugs.add(g.art); if (!window.LITE) (g.sprites || []).forEach(s => slugs.add(s)); });
+    App.games.forEach(g => { if (g.art) slugs.add(g.art); if (!window.LITE) (g.sprites || []).forEach(s => { if (s) slugs.add(s); }); });
     slugs.forEach(s => { const i = new Image(); i.src = IMG(s); });
   });
 

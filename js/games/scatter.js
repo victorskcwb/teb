@@ -409,7 +409,7 @@
     ]), 1.05),
     scatter: { id: 'sc', img: 'shootingstar', name: 'Estrela cadente', w: 1.25 },
     orbImg: 'glowstar', orbs: ORBS, orbBase: 0.0048, orbFS: 0.0155,
-    fsCount: 15, buyX: 65, accumulate: true,
+    fsCount: 15, buyX: 60, accumulate: true,
     maxWin: 5000, vol: 4, hit: '~1 em 3 giros (32%)', fsEvery: 295,
     highlights: ['🌟 Estrelas de <b>2x a 100x</b> podem cair em qualquer giro', 'Nas rodadas grátis as estrelas <b>acumulam</b> e valem para todos os ganhos seguintes', '4+ estrelas cadentes = <b>15 rodadas grátis</b>', 'Prêmio máximo: <b>5.000x</b>'],
   }));

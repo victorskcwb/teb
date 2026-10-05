@@ -405,7 +405,11 @@
     const SC = { id: 'sc', img: 'pyramid', name: 'Bônus', sc: true, w: 0.55, fw: 0 };
     const draw = pool([...SY, WILD, RAIN, SC]);
     const make = wk => grid([5, 5, 5, 5, 5, 5], c => draw(c, wk));
-    async function play(rt, g, wk, gold) {
+    const COINS = [{ v: 0.2, w: 40 }, { v: 0.5, w: 30 }, { v: 1, w: 18 }, { v: 2, w: 8 }, { v: 5, w: 3 }, { v: 25, w: 0.5 }, { v: 100, w: 0.05 }];
+    // nas grátis as moedas valem mais
+    const COINS_FS = [{ v: 2, w: 40 }, { v: 4, w: 30 }, { v: 6, w: 15 }, { v: 10, w: 9 }, { v: 20, w: 4 }, { v: 50, w: 1.5 }, { v: 200, w: 0.2 }];
+    /** gold: quadrados que ficam (grátis) ou null; tier 3 = zeram depois do arco-íris, 4 = ficam, 5 = arco-íris em todo giro */
+    async function play(rt, g, wk, gold, tier = 0) {
       const sq = gold || new Set();
       await rt.spin(g, { tease: false });
       for (let guard = 0; guard < 6 && !rt.capped; guard++) {
@@ -420,14 +424,17 @@
         rt.mark([...sq], 'hl');
         await rt.drop(g);
       }
-      if (gold && sq.size && RNG.float() < 0.4 && !g.flat().some(x => x.rainbow)) { g[RNG.int(0, 5)][RNG.int(0, 4)] = { ...RAIN, fresh: true }; await rt.drop(g); }
+      if (gold && sq.size && !g.flat().some(x => x.rainbow) && (tier >= 5 || (tier === 4 && RNG.float() < 0.4))) { g[RNG.int(0, 5)][RNG.int(0, 4)] = { ...RAIN, fresh: true }; await rt.drop(g); }
+      let act = false;
       if (g.flat().some(x => x.rainbow) && sq.size) {
         let coins = 0, m = 1;
-        sq.forEach(() => { const r = RNG.float(); if (r < 0.08) m += RNG.pick([1, 2, 4]); else if (r < 0.45) coins += RNG.weighted([{ v: 0.2, w: 40 }, { v: 0.5, w: 30 }, { v: 1, w: 18 }, { v: 2, w: 8 }, { v: 5, w: 3 }, { v: 25, w: 0.5 }, { v: 100, w: 0.05 }]).v; });
-        if (coins) { rt.win(coins * m); rt.msg(`🌈 Arco-íris sobre as pirâmides: ${rt.coins(coins)}${m > 1 ? ` × ${m} (trevos)` : ''}`); rt.fx('big'); await rt.wait(900); }
-        if (!gold) sq.clear();
+        sq.forEach(() => { const r = RNG.float(); if (r < 0.08) m += RNG.pick([1, 2, 4]); else if (r < (gold ? 0.8 : 0.45)) coins += RNG.weighted(gold ? COINS_FS : COINS).v; });
+        if (coins) { rt.win(coins * m); rt.msg(`🌈 Arco-íris! Os dourados pagam ${rt.coins(coins)}${m > 1 ? ` × ${m} (trevos)` : ''}`); rt.fx('big'); await rt.wait(900); }
+        act = true;
       }
-      if (!gold) sq.clear();
+      // Sorte do Faraó: os dourados só zeram depois de ativados por um arco-íris
+      if (!gold || (tier === 3 && act)) sq.clear();
+      if (gold) rt.chip('gold', 'DOURADOS', sq.size);
       return count(g, x => x.sc);
     }
     App.register(K.create({
@@ -438,12 +445,21 @@
       symbols: [...SY, WILD, RAIN, SC],
       lineList: { cols: 6, rows: 5, list: L19x6, text: '19 linhas fixas.' },
       tables: [table('Pagamento por linha', heads(3, 4), SY, 'Iguais seguidos a partir da esquerda.')],
-      highlights: ['🦝 6×5 com 19 linhas', '🔁 <b>Re-drops colantes:</b> os símbolos vencedores ficam e os outros caem de novo enquanto houver ganho', '🟨 Casas vencedoras viram <b>quadrados dourados</b>; com um 🌈 na tela, eles revelam moedas e trevos multiplicadores', '🔺 3+ bônus = <b>Sorte do Faraó</b>: 8 giros em que os quadrados dourados <b>ficam</b>', 'Prêmio máximo: <b>15.000x</b>'],
+      highlights: ['🦝 6×5 com 19 linhas', '🔁 <b>Re-drops colantes:</b> os símbolos vencedores ficam e os outros caem de novo enquanto houver ganho', '🟨 Casas vencedoras viram <b>quadrados dourados</b>; com um 🌈 na tela, eles revelam moedas e trevos multiplicadores', '🔺 3/4/5 bônus = <b>Sorte do Faraó</b>, <b>Tesouros Perdidos</b> ou <b>Arco-íris sobre as pirâmides</b>: os quadrados dourados ficam de um giro para o outro', 'Prêmio máximo: <b>15.000x</b>'],
       how: '<p>Grade 6×5 com 19 linhas. Depois de um ganho, os símbolos vencedores ficam presos e todo o resto cai de novo; repete enquanto houver ganho. Cada casa que fez parte de um ganho vira um quadrado dourado; se cair um arco-íris, os quadrados revelam moedas (até 100x) e trevos que multiplicam as moedas.</p>',
-      features: '<p>🔺 <b>3 ou mais bônus</b> dão <b>8 rodadas grátis</b> com mais arco-íris, e os quadrados dourados ficam de um giro para o outro.</p>',
+      features: '<ul class="si-list"><li>🔺 <b>3 bônus — Sorte do Faraó:</b> 10 rodadas grátis com mais arco-íris. Os quadrados dourados <b>ficam de um giro para o outro</b> até um arco-íris ativá-los; depois disso eles zeram.</li><li>🔺 <b>4 bônus — Tesouros Perdidos:</b> 12 rodadas grátis e os dourados <b>ficam a rodada inteira</b>, mesmo depois de ativados; o arco-íris aparece com mais frequência.</li><li>🔺 <b>5 bônus — Arco-íris sobre as pirâmides:</b> 12 rodadas, dourados fixos e <b>arco-íris em todo giro</b>.</li></ul><p class="muted small">A compra de bônus dá um bônus aleatório: Sorte do Faraó (85%), Tesouros Perdidos (13%) ou Arco-íris sobre as pirâmides (2%).</p>',
       make: () => make('w'),
-      async spin(rt) { const g = make('w'); if (await play(rt, g, 'w', null) >= 3) { rt.mark(scatters(g)); await rt.wait(1000); await this.bonus(rt, {}); } },
-      async bonus(rt) { const sq = new Set(); await rt.fsLoop(8, async () => { await play(rt, make('fw'), 'fw', sq); }, { title: 'SORTE DO FARAÓ', sub: 'Quadrados dourados ficam' }); },
+      async spin(rt) { const g = make('w'); const sc = await play(rt, g, 'w', null); if (sc >= 3) { rt.mark(scatters(g)); await rt.wait(1000); await this.bonus(rt, { sc }); } },
+      async bonus(rt, { sc = 3, buy = false } = {}) {
+        if (buy) sc = RNG.weighted([{ v: 3, w: 85 }, { v: 4, w: 13 }, { v: 5, w: 2 }]).v;
+        const tier = Math.min(5, sc), sq = new Set();
+        const n = { 3: 10, 4: 12, 5: 12 }[tier];
+        await rt.fsLoop(n, async () => { await play(rt, make('fw'), 'fw', sq, tier); }, {
+          title: { 3: 'SORTE DO FARAÓ', 4: 'TESOUROS PERDIDOS', 5: 'ARCO-ÍRIS SOBRE AS PIRÂMIDES' }[tier],
+          sub: tier === 3 ? 'Dourados ficam até o arco-íris' : tier === 4 ? 'Quadrados dourados não somem' : 'Arco-íris em todo giro',
+        });
+        rt.chip('gold', null);
+      },
     }));
   })();
 
@@ -779,7 +795,7 @@
       await tumble(rt, g, {
         draw: c => draw(c),
         evaluate: gg => {
-          const res = payClusters(clusters(gg, 5), TC, k => (k.n >= 70 ? 10 : 1));
+          const res = payClusters(clusters(gg, 5), TC, k => (k.n >= 70 ? 10 : 1) * (st && k.sym.id === st.color ? 2 : 1));
           if (st && res.total) { const col = res.wins.find(w => w.sym.id === st.color); if (col) { st.got += col.n; rt.chip('cor', 'COR', st.got); } }
           return res;
         },
@@ -793,7 +809,7 @@
           }
         },
       });
-      if (st) { st.size = size; while (st.got >= st.next) { const v = st.prize; rt.win(v); rt.msg(`💰 ${st.next} cubos da cor escolhida: +${rt.coins(v)}`); st.next += 50; st.prize *= 2; } }
+      if (st) { st.size = size; while (st.got >= st.next) { const v = st.prize; rt.win(v); rt.msg(`💰 ${st.next} cubos da cor escolhida: +${rt.coins(v)}`); st.next += 10; st.prize *= 2; } }
     }
     App.register(K.create({
       id: 'cubos2', name: 'Cubos 2', studio: STUDIO, art: 'bluesquare', mascot: 'redsquare',
@@ -804,12 +820,12 @@
       tables: [table('Pagamento por tamanho do grupo', ['5–7', '8–10', '11–15', '16–25', '26–45', '46+'], SY, 'Todas as cores pagam igual. Grupos de 70+ valem x10.')],
       highlights: ['🧊 Sem símbolos: só <b>cubos de 6 cores</b> que pagam igual, em grupos de 5+', '📈 Começa em <b>5×5</b> e <b>cresce uma casa em cada direção</b> a cada ganho, até <b>11×11</b>', '💥 Grupo de <b>70+ cubos</b> = <b>x10</b>', '🎨 Bônus: escolha uma cor; a grade não encolhe e juntar cubos dessa cor paga prêmios extras', 'Prêmio máximo: <b>10.500x</b>'],
       how: '<p>A grade começa 5×5. Grupos de 5 ou mais cubos da mesma cor pagam e somem (cascata); a cada cascata a grade ganha um anel novo de cubos, até 11×11. No próximo giro ela volta a 5×5.</p>',
-      features: '<p>🎨 <b>Rodadas grátis</b> (sem scatter — use a compra de bônus ou o grupo de 70+): escolha uma cor; durante 10 giros a grade <b>não volta</b> a 5×5 e, a cada 50 cubos da sua cor em ganhos, você recebe um prêmio em dinheiro que dobra a cada vez.</p>',
+      features: '<p>🎨 <b>Rodadas grátis</b> (sem scatter): o bônus pode aparecer <b>de surpresa</b> no fim de qualquer giro (em média 1 vez a cada ~300 giros) ou pela compra. Escolha uma cor; durante 10 giros a grade <b>não volta</b> a 5×5, os grupos dessa cor <b>pagam em dobro</b> e, a cada 10 cubos da sua cor em ganhos, você recebe um prêmio em dinheiro que dobra a cada vez.</p>',
       make: () => make(5),
-      async spin(rt) { const g = make(5); await play(rt, g, null); if (RNG.float() < 0.0025) { await rt.wait(600); await this.bonus(rt, {}); } },
+      async spin(rt) { const g = make(5); await play(rt, g, null); if (RNG.float() < 0.0035) { await rt.wait(600); await this.bonus(rt, {}); } },
       async bonus(rt) {
         const color = await rt.choose('ESCOLHA SUA COR', SY.map(s => ({ id: s.id, img: s.img, label: s.name })));
-        const st = { size: 5, color, got: 0, next: 50, prize: 5 };
+        const st = { size: 5, color, got: 0, next: 10, prize: 2 };
         await rt.fsLoop(10, async () => { await play(rt, make(st.size), st); }, { sub: 'A grade não encolhe' });
         rt.chip('cor', null);
       },

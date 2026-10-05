@@ -529,9 +529,9 @@
       intro: 'Inspirado no "Blood & Shadow" (Nolimit City).', hello: 'O ritual transforma os baixos em altos...',
       symbols: all,
       tables: [table('Pagamento por caminho', heads(3, 3, ' rolos'), SY, '5×4 = 1.024 caminhos com cascata (5×5 = 3.125 nos giros amaldiçoados).')],
-      highlights: ['🕯️ 5×4 com <b>1.024 caminhos</b> e cascata', '🕸️ 3+ scatters = <b>6 Candle Spins</b>', '🩸 Cada ganho enche a <b>Barra do Ritual</b>: a cada nível um símbolo baixo vira <b>alto amaldiçoado</b> e você ganha <b>+2 giros</b>', 'No nível 5: <b>+6 Giros Amaldiçoados</b> na grade 5×5 só com símbolos altos e <b>coringas presos</b>', 'Prêmio máximo: <b>6.666x</b>'],
+      highlights: ['🕯️ 5×4 com <b>1.024 caminhos</b> e cascata', '🕸️ 3+ scatters = <b>6 Candle Spins</b>', '🩸 Cada ganho enche a <b>Barra do Ritual</b>: a cada nível um símbolo baixo vira <b>alto amaldiçoado</b> e você ganha <b>+2 giros</b>', 'No nível 5: <b>+4 Giros Amaldiçoados</b> na grade 5×5 só com símbolos altos e <b>coringas presos</b>', 'Prêmio máximo: <b>6.666x</b>'],
       how: '<p>Grade <b>5×4</b> com <b>1.024 caminhos</b>. Os vencedores somem e novos caem (<b>cascata</b>). 🩸 é coringa.</p>',
-      features: '<p>🕸️ <b>3 ou mais scatters</b> dão <b>6 Candle Spins</b>. Cada símbolo eliminado enche a <b>Barra do Ritual</b> (30 por nível). A cada nível, o símbolo baixo mais fraco que restar é <b>trocado por um alto</b> e você ganha <b>+2 giros</b> (até o nível 4).</p><p>No <b>nível 5</b> o ritual se completa: você ganha <b>+6 giros</b> e todos os que sobram viram <b>Giros Amaldiçoados</b>, com uma linha extra (5×5, 3.125 caminhos), só símbolos altos e <b>coringas presos</b>: todo coringa que cair fica no lugar até o fim do bônus.</p>',
+      features: '<p>🕸️ <b>3 ou mais scatters</b> dão <b>6 Candle Spins</b>. Cada símbolo eliminado enche a <b>Barra do Ritual</b> (40 por nível). A cada nível, o símbolo baixo mais fraco que restar é <b>trocado por um alto</b> e você ganha <b>+2 giros</b> (até o nível 4).</p><p>No <b>nível 5</b> o ritual se completa: você ganha <b>+4 giros</b> e todos os que sobram viram <b>Giros Amaldiçoados</b>, com uma linha extra (5×5, 3.125 caminhos), só símbolos altos e <b>coringas presos</b> (até 5 cascatas por giro): todo coringa que cair fica no lugar até o fim do bônus.</p>',
       make: () => make(),
       async spin(rt) {
         const g = make();
@@ -550,20 +550,22 @@
           // giros amaldiçoados: os coringas ficam presos até o fim
           stuck.forEach((x, k) => { const [c, r] = K.unkey(k); g[c][r] = { ...x }; });
           await rt.spin(g, { tease: false });
+          let steps = 0;
           await tumble(rt, g, {
             draw: c => (cursed ? mkPool(HI) : d)(c),
-            evaluate: gg => ways(gg, SY),
+            // nos amaldiçoados os coringas presos podem encadear sem fim: no máximo 5 cascatas por giro
+            evaluate: gg => (cursed && steps++ >= 5 ? { total: 0, wins: [], cells: new Set() } : ways(gg, SY)),
             keep: cursed ? (x => !!x.wild) : null,
             onStep: async (s, gg, res) => {
               bar += res.cells.size;
-              while (bar >= 30 && level < 5) {
-                bar -= 30;
+              while (bar >= 40 && level < 5) {
+                bar -= 40;
                 level++;
                 if (level <= 4 && lows.length) { const gone = lows.pop(); lows = lows.slice(); d = mkPool([...HI, ...lows]); rt.msg(`🩸 Ritual nível ${level}: ${gone.name} sai das fitas! +2 giros`); api.add(2, true); }
-                if (level === 5) { rt.msg('🩸 RITUAL COMPLETO! +6 giros amaldiçoados com coringas presos'); api.add(6, true); }
+                if (level === 5) { rt.msg('🩸 RITUAL COMPLETO! +4 giros amaldiçoados com coringas presos'); api.add(4, true); }
                 rt.fx('big');
               }
-              rt.chip('ritual', 'RITUAL', `Nv ${level} · ${bar}/30`);
+              rt.chip('ritual', 'RITUAL', `Nv ${level} · ${bar}/40`);
             },
           });
           if (cursed) cells(g, x => x.wild).forEach(([c, r]) => stuck.set(key(c, r), { ...g[c][r], c: 'sticky', fresh: false }));
