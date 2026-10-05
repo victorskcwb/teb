@@ -10,6 +10,8 @@
   const grid = (hs, f) => hs.map((hh, c) => Array.from({ length: hh }, (_, r) => f(c, r)));
   const SUITS = (pays, w = [8, 8, 9, 9]) => K.ROYALS(pays, w);
   const wmult = list => RNG.weighted(list).m;
+  /** Compra de bônus: sorteia o nível com as chances naturais. list = [{ v, w }] */
+  const tier = list => RNG.weighted(list).v;
   const BIG = [{ m: 2, w: 45 }, { m: 3, w: 25 }, { m: 5, w: 15 }, { m: 10, w: 9 }, { m: 25, w: 4 }, { m: 50, w: 1.5 }, { m: 100, w: 0.5 }];
 
   /* =========================================================
@@ -118,9 +120,10 @@
       S('dinheiro', 'banknote', 'Grana', [2, 6, 20], 3), S('maleta', 'briefcase', 'Maleta', [1.5, 4, 12], 4), S('queijo', 'mousetrap', 'Ratoeira', [1, 3, 8], 4),
       S('cartola', 'sunglasses', 'Óculos', [0.8, 2, 5], 5), ...SUITS([[0.3, 0.8, 2], [0.3, 0.8, 2], [0.2, 0.6, 1.5], [0.2, 0.6, 1.5]]),
     ];
-    const CAT = { id: 'cat', img: 'catface', name: 'Gato Ro$$', wild: true, cat: true, reels: [1, 2, 3], w: 0.32, fw: 0.5 };
-    const MOUSE = { id: 'rato', img: 'mouse', name: 'Rato Maxx', wild: true, w: 0.55, fw: 0.9 };
-    const SC = { id: 'sc', img: 'pizza', name: 'Pizza', sc: true, w: 0.55, fw: 0 };
+    // rw = Bônus Ro$$ (mais gatos), fw = Bônus Maxx
+    const CAT = { id: 'cat', img: 'catface', name: 'Gato Ro$$', wild: true, cat: true, reels: [1, 2, 3], w: 0.32, rw: 1.5, fw: 0.8 };
+    const MOUSE = { id: 'rato', img: 'mouse', name: 'Rato Maxx', wild: true, w: 0.55, rw: 1.1, fw: 1.3 };
+    const SC = { id: 'sc', img: 'pizza', name: 'Pizza', sc: true, w: 0.55, rw: 0.25, fw: 0.25 };
     const all = [...SY, CAT, MOUSE, SC];
     const draw = pool(all);
     const MM = [{ m: 2, w: 50 }, { m: 3, w: 25 }, { m: 5, w: 15 }, { m: 10, w: 10 }];
@@ -134,10 +137,11 @@
       symbols: all,
       lineList: { cols: 5, rows: 5, list: L, text: '19 linhas fixas, da esquerda para a direita.' },
       tables: [table('Pagamento por linha', heads(3, 3), SY, 'Iguais seguidos a partir do rolo da esquerda.')],
-      highlights: ['😼 <b>Gato Ro$$</b> (rolos 2 a 4) expande e cobre o rolo inteiro de coringa', '🐭 <b>Rato Maxx</b> é coringa com <b>x2 a x10</b>', '💀 3 scatters = <b>Bônus Ro$$</b> (gatos colantes) · 4+ = <b>Bônus Maxx</b> (ratos somam multiplicador no gato, até x200)', 'Prêmio máximo: <b>12.500x</b>'],
+      highlights: ['😼 <b>Gato Ro$$</b> (rolos 2 a 4) expande e cobre o rolo inteiro de coringa', '🐭 <b>Rato Maxx</b> é coringa com <b>x2 a x10</b>', '🍕 3 scatters = <b>Bônus Ro$$</b> (muito mais gatos) · 4+ = <b>Bônus Maxx</b> (rolos de gato ativados e ratos somando no gato, até x200)', '🔁 3 scatters nas grátis = <b>+4 giros</b>', 'Prêmio máximo: <b>12.500x</b>'],
       how: `<p>Grade <b>5×5</b> com <b>19 linhas</b>.</p><p>${ico('catface')} <b>Gato:</b> coringa que <b>expande</b> e cobre o rolo inteiro. ${ico('mouse')} <b>Rato:</b> coringa com multiplicador x2 a x10; numa linha, multiplicadores se multiplicam.</p>`,
-      features: `<ul class="si-list"><li>💀 <b>3 scatters — Bônus Ro$$:</b> 10 rodadas grátis; todo gato que expandir <b>fica preso</b> até o fim.</li>
-        <li>💀 <b>4+ scatters — Bônus Maxx:</b> 10 rodadas grátis com gatos presos; cada rato que cair num rolo de gato <b>soma seu multiplicador</b> nesse rolo (até x200).</li></ul>`,
+      features: `<ul class="si-list"><li>🍕 <b>3 scatters — Bônus Ro$$:</b> 10 rodadas grátis com <b>gatos bem mais frequentes</b>. Os gatos não ficam presos: cada um expande só naquele giro, e os ratos que caírem no rolo dele somam no multiplicador do gato.</li>
+        <li>🍕 <b>4+ scatters — Bônus Maxx:</b> 10 rodadas grátis. O rolo onde cair um gato fica <b>ativado</b> até o fim: em todo giro ele traz um gato novo, que expande. Cada rato que cair num rolo ativado <b>soma seu multiplicador</b> nele (até x200).</li>
+        <li>🔁 Nos dois bônus, <b>3 scatters</b> dão <b>+4 rodadas</b>.</li></ul><p class="muted small">A compra de bônus dá um bônus aleatório: Ro$$ (85%) ou Maxx (15%).</p>`,
       make: () => make(),
       async spin(rt) {
         const g = make();
@@ -146,24 +150,33 @@
         if (cells(g, x => x.c === 'duel').length) { rt.msg('😼 O gato expandiu!'); await rt.drop(g); }
         await pay(rt, lines(g, L, SY));
         const sc = count(g, x => x.sc);
-        if (sc >= 3) { rt.mark(scatters(g)); await rt.wait(1000); await this.bonus(rt, { maxx: sc >= 4 }); }
+        if (sc >= 3) { rt.mark(scatters(g)); await rt.wait(1000); await this.bonus(rt, { sc }); }
       },
-      async bonus(rt, { maxx = false } = {}) {
-        const cats = {};
-        await rt.fsLoop(10, async () => {
-          const g = make('fw');
+      async bonus(rt, { sc = 3, buy = false } = {}) {
+        if (buy) sc = tier([{ v: 3, w: 85 }, { v: 4, w: 15 }]);
+        const maxx = sc >= 4, cats = {};
+        await rt.fsLoop(10, async api => {
+          const g = make(maxx ? 'fw' : 'rw');
           await rt.spin(g, { tease: false });
+          const s = count(g, x => x.sc);
           for (let c = 0; c < 5; c++) {
+            const rats = g[c].filter(x => x.id === 'rato').reduce((t, x) => t + x.m, 0);
+            if (!maxx) {
+              // Ro$$: o gato expande só neste giro; ratos no rolo somam no gato
+              if (g[c].some(x => x.cat)) expand(g, c, rats || 1);
+              continue;
+            }
             if (g[c].some(x => x.cat) && !cats[c]) cats[c] = 1;
             if (cats[c]) {
-              if (maxx) { const add = g[c].filter(x => x.id === 'rato').reduce((s, x) => s + x.m, 0); if (add) { cats[c] = Math.min(200, (cats[c] === 1 ? 0 : cats[c]) + add); rt.msg(`🐭 Rato no gato: rolo ${c + 1} vale x${cats[c]}`); } }
+              if (rats) { cats[c] = Math.min(200, (cats[c] === 1 ? 0 : cats[c]) + rats); rt.msg(`🐭 Rato no gato: rolo ${c + 1} vale x${cats[c]}`); }
               expand(g, c, cats[c]);
             }
           }
-          rt.head([0, 1, 2, 3, 4].map(c => (cats[c] > 1 ? 'x' + cats[c] : cats[c] ? '😼' : '')));
-          await rt.drop(g);
+          if (maxx) rt.head([0, 1, 2, 3, 4].map(c => (cats[c] > 1 ? 'x' + cats[c] : cats[c] ? '😼' : '')));
+          if (cells(g, x => x.c === 'duel').length) await rt.drop(g);
           await pay(rt, lines(g, L, SY));
-        }, { title: maxx ? 'BÔNUS MAXX' : 'BÔNUS RO$$', sub: maxx ? 'Ratos somam no gato!' : 'Gatos colantes!' });
+          if (s >= 3) api.add(4);
+        }, { title: maxx ? 'BÔNUS MAXX' : 'BÔNUS RO$$', sub: maxx ? 'Rolos de gato ativados · ratos somam no gato!' : 'Muito mais gatos!' });
         rt.head(null);
       },
     }));

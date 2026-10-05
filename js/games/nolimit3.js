@@ -89,8 +89,8 @@
   /* 22. Vias Lácteas — coringas solares e giros de fusão */
   (() => {
     const SY = msyms([['astronauta', 'astronaut', 'Astronauta'], ['foguete', 'rocket', 'Foguete'], ['planeta', 'ringedplanet', 'Planeta'], ['cometa', 'comet', 'Cometa']]);
-    const WILD = { id: 'w', img: 'sunface', name: 'Coringa solar', wild: true, w: 0.55, fw: 0.11 };
-    const SC = { id: 'sc', img: 'milkyway', name: 'Galáxia', sc: true, w: 0.92, fw: 0 };
+    const WILD = { id: 'w', img: 'sunface', name: 'Coringa solar', wild: true, w: 0.55, fw: 0.1 };
+    const SC = { id: 'sc', img: 'milkyway', name: 'Galáxia', sc: true, w: 0.86, fw: 0 };
     const draw = pool([...SY, WILD, SC]);
     const cell = (c, wk) => { const x = draw(c, wk); if (x.wild) mult(x, RNG.int(1, wk === 'fw' ? 2 : 3)); if (x.m === 1) { delete x.m; delete x.t; } return x; };
     const make = (rows, wk) => grid([rows, rows, rows, rows, rows], c => cell(c, wk));
@@ -468,7 +468,7 @@
   /* 29. Lápide: Sem Piedade — o gatilho decide o modo */
   (() => {
     const SY = [S('pistoleiro', 'cowboy', 'Pistoleiro', [1, 3, 10], 3), S('xerife', 'police', 'Xerife', [0.8, 2.5, 8], 4), S('revolver', 'pistol', 'Revólver', [0.6, 2, 6], 4), S('ferradura', 'horseshoe', 'Ferradura', [0.5, 1.5, 5], 5), ...R([[0.15, 0.4, 1.2], [0.15, 0.4, 1.2], [0.1, 0.3, 1], [0.1, 0.3, 1]])];
-    const WILD = { id: 'w', img: 'cowboy', name: 'Fora da lei', wild: true, reels: [1, 2, 3], w: 0.45, fw: 1.0 };
+    const WILD = { id: 'w', img: 'cowboy', name: 'Fora da lei', wild: true, reels: [1, 2, 3], w: 0.45, fw: 0.95 };
     const SC = { id: 'sc', img: 'moneybag', name: '$', sc: true, reels: [1, 2, 3], w: 1.6, fw: 0 };
     const SHERIFF = { id: 'xerifeb', img: 'sheriff', name: 'Distintivo do Xerife', badge: true, noPay: true, reels: [0], w: 0.9, fw: 0 };
     const MARSHAL = { id: 'marshal', img: 'star2', name: 'Distintivo do Marshal', badge: true, noPay: true, reels: [4], w: 0.9, fw: 0 };
@@ -508,7 +508,6 @@
       async bonus(rt, o = {}) {
         const mode = o.buy ? RNG.weighted([{ k: 'g', w: 63 }, { k: 'j', w: 35 }, { k: 'b', w: 2 }]).k : o.mode || 'g';
         const M = MODES[mode];
-        await rt.banner(M.n.toUpperCase(), M.d, 1400);
         const st = { acc: mode !== 'j', sticky: mode !== 'g' ? new Map() : null, m: 1 };
         await rt.fsLoop(M.spins, async () => { await play(rt, make('fw'), st); }, { title: M.n.toUpperCase(), sub: M.d });
         rt.chip('mult', null);
@@ -730,7 +729,7 @@
   (() => {
     const SY = msyms([['trailer', 'camping', 'Trailer'], ['caminhonete', 'pickuptruck', 'Caminhonete'], ['churrasqueira', 'cutofmeat', 'Churrasco'], ['bone', 'cap', 'Boné']]);
     const WILD = { id: 'w', img: 'eagle', name: 'Coringa', wild: true, w: 0.45 };
-    const SC = { id: 'sc', img: 'wave', name: 'Onda', sc: true, w: 0.9, fw: 0.45 };
+    const SC = { id: 'sc', img: 'wave', name: 'Onda', sc: true, w: 0.9, fw: 0.5 };
     const draw = pool([...SY, WILD, SC]);
     const make = wk => grid([4, 4, 4, 4], c => draw(c, wk));
     const MODS = [{ k: 'keg', w: 30 }, { k: 'bottle', w: 30 }, { k: 'split', w: 25 }, { k: 'bear', w: 15 }];
@@ -788,7 +787,7 @@
     const SY = msyms([['soldado', 'militaryhelmet', 'Capacete'], ['aviao', 'airplane', 'Avião'], ['navio', 'ship', 'Navio'], ['medalha', 'militarymedal', 'Medalha']]);
     const WILD = { id: 'w', img: 'star', name: 'Coringa', wild: true, w: 0.45, fw: 1.5 };
     const SUP = { id: 'sup', img: 'glowstar', name: 'Coringa atômico', wild: true, w: 0.03, fw: 0.3 };
-    const SC = { id: 'sc', img: 'worldmap', name: 'Mapa', sc: true, w: 0.78, fw: 0 };
+    const SC = { id: 'sc', img: 'worldmap', name: 'Mapa', sc: true, w: 0.82, fw: 0 };
     const draw = pool([...SY, WILD, SUP, SC]);
     const cell = (c, wk) => { const x = draw(c, wk); if (x.id === 'sup') mult(x, wm(BIG) * 2); return x; };
     const make = wk => grid([3, 4, 5, 4, 3], c => cell(c, wk));
@@ -817,7 +816,7 @@
       tag: 'Modificadores · coringa atômico', colors: ['#4d7c0f', '#78716c'], bg: 'linear-gradient(180deg,#a8a29e,#57534e 50%,#365314)',
       cols: 5, rows: 5, maxWin: 55555, vol: 5, rtp: '~96,1%', target: 0.961,
       intro: 'Inspirado no "D-Day" (Nolimit City) — tema histórico sem cenas de violência.', hello: 'Rumo à praia!',
-      symbols: [...SY, WILD, SUP, SC],
+      symbols: [...SY, WILD, SUP, SC], extraSprites: ['scissors', 'bomb'],
       tables: [table('Pagamento por caminho', heads(3, 3, ' rolos'), SY, 'Rolos 3-4-5-4-3 = 720 caminhos.')],
       highlights: ['🎖️ Rolos 3-4-5-4-3 com 720 caminhos', '✈️ Quatro <b>modificadores</b> surpresa: avião (coringas), caça (divide um rolo), tanque (rolo coringa) e artilharia (x2 a x5)', '☢️ <b>Coringa atômico</b> com multiplicador de até x200', '🗺️ 3/4/5 mapas = <b>Netuno / Invasão / Overlord</b>: 8 giros em que você <b>escolhe 1, 2 ou 3 modificadores</b>, cada um garantido pelo menos uma vez; no Overlord o <b>coringa atômico</b> é garantido', 'Prêmio máximo: <b>55.555x</b>'],
       how: '<p>Rolos 3-4-5-4-3 que pagam por caminhos. Em qualquer giro um modificador pode entrar em ação.</p>',
@@ -850,7 +849,7 @@
   /* 36. Cidade Fantasma R.I.P. — rolo final x2 e xRIP */
   (() => {
     const SY = msyms([['pistoleiro', 'cowboy', 'Pistoleiro'], ['cavalo', 'horse', 'Cavalo'], ['garrafa', 'bottle', 'Garrafa'], ['bota', 'boot', 'Bota']]);
-    const WILD = { id: 'w', img: 'skull', name: 'Coringa xNudge', wild: true, reels: [1, 2, 3], w: 0.22, fw: 1.6 };
+    const WILD = { id: 'w', img: 'skull', name: 'Coringa xNudge', wild: true, reels: [1, 2, 3], w: 0.22, fw: 1.85 };
     const SC = { id: 'sc', img: 'snake', name: 'Cascavel', sc: true, w: 0.8, fw: 0 };
     const SC2 = { id: 'sc2', img: 'motorcycle', name: 'Moto', sc2: true, noPay: true, w: 0.35, fw: 0 };
     const draw = pool([...SY, WILD, SC, SC2]);
@@ -938,7 +937,7 @@
   /* 38. Pescaria Bizarra — células reforçadas e troféus */
   (() => {
     const SY = msyms([['peixe3olhos', 'fish', 'Peixe esquisito'], ['bagre', 'shark', 'Bagre gigante'], ['bota', 'boot', 'Bota velha'], ['lata', 'can', 'Lata']]);
-    const FISHER = { id: 'w', img: 'fishingpole', name: 'Pescador coringa', wild: true, fisher: true, w: 0.3, fw: 1.8 };
+    const FISHER = { id: 'w', img: 'fishingpole', name: 'Pescador coringa', wild: true, fisher: true, w: 0.3, fw: 2.2 };
     const TROPHY = { id: 'trofeu', img: 'tropicalfish', name: 'Troféu', trophy: true, noPay: true, w: 0.5, fw: 2.2 };
     const SC = { id: 'sc', img: 'tackle', name: 'Isca', sc: true, w: 0.95, fw: 0.35 };
     const draw = pool([...SY, FISHER, TROPHY, SC]);
@@ -987,7 +986,7 @@
   (() => {
     const SY = msyms([['violao', 'guitar', 'Violão'], ['chapeu', 'tophat', 'Chapéu'], ['gaita', 'saxophone', 'Gaita'], ['dado', 'dice2', 'Dados']]);
     const WILD = { id: 'w', img: 'imp', name: 'Coringa da encruzilhada', wild: true, w: 0.3 };
-    const SC = { id: 'sc', img: 'crossmark', name: 'Encruzilhada', sc: true, w: 0.95 };
+    const SC = { id: 'sc', img: 'crossmark', name: 'Encruzilhada', sc: true, w: 1.15 };
     const draw = pool([...SY, WILD, SC]);
     const make = () => grid([5, 5, 5, 5, 5], (c, r) => (c === 2 && r === 2 && RNG.float() < 0.3 ? { ...WILD, c: 'gold', center: true } : draw(c)));
     async function play(rt, g) {
@@ -1000,7 +999,7 @@
       await pay(rt, ways(g, SY), m);
       return count(g, x => x.sc);
     }
-    const U = 10;
+    const U = 13;
     const CV = [{ v: 1, w: 34 }, { v: 2, w: 26 }, { v: 3, w: 16 }, { v: 5, w: 12 }, { v: 10, w: 8 }, { v: 25, w: 3 }, { v: 100, w: 0.6 }];
     const COIN = () => ({ id: 'moeda', img: 'coin', name: 'Moeda', coin: true, noPay: true, v: U * RNG.weighted(CV).v });
     const EMPTY = () => ({ id: 'vazio', img: null, c: 'empty', noPay: true });
