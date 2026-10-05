@@ -492,19 +492,21 @@
     const cell = (c, fs) => silver(draw(c), c, fs ? 0.25 : 0.08);
     const make = fs => K.stack(grid([5, 6, 6, 6, 6, 5], c => cell(c, fs)), 0.4);
     const conv = frames(SY, WILD);
-    const TIERS = [{ s: 8, m: 8 }, { s: 12, m: 12 }, { s: 16, m: 16 }, { s: 20, m: 20 }];
-    const P_UP = [64 / 144, 144 / 256, 256 / 400]; // aposta justa: o valor esperado não muda
-    async function play(rt, g, fixed) {
+    const natSc = () => { for (let i = 0; i < 50000; i++) { const n = count(make(), x => x.sc); if (n >= 4) return n; } return 4; };
+    // aposta justa: chance = valor atual / valor novo (aprox. giros × multiplicador)
+    const chance = (s, m, s2, m2) => (s * m) / (s2 * m2);
+    /** st = null no jogo base; nas grátis st.m começa em x8, sobe +1 por cascata e não zera */
+    async function play(rt, g, st) {
       let m = 1;
       // Caishen da Sorte: bloco de 4 coringas no topo
-      if (RNG.float() < (fixed ? 0.04 : 0.025)) { for (let c = 1; c <= 4; c++) g[c][0] = { ...WILD, fresh: true }; rt.msg('🧧 Caishen da Sorte! 4 coringas'); rt.fx('big'); await rt.drop(g); }
-      if (!fixed) rt.chip('mult', 'MULT.', 'x1');
+      if (RNG.float() < (st ? 0.04 : 0.025)) { for (let c = 1; c <= 4; c++) g[c][0] = { ...WILD, fresh: true }; rt.msg('🧧 Caishen da Sorte! 4 coringas'); rt.fx('big'); await rt.drop(g); }
+      rt.chip('mult', 'MULT.', 'x' + (st ? st.m : 1));
       await tumble(rt, g, {
-        draw: c => cell(c, !!fixed), evaluate: gg => ways(gg, SY), convert: conv,
-        mult: () => (fixed || m),
-        onStep: async () => { if (!fixed) { m++; rt.chip('mult', 'MULT.', 'x' + m); } },
+        draw: c => cell(c, !!st), evaluate: gg => ways(gg, SY), convert: conv,
+        mult: () => (st ? st.m : m),
+        onStep: async () => { if (st) st.m++; else m++; rt.chip('mult', 'MULT.', 'x' + (st ? st.m : m)); },
       });
-      if (!fixed) rt.chip('mult', null);
+      if (!st) rt.chip('mult', null);
     }
     App.register(K.create({
       id: 'caishen', name: 'Vitórias de Caishen', studio: STUDIO, art: 'moneybag', mascot: 'redenvelope',
@@ -513,39 +515,40 @@
       intro: 'Inspirado no "Caishen Wins" (PG Soft).', hello: 'Molduras viram coringas no caminho!',
       symbols: [...all, WILD],
       tables: [table('Pagamento por caminho', heads(3, 4, ' rolos'), SY, 'Rolos 5-6-6-6-6-5 = 32.400 caminhos, com cascata.')],
-      highlights: ['🧧 <b>32.400 caminhos</b> com cascata; multiplicador +1 por cascata no jogo base', '🖼️ Moldura prata → dourada → <b>coringa</b>', '8️⃣ 4+ scatters = <b>8 rodadas grátis com x8 fixo</b>', '🎡 Antes do bônus você pode <b>arriscar na roda</b>: até <b>20 giros com x20</b>', 'Prêmio máximo: <b>100.000x</b>'],
+      highlights: ['🧧 <b>32.400 caminhos</b> com cascata; multiplicador +1 por cascata', '🖼️ Moldura prata → dourada → <b>coringa</b>', '8️⃣ 4+ scatters = <b>8 rodadas grátis</b> (+2 por extra) com o multiplicador começando em <b>x8</b>, subindo +1 por cascata e <b>sem zerar</b>', '🎡 Antes do bônus você pode <b>arriscar na roda</b> por +2 giros ou +2 no multiplicador: até <b>20 giros</b> e <b>x20</b>', 'Prêmio máximo: <b>100.000x</b>'],
       how: '<p>Rolos <b>5-6-6-6-6-5</b> (32.400 caminhos) com <b>cascata</b>. No jogo base o multiplicador começa em x1 e sobe +1 por cascata.</p><p>Símbolos dos rolos 2 a 5 com <b>moldura prata</b> viram dourados ao ganhar; dourados viram <b>coringa</b>. O <b>Caishen da Sorte</b> pode cobrir o topo com 4 coringas.</p>',
-      features: `<p>8️⃣ <b>4 ou mais scatters</b> dão <b>8 rodadas grátis com multiplicador fixo x8</b> em todos os ganhos.</p>
-        <p>🎡 <b>Aposta na roda:</b> antes de começar você pode aceitar ou arriscar. Acertando, sobe para 12 giros x12, depois 16 x16 e 20 x20. Errando, o bônus acaba. As chances são justas: em média o valor do bônus é o mesmo.</p>
-        <table class="paytable"><tr class="si-head"><td>De</td><td>Para</td><td>Chance</td></tr>${P_UP.map((p, i) => `<tr><td>${TIERS[i].s} giros x${TIERS[i].m}</td><td>${TIERS[i + 1].s} giros x${TIERS[i + 1].m}</td><td>${Math.round(p * 100)}%</td></tr>`).join('')}</table>`,
+      features: `<p>8️⃣ <b>4 ou mais scatters</b> dão <b>8 rodadas grátis</b> (+2 por scatter extra). O multiplicador começa em <b>x8</b>, sobe <b>+1 a cada cascata</b> e não zera até o fim do bônus.</p>
+        <p>🎡 <b>Aposta na roda:</b> antes de começar você pode aceitar ou girar a roda para ganhar <b>+2 giros</b> ou <b>+2 no multiplicador inicial</b>, quantas vezes quiser, até <b>20 giros</b> e <b>x20</b>. Errando, o bônus acaba. As chances são justas: quanto maior o salto em relação ao que você já tem, menor a chance.</p>`,
       make,
       async spin(rt) {
         const g = make();
         await rt.spin(g);
-        await play(rt, g, 0);
-        if (count(g, x => x.sc) >= 4) { rt.mark(scatters(g)); await rt.wait(1000); await this.bonus(rt, {}); }
+        await play(rt, g, null);
+        const sc = count(g, x => x.sc);
+        if (sc >= 4) { rt.mark(scatters(g)); await rt.wait(1000); await this.bonus(rt, { sc }); }
       },
-      async bonus(rt) {
-        let t = 0;
-        while (t < 3) {
-          const nx = TIERS[t + 1];
-          const pick = await rt.choose(`${TIERS[t].s} GIROS · x${TIERS[t].m}`, [
-            { id: 'ok', img: 'check', label: 'Aceitar', desc: `${TIERS[t].s} giros com x${TIERS[t].m}`, sim: true },
-            { id: 'gamble', img: 'ferris', label: 'Arriscar', desc: `${Math.round(P_UP[t] * 100)}% → ${nx.s} giros x${nx.m}` },
-          ]);
+      async bonus(rt, { sc = 4, buy } = {}) {
+        if (buy) sc = natSc();
+        let s = Math.min(20, 8 + (sc - 4) * 2), m = 8;
+        for (;;) {
+          const opts = [{ id: 'ok', img: 'check', label: 'Aceitar', desc: `${s} giros começando em x${m}`, sim: true }];
+          if (s < 20) opts.push({ id: 's', img: 'ferris', label: '+2 giros', desc: `${Math.round(chance(s, m, s + 2, m) * 100)}% → ${s + 2} giros x${m}` });
+          if (m < 20) opts.push({ id: 'm', img: 'ferris', label: '+2 no mult.', desc: `${Math.round(chance(s, m, s, m + 2) * 100)}% → ${s} giros x${m + 2}` });
+          if (opts.length === 1) break;
+          const pick = await rt.choose(`${s} GIROS · x${m}`, opts);
           if (pick === 'ok') break;
-          const win = RNG.float() < P_UP[t];
+          const [s2, m2] = pick === 's' ? [s + 2, m] : [s, m + 2];
+          const win = RNG.float() < chance(s, m, s2, m2);
           await rt.reveal('RODA DA SORTE', [{ img: 'check', t: 'SUBIU!' }, { img: 'skull', t: 'PERDEU' }], win ? 0 : 1);
           if (!win) { rt.msg('A roda não ajudou... bônus perdido.'); await rt.wait(900); return; }
-          t++;
+          [s, m] = [s2, m2];
         }
-        const T = TIERS[t];
-        rt.chip('mult', 'MULT.', 'x' + T.m);
-        await rt.fsLoop(T.s, async () => {
+        const st = { m };
+        await rt.fsLoop(s, async () => {
           const g = make(true);
           await rt.spin(g, { tease: false });
-          await play(rt, g, T.m);
-        }, { sub: `${T.s} giros · tudo x${T.m}` });
+          await play(rt, g, st);
+        }, { sub: `Começa em x${m} e não zera` });
         rt.chip('mult', null);
       },
     }));
