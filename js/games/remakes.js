@@ -329,7 +329,7 @@
     ];
     const WILD = { id: 'w', img: 'magicwand', name: 'Coringa', wild: true };
     const BOLT = { id: 'raio', img: 'lightning', name: 'Raio', noPay: true, bolt: true, tagTxt: 'RAIO' };
-    const SC = { id: 'sc', img: 'goldbook', name: 'Livro de feitiços', sc: true, w: 0.5, fw: 0.36 };
+    const SC = { id: 'sc', img: 'goldbook', name: 'Livro de feitiços', sc: true, w: 0.82, fw: 0.4 };
     const all = [...SY, WILD, BOLT, SC];
     const dReel = pool([...SY, SC]), dTopP = pool(SY);
     const drawTop = (c, wk) => (RNG.float() < (wk === 'fw' ? 0.09 : 0.06) ? { ...BOLT } : dTopP(c));
