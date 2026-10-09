@@ -6,7 +6,7 @@
    ========================================================= */
 (function () {
   const K = SlotKit;
-  const { S, pool, lines, count, key, clusters, payClusters, table, heads, pay, tumble, scatters } = K;
+  const { S, pool, ways, lines, count, key, clusters, payClusters, table, heads, pay, tumble, scatters } = K;
   const STUDIO = 'pragmatic';
 
   /* =========================================================
@@ -177,6 +177,230 @@
           await pay(rt, ev(g));
           rt.chip('mult', 'PRESOS', sticky.size);
         }, { sub: `10 giros com ${god === 'zeus' ? 'Zeus' : 'Hades'} · coringas presos` });
+        rt.chip('mult', null);
+      },
+    }));
+  })();
+
+  /* =========================================================
+     Base comum: Megaways com trilho no topo dos rolos 2 a 5
+     (6 rolos de 2 a 7 + 1 casa por rolo no topo; cascata em que
+     os rolos caem de cima e o trilho desliza da direita p/ esquerda)
+     ========================================================= */
+  const TRK = [1, 2, 3, 4];
+  function megaTrack(drawReel, drawTop) {
+    const make = (wk = 'w') => {
+      const g = K.stack(Array.from({ length: 6 }, (_, c) => Array.from({ length: RNG.int(2, 7) }, () => drawReel(c, wk))), 0.3);
+      TRK.forEach(c => g[c].unshift({ ...drawTop(c, wk), c: 'trk' }));
+      return g;
+    };
+    // remove as casas `rm`; devolve as casas novas do trilho (para efeitos de quem "chega" lá)
+    const fall = (g, rm, wk) => {
+      g.forEach((col, c) => {
+        const r0 = TRK.includes(c) ? 1 : 0;
+        const body = col.slice(r0).filter((x, i) => !rm.has(key(c, i + r0)));
+        const add = Array.from({ length: col.length - r0 - body.length }, () => ({ ...drawReel(c, wk), fresh: true }));
+        g[c] = [...col.slice(0, r0), ...add, ...body];
+      });
+      const keep = TRK.map(c => g[c][0]).filter((x, i) => !rm.has(key(TRK[i], 0)));
+      const fresh = [];
+      while (keep.length < TRK.length) { const x = { ...drawTop(TRK[keep.length], wk), c: 'trk', fresh: true }; fresh.push(x); keep.push(x); }
+      TRK.forEach((c, i) => { g[c][0] = keep[i]; });
+      return fresh;
+    };
+    return { make, fall };
+  }
+  /** Roleta de aposta antes das grátis: arrisca os giros por um nível maior (pode perder o bônus). */
+  async function gambleWheel(rt, n, LAD) {
+    for (;;) {
+      const i = LAD.indexOf(n);
+      if (i < 0 || i >= LAD.length - 1 || rt.capped) return n;
+      const nx = LAD[i + 1], p = n / nx; // aposta justa: o valor esperado não muda
+      const ch = await rt.choose(`🎡 ${n} RODADAS GRÁTIS`, [
+        { id: 'ok', img: 'sparkles', label: `Jogar ${n}`, desc: 'Começar agora', sim: true },
+        { id: 'gamble', img: 'dizzystar', label: `Arriscar por ${nx}`, desc: `${Math.round(p * 100)}% de chance` },
+      ]);
+      if (ch !== 'gamble') return n;
+      const win = RNG.float() < p;
+      await rt.reveal('ROLETA DA SORTE', [{ img: 'dizzystar', t: `${nx} giros` }, { img: 'skull', t: 'Perdeu' }], win ? 0 : 1);
+      if (!win) { rt.msg('💀 A roleta levou o bônus...'); rt.fx('lose'); await rt.wait(900); return 0; }
+      n = nx;
+      rt.msg(`🎡 Agora são ${n} rodadas grátis!`); rt.fx('big'); await rt.wait(600);
+    }
+  }
+
+  /* =========================================================
+     Muertos Multiplicador Megaways (Muertos Multiplier Megaways)
+     Pimentas (coringa x2/x3) só no trilho multiplicam o multiplicador
+     global; cada cascata soma +1; nas grátis ele não zera
+     ========================================================= */
+  (() => {
+    const SY = [
+      S('mariachi', 'guitar', 'Violão', [1, 2, 5, 12], 4), S('maracas', 'maracas', 'Maracas', [0.8, 1.6, 4, 10], 4),
+      S('mascara', 'performing', 'Máscaras', [0.6, 1.2, 3, 8], 5), S('cacto', 'cactus', 'Cacto', [0.5, 1, 2.5, 6], 5),
+      ...['A', 'K', 'Q', 'J', '10'].map((l, i) => K.L(l, [[0.2, 0.4, 1, 2.5], [0.2, 0.4, 1, 2.5], [0.15, 0.3, 0.8, 2], [0.15, 0.3, 0.8, 2], [0.1, 0.25, 0.6, 1.5]][i], 7 + i)),
+    ];
+    const WILD = { id: 'w', img: 'hotpepper', name: 'Pimenta', wild: true, tagTxt: 'WILD' };
+    const SC = { id: 'sc', img: 'skull', name: 'Caveira', sc: true, w: 0.48, fw: 0.3 };
+    const all = [...SY, WILD, SC];
+    const dReel = pool([...SY, SC]), dTopP = pool(SY);
+    const drawTop = (c, wk) => (RNG.float() < (wk === 'fw' ? 0.11 : 0.07) ? { ...WILD, m: RNG.weighted([{ m: 2, w: 65 }, { m: 3, w: 35 }]).m } : dTopP(c));
+    const { make, fall } = megaTrack(dReel, drawTop);
+    const CAP = 1000;
+    const ev = g => ways(g, SY, { wildMult: 'once', onceM: 1 });
+    const FS_N = [{ v: 8, w: 30 }, { v: 10, w: 40 }, { v: 12, w: 30 }];
+    const LAD = [8, 10, 12, 15, 20, 25, 30];
+    async function hitWilds(rt, st, xs) {
+      for (const x of xs) {
+        if (!x.wild) continue;
+        st.m = Math.min(CAP, st.m * x.m);
+        rt.chip('mult', 'MULT.', 'x' + st.m);
+        rt.msg(`🌶️ Pimenta x${x.m}! Multiplicador agora x${st.m}`); rt.fx('big');
+        await rt.wait(600);
+      }
+    }
+    async function play(rt, g, st, wk) {
+      await hitWilds(rt, st, TRK.map(c => g[c][0]));
+      for (let step = 0; step < 30 && !rt.capped; step++) {
+        const res = ev(g);
+        if (!res.total) break;
+        await pay(rt, res, st.m);
+        if (rt.capped) break;
+        rt.mark(res.cells, 'burst');
+        await rt.wait(200);
+        const fresh = fall(g, res.cells, wk);
+        st.m = Math.min(CAP, st.m + 1);
+        rt.chip('mult', 'MULT.', 'x' + st.m);
+        await rt.drop(g);
+        await hitWilds(rt, st, fresh);
+      }
+      return count(g, x => x.sc);
+    }
+    App.register(K.create({
+      id: 'muertos', name: 'Muertos Multiplicador Megaways', studio: STUDIO, art: 'skull', mascot: 'hotpepper',
+      tag: 'Megaways · pimentas multiplicam o multiplicador', colors: ['#db2777', '#f59e0b'], bg: 'linear-gradient(180deg,#4a044e,#831843 55%,#431407)',
+      cols: 6, rows: 8, maxWin: 10000, vol: 5, rtp: '~96,5%', target: 0.965,
+      intro: 'Inspirado no "Muertos Multiplier Megaways" (Pragmatic Play).', hello: 'As pimentas esquentam o multiplicador!',
+      symbols: all,
+      tables: [table('Pagamento por caminho', heads(3, 4, ' rolos'), SY, 'Megaways: 6 rolos de 2 a 7 símbolos mais a linha do topo nos rolos 2 a 5. Iguais em rolos seguidos a partir da esquerda pagam por caminho.')],
+      highlights: ['💀 Megaways com <b>linha no topo</b> dos rolos 2 a 5 e <b>cascata</b>', '🌶️ <b>Pimenta</b> (coringa) só cai na linha do topo com <b>x2 ou x3</b>: ela <b>multiplica</b> o multiplicador global (x2 com pimenta x3 = <b>x6</b>)', '➕ Cada cascata soma <b>+1</b> no multiplicador global', '💀 3+ caveiras = <b>8 a 12 rodadas grátis</b>, com <b>roleta</b> para arriscar mais giros', '🔥 Nas grátis o multiplicador <b>não zera</b> até o fim', 'Prêmio máximo: <b>10.000x</b>'],
+      how: `<p><b>6 rolos</b> com 2 a 7 símbolos e uma <b>linha horizontal no topo</b> dos rolos 2 a 5. Iguais em rolos seguidos a partir da esquerda pagam por caminho.</p>
+        <p><b>Cascata:</b> os vencedores somem; nos rolos os símbolos caem de cima e na linha do topo eles deslizam da direita para a esquerda.</p>
+        <p>${ico('hotpepper')} <b>Pimenta</b> é o coringa e só aparece na linha do topo, com <b>x2 ou x3</b>. Toda vez que uma pimenta chega à tela, ela <b>multiplica o multiplicador global</b> da rodada pelo valor dela (ex.: global x2 e pimenta x3 → <b>x6</b>). Cada cascata soma <b>+1</b> ao global. Todos os ganhos pagam × o multiplicador global.</p>`,
+      features: `<p>${ico('skull')} <b>3 ou mais caveiras</b> dão <b>8, 10 ou 12 rodadas grátis</b>. Antes de começar você pode girar a <b>roleta</b>: arrisca os giros por um nível maior (até 30) — se perder, o bônus acaba. A chance é justa: o valor médio não muda.</p>
+        <p>🔥 Nas rodadas grátis o multiplicador global <b>não zera</b> entre os giros: as pimentas e as cascatas continuam aumentando até o fim do bônus (até x${CAP}). As pimentas aparecem mais. 3+ caveiras dão <b>+5 giros</b>.</p>`,
+      make,
+      async spin(rt) {
+        const g = make();
+        await rt.spin(g);
+        const st = { m: 1 };
+        rt.chip('mult', 'MULT.', 'x1');
+        const sc = await play(rt, g, st, 'w');
+        rt.chip('mult', null);
+        if (sc >= 3 && !rt.capped) { rt.mark(scatters(g)); await rt.wait(900); await this.bonus(rt, {}); }
+      },
+      async bonus(rt) {
+        let n = RNG.weighted(FS_N).v;
+        n = await gambleWheel(rt, n, LAD);
+        if (!n) return;
+        const st = { m: 1 };
+        rt.chip('mult', 'MULT.', 'x1');
+        await rt.fsLoop(n, async api => {
+          const g = make('fw');
+          await rt.spin(g, { tease: false });
+          const sc = await play(rt, g, st, 'fw');
+          if (sc >= 3) { rt.mark(scatters(g)); rt.msg('💀 +5 rodadas grátis!'); api.add(5); await rt.wait(700); }
+        }, { sub: `${n} giros · multiplicador não zera` });
+        rt.chip('mult', null);
+      },
+    }));
+  })();
+
+  /* =========================================================
+     Poder de Merlin Megaways (Power of Merlin Megaways)
+     O Raio no trilho transforma um símbolo em coringa nos rolos 2–5;
+     nas grátis o multiplicador sobe +1 por cascata e não zera
+     ========================================================= */
+  (() => {
+    const SY = [
+      S('merlin', 'mage', 'Merlin', [1, 2, 5, 12], 4), S('coruja', 'owl', 'Coruja', [0.8, 1.6, 4, 10], 4),
+      S('pocao', 'potion', 'Poção', [0.6, 1.2, 3, 8], 5), S('bola', 'crystalball', 'Bola de cristal', [0.5, 1, 2.5, 6], 5),
+      ...['A', 'K', 'Q', 'J', '10'].map((l, i) => K.L(l, [[0.2, 0.4, 1, 2.5], [0.2, 0.4, 1, 2.5], [0.15, 0.3, 0.8, 2], [0.15, 0.3, 0.8, 2], [0.1, 0.25, 0.6, 1.5]][i], 7 + i)),
+    ];
+    const WILD = { id: 'w', img: 'magicwand', name: 'Coringa', wild: true };
+    const BOLT = { id: 'raio', img: 'lightning', name: 'Raio', noPay: true, bolt: true, tagTxt: 'RAIO' };
+    const SC = { id: 'sc', img: 'goldbook', name: 'Livro de feitiços', sc: true, w: 0.5, fw: 0.36 };
+    const all = [...SY, WILD, BOLT, SC];
+    const dReel = pool([...SY, SC]), dTopP = pool(SY);
+    const drawTop = (c, wk) => (RNG.float() < (wk === 'fw' ? 0.09 : 0.06) ? { ...BOLT } : dTopP(c));
+    const { make, fall } = megaTrack(dReel, drawTop);
+    const ev = g => ways(g, SY);
+    const FS_N = [{ v: 10, w: 40 }, { v: 12, w: 35 }, { v: 15, w: 25 }];
+    const LAD = [10, 12, 15, 20, 25, 30];
+    const boltPos = g => TRK.filter(c => g[c][0].bolt);
+    // cada Raio que chega (ou muda de lugar) escolhe um símbolo pagante da tela e o transforma em coringa nos rolos 2 a 5
+    async function strike(rt, g, times) {
+      for (let i = 0; i < times; i++) {
+        const opts = [...new Set(g.slice(1, 5).flatMap(col => col.filter(x => x.pays && !x.wild && !x.sc && x.c !== 'trk').map(x => x.id)))];
+        if (!opts.length) return;
+        const id = RNG.pick(opts), sym = SY.find(s => s.id === id);
+        let n = 0;
+        for (let c = 1; c <= 4; c++) g[c].forEach((x, r) => { if (x.id === id && x.c !== 'trk') { g[c][r] = { ...WILD, fresh: true }; n++; } });
+        rt.msg(`⚡ Raio de Merlin: ${sym.name} vira coringa nos rolos 2 a 5 (${n})!`); rt.fx('big');
+        await rt.drop(g);
+        await rt.wait(500);
+      }
+    }
+    async function play(rt, g, st, wk) {
+      await strike(rt, g, boltPos(g).length);
+      for (let step = 0; step < 30 && !rt.capped; step++) {
+        const res = ev(g);
+        if (!res.total) break;
+        await pay(rt, res, st ? st.m : 1);
+        if (rt.capped) break;
+        rt.mark(res.cells, 'burst');
+        await rt.wait(200);
+        const before = boltPos(g).join();
+        const fresh = fall(g, res.cells, wk);
+        if (st) { st.m++; rt.chip('mult', 'MULT.', 'x' + st.m); }
+        await rt.drop(g);
+        // raio novo, ou raio que deslizou para outra casa, dispara de novo
+        const moved = boltPos(g).join() !== before ? boltPos(g).length - fresh.filter(x => x.bolt).length : 0;
+        await strike(rt, g, fresh.filter(x => x.bolt).length + Math.max(0, moved));
+      }
+      return count(g, x => x.sc);
+    }
+    App.register(K.create({
+      id: 'merlin', name: 'Poder de Merlin Megaways', studio: STUDIO, art: 'mage', mascot: 'mage',
+      tag: 'Megaways · Raio transforma em coringa', colors: ['#4338ca', '#0891b2'], bg: 'radial-gradient(circle at 50% 0%,#3730a3,#0c0a3e 70%)',
+      cols: 6, rows: 8, maxWin: 10000, vol: 5, rtp: '~96,5%', target: 0.965,
+      intro: 'Inspirado no "Power of Merlin Megaways" (Pragmatic Play).', hello: 'O Raio de Merlin transforma símbolos em coringas!',
+      symbols: all,
+      tables: [table('Pagamento por caminho', heads(3, 4, ' rolos'), SY, 'Megaways: 6 rolos de 2 a 7 símbolos mais a linha do topo nos rolos 2 a 5. Iguais em rolos seguidos a partir da esquerda pagam por caminho.')],
+      highlights: ['🔮 Megaways com <b>linha no topo</b> dos rolos 2 a 5 e <b>cascata</b>', '⚡ <b>Raio</b> (só na linha do topo): escolhe um símbolo da tela e transforma <b>todos</b> eles em <b>coringa</b> nos rolos 2 a 5', '🔁 Se o Raio muda de lugar numa cascata, ele <b>dispara de novo</b>', '📖 4+ livros = <b>10 a 15 rodadas grátis</b>, com <b>roleta</b> para arriscar mais giros', '✨ Nas grátis cada cascata soma <b>+1</b> no multiplicador, que <b>não zera</b>', 'Prêmio máximo: <b>10.000x</b>'],
+      how: `<p><b>6 rolos</b> com 2 a 7 símbolos e uma <b>linha horizontal no topo</b> dos rolos 2 a 5. Iguais em rolos seguidos a partir da esquerda pagam por caminho, com <b>cascata</b> (o topo desliza da direita para a esquerda).</p>
+        <p>${ico('lightning')} <b>Raio:</b> aparece só na linha do topo. Quando chega, escolhe um símbolo pagante da tela e transforma <b>todas</b> as cópias dele nos rolos 2, 3, 4 e 5 em ${ico('magicwand')} <b>coringa</b>. Se o Raio for empurrado para outra casa durante uma cascata, o efeito <b>dispara de novo</b>.</p>`,
+      features: `<p>${ico('goldbook')} <b>4 ou mais livros de feitiços</b> dão <b>10, 12 ou 15 rodadas grátis</b>. Antes de começar você pode girar a <b>roleta</b> para arriscar os giros por um nível maior (até 30) — se perder, o bônus acaba. A chance é justa.</p>
+        <p>✨ Nas grátis o multiplicador começa em <b>x1</b> e sobe <b>+1 a cada cascata</b>, sem zerar até o fim do bônus. Os Raios aparecem mais. 3+ livros dão <b>+5 giros</b>.</p>`,
+      make,
+      async spin(rt) {
+        const g = make();
+        await rt.spin(g);
+        const sc = await play(rt, g, null, 'w');
+        if (sc >= 4 && !rt.capped) { rt.mark(scatters(g)); await rt.wait(900); await this.bonus(rt, {}); }
+      },
+      async bonus(rt) {
+        let n = RNG.weighted(FS_N).v;
+        n = await gambleWheel(rt, n, LAD);
+        if (!n) return;
+        const st = { m: 1 };
+        rt.chip('mult', 'MULT.', 'x1');
+        await rt.fsLoop(n, async api => {
+          const g = make('fw');
+          await rt.spin(g, { tease: false });
+          const sc = await play(rt, g, st, 'fw');
+          if (sc >= 3) { rt.mark(scatters(g)); rt.msg('📖 +5 rodadas grátis!'); api.add(5); await rt.wait(700); }
+        }, { sub: `${n} giros · multiplicador +1 por cascata` });
         rt.chip('mult', null);
       },
     }));

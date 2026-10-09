@@ -21,6 +21,7 @@ Para testar no celular na mesma rede: `python -m http.server 8000` e acesse `htt
 | Slots | Princesa Estelar | Starlight Princess — mesma matemática do Olimpo (15 FS), tema de estrelas | ~95,5% |
 | Slots | Portais de Fogo | Fire Portals — 7×7 em grupos, portais coringa que sobem +1 a cada ganho e ficam presos nas FS | ~96% |
 | Slots | Zeus x Hades | Zeus vs Hades — 5×3, 15 linhas, coringas expansivos, FS com escolha do deus e rolos presos | ~96,5% |
+| Slots | Muertos Multiplicador Megaways | Muertos Multiplier Megaways — Megaways com linha no topo, pimentas x2/x3 multiplicam o multiplicador global, +1 por cascata, FS com roleta e multiplicador que não zera | ~96,5% |
 | Slots | Pescaria Bonança | Big Bass Bonanza — 5×3, 10 linhas, pescador coleta peixes nas FS (x2/x3/x10), compra de bônus | ~94% |
 | Originais | Foguetinho | Aviator / Crash | 97% |
 | Originais | Double | Blaze Double | 93,3% |
