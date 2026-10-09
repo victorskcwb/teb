@@ -92,8 +92,15 @@ async function calibrate(game, SlotKit, spins, bonusN) {
   const r1 = await run(game, SlotKit, K, Math.max(20000, Math.floor(spins / 5)), Math.floor(bonusN / 5));
   if (!(r1.rtp > 0)) throw new Error(`${game.id}: RTP zero`);
   K *= target / r1.rtp;
-  const fin = await run(game, SlotKit, K, spins, bonusN);
-  const K2 = K * (target / fin.rtp);
+  // o teto de prêmio máximo distorce a 1ª estimativa quando a escala real é muito diferente de 1
+  // (os bônus batem no teto e saem subestimados): repete a passada final até o k estabilizar
+  let fin, K2;
+  for (let pass = 0; pass < 4; pass++) {
+    fin = await run(game, SlotKit, K, spins, bonusN);
+    K2 = K * (target / fin.rtp);
+    if (Math.abs(K2 / K - 1) < 0.03) break;
+    K = K2;
+  }
   const s = K2 / K;
   // a compra de bônus devolve BUY_RTP (um pouco abaixo do jogo normal, como nos cassinos)
   const buy = game.logic.buy === false ? 0 : Math.max(10, Math.round((fin.bonus * s) / BUY_RTP));

@@ -118,7 +118,7 @@ const SLOT_CALIB = {
   "gravidade": {"k":0.69997,"buy":56,"hit":0.4409,"fs":0.0054},
   "guerradragoes": {"k":1.6148,"buy":93,"hit":0.2525,"fs":0.00407},
   "gulaggelado": {"k":0.67103,"buy":92,"hit":0.5931,"fs":0.00329},
-  "imperiodourado": {"k":0.0018854,"buy":180,"hit":0.4203,"fs":0.00505},
+  "imperiodourado": {"k":0.00039463,"buy":198,"hit":0.4177,"fs":0.00512},
   "invasoresfazenda": {"k":1.2986,"buy":66,"hit":0.307,"fs":0.00301},
   "jackpirata": {"k":2.6001,"buy":37,"hit":0.2395,"fs":0.00267},
   "jardimcoelhos": {"k":2.0641,"buy":133,"hit":0.2976,"fs":0.00369},
