@@ -474,7 +474,11 @@ const UI = {
     if (payout > 0) {
       const mult = stake > 0 ? payout / stake : 0;
       if (mult >= 10 || (payout >= 300 && mult >= 3)) UI.bigWin(payout, mult);
-      else { Sfx.win(); UI.toast(`Você ganhou 🪙 ${fmt(payout)}`, 'win'); }
+      else {
+        Sfx.win();
+        // ganhos menores que a aposta só tocam o som (o valor já aparece na barra de ganho)
+        if (mult >= 1) UI.toast(`Você ganhou 🪙 ${fmt(payout)}`, 'win', undefined, 'win');
+      }
     } else {
       Sfx.lose();
     }
