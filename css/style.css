@@ -1371,3 +1371,26 @@ select { padding: 9px 10px; border-radius: 12px; background: var(--bg2); border:
 .lite .kc.sc, .lite .pcell.scatter, .lite .sc-cell.scatter, .lite .rc.scatter { animation: none; }
 /* linha horizontal do topo (Megaways com trilho) */
 .kc.trk { background: linear-gradient(180deg, rgba(250, 204, 21, .28), rgba(250, 204, 21, .08)); box-shadow: inset 0 -2px 0 #facc15; }
+
+/* =========================================================
+   Efeitos por tipo de símbolo especial (v2)
+   BÔNUS/scatter = roxo + salto ao cair · WILD = ouro pulsante
+   multiplicador = pílula azul brilhante · dinheiro = verde · mistério = arco-íris
+   ========================================================= */
+.kc.sc, .kc.bonus { background: radial-gradient(circle at 50% 38%, #e9d5ff, #a855f7 35%, #6b21a8 70%, #3b0764); box-shadow: inset 0 0 0 2px #facc15, 0 0 14px rgba(250, 204, 21, .7); }
+.kc.sc.drop, .kc.bonus.drop { animation: scDrop .36s cubic-bezier(.3, 1.4, .5, 1) backwards, specLand .7s .36s ease-out; }
+.kc.sc img, .kc.bonus img { filter: drop-shadow(0 0 6px #fde047) drop-shadow(0 2px 2px rgba(0, 0, 0, .5)); }
+@keyframes specLand { 0% { transform: scale(1); } 30% { transform: scale(1.18); filter: brightness(1.6); } 60% { transform: scale(.96); } 100% { transform: scale(1); } }
+.kc.wild { background: radial-gradient(circle at 50% 35%, #fffbeb, #fde047 35%, #f59e0b 65%, #b45309); animation: wildGlow 1.8s ease-in-out infinite; }
+.kc.wild img { filter: drop-shadow(0 0 5px #fff) drop-shadow(0 2px 2px rgba(0, 0, 0, .45)); }
+@keyframes wildGlow { 0%, 100% { box-shadow: inset 0 0 0 2px #fff7c2, 0 0 8px rgba(251, 191, 36, .55); } 50% { box-shadow: inset 0 0 0 2px #fff, 0 0 18px rgba(251, 191, 36, .95); } }
+.kc.mulx b, .kc.wild b { color: #fff; background: linear-gradient(180deg, #38bdf8, #1d4ed8); box-shadow: 0 0 8px rgba(56, 189, 248, .9); font-size: clamp(.65rem, 3vw, 1.05rem); animation: mulPulse 1.2s ease-in-out infinite; }
+.kc.wild b { background: linear-gradient(180deg, #f87171, #b91c1c); box-shadow: 0 0 8px rgba(248, 113, 113, .9); }
+@keyframes mulPulse { 0%, 100% { transform: translateX(-50%) scale(1); } 50% { transform: translateX(-50%) scale(1.12); } }
+.kc.cash { background: radial-gradient(circle at 50% 38%, rgba(187, 247, 208, .55), rgba(22, 163, 74, .45) 60%, rgba(20, 83, 45, .5)); box-shadow: inset 0 0 0 2px #4ade80, 0 0 10px rgba(74, 222, 128, .55); }
+.kc.cash b { color: #fef08a; background: linear-gradient(180deg, #15803d, #14532d); box-shadow: 0 0 6px rgba(74, 222, 128, .8); }
+.kc.mys { background: conic-gradient(from 0deg, #f472b6, #a78bfa, #38bdf8, #4ade80, #facc15, #f472b6); box-shadow: inset 0 0 0 2px #fff; }
+.kc.mys img { filter: drop-shadow(0 0 6px #fff); }
+.stag.t { background: linear-gradient(180deg, #0ea5e9, #0369a1); }
+.lite .kc.wild, .lite .kc.mulx b, .lite .kc.wild b { animation: none; }
+.lite .kc.sc.drop, .lite .kc.bonus.drop { animation: scDrop .36s cubic-bezier(.3, 1.4, .5, 1) backwards; }

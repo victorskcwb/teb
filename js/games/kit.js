@@ -493,12 +493,16 @@ const SlotKit = (() => {
           if (x.letter) cls.push('lt', 'lt-' + x.letter);
           if (x.hi) cls.push('hi');
           if (x.mid) cls.push('mid');
-          if (x.v && !x.sc && !x.wild) cls.push('cash');
+          if ((x.v || x.coin) && !x.sc && !x.wild) cls.push('cash');
           else if (x.m > 1 && !x.wild && !x.sc) cls.push('mulx');
+          if (x.mys) cls.push('mys');
+          if (x.bonus) cls.push('bonus');
           if (x.fresh && delay != null) cls.push('drop');
           const lb = label(x);
           // etiqueta de símbolo especial, como nos slots reais (WILD / BÔNUS)
-          const tag = x.sc ? `<i class="stag">${x.tagTxt || 'BÔNUS'}</i>` : x.wild && !x.noTag ? `<i class="stag w">${x.tagTxt || 'WILD'}</i>` : '';
+          const tag = x.sc || x.bonus ? `<i class="stag">${x.tagTxt || 'BÔNUS'}</i>`
+            : x.wild && !x.noTag ? `<i class="stag w">${x.tagTxt || 'WILD'}</i>`
+              : x.tagTxt ? `<i class="stag t">${x.tagTxt}</i>` : '';
           return `<div class="${cls.join(' ')}"${x.fresh && delay != null ? ` style="animation-delay:${delay}ms"` : ''}>${face(x)}${tag}${lb !== '' ? `<b>${lb}</b>` : ''}</div>`;
         };
         let cur = null;
