@@ -586,5 +586,10 @@ Speed.load();
    ========================================================= */
 const App = {
   games: [],
-  register(game) { this.games.push(game); },
+  register(game) {
+    // slots de estúdio fora da seleção (js/games/lineup.js) não entram no lobby
+    const L = typeof SLOT_LINEUP !== 'undefined' && game.studio && SLOT_LINEUP[game.studio];
+    if (L && !L.includes(game.id)) return;
+    this.games.push(game);
+  },
 };

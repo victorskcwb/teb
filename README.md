@@ -334,6 +334,7 @@ Os RTPs e preços de compra de bônus são calibrados por simulação: `node too
 - **Marcos de nível:** recompensas no nível 10, 20, 30, 40, 50, 65, 80, 100, 125, 150, 180, 210, 250 e depois cada vez mais espaçados (+50, +50, +60, +60…). Valem `400·(1 + 0,35·i)` fichas + `5 + 2·i` giros (até 30) — cada um ≈ uma sessão de jogo. São resgatados no perfil ou na página Nível; quem já jogava antes começa a contar do nível atual.
 - **XP:** cada rodada dá `2 + 1,5·√aposta` XP (não premia só apostas enormes).
 - **Velocidade dos slots:** Normal, Rápido e Turbo (salvo no navegador).
+- **Seleção no lobby:** dos 254 slots de estúdio programados, aparecem **25 por estúdio** (125 no total) além dos 11 slots próprios. A lista fica em `js/games/lineup.js`; para trazer um jogo de volta basta incluir o id dele.
 - **Som dos slots de estúdio:** trilha temática gerada por jogo (WebAudio) e efeitos CC0 do Kenney/OpenGameArt em `assets/audio/slotsfx.js`.
 - **VIP + cashback semanal:** 10 degraus que acompanham o nível do jogador — Bronze I (1), Bronze II (5), Prata I (10), Prata II (20), Ouro I (30), Ouro II (45), Platina (60), Diamante (80), Mestre (100) e Lenda (130). Cada um dá cashback de 1–8% das perdas líquidas da semana (teto 🪙 5.000, liberado na segunda-feira), multiplica o bônus diário (x1 a x2,2) e dá um presente ao subir (🪙 300 + 5 giros até 🪙 5.000 + 30 giros).
 - **Raspadinha grátis do dia:** uma cartela de 🪙 5 por dia.
@@ -358,7 +359,8 @@ js/progress.js      XP/passe, missões, check-in, roda, anúncios fictícios, ro
 js/history.js       histórico de giros dos slots (localStorage) e o modal de histórico
 js/games/kit.js     SlotKit: motor dos slots de estúdio (tela, giro, cascata, ways/linhas/grupos, hold & spin, rodadas grátis)
 js/games/calib.js   calibração gerada (escala de prêmios, preço do bônus, chance de ganho, frequência do bônus)
-js/games/pragmatic*.js, pgsoft*.js, hacksaw*.js, tada*.js, nolimit*.js, remakes.js   os 252 slots de estúdio
+js/games/pragmatic*.js, pgsoft*.js, hacksaw*.js, tada*.js, nolimit*.js, remakes.js   os 254 slots de estúdio (código)
+js/games/lineup.js  seleção que aparece no lobby: 25 por estúdio (os mais conhecidos e os mais elaborados)
 js/games/templates.js  modelos reaproveitados (paga em qualquer lugar, grupos, PG Soft)
 tools/calibrate.js  simulador que calibra o RTP dos slots de estúdio
 js/slotinfo.js      painel "Prêmios" dos slots (prêmio máximo, tabela, bônus, linhas)
