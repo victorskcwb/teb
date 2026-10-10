@@ -227,7 +227,7 @@ const SLOT_CALIB = {
   "solitario": {"k":0.40628,"buy":40,"hit":0.4181,"fs":0.00236},
   "songkran": {"k":0.13277,"buy":48,"hit":0.2986,"fs":0.00214},
   "sonhosmacau": {"k":0.31888,"buy":82,"hit":0.2762,"fs":0.00246},
-  "submarino": {"k":0.089262,"buy":190,"hit":0.5949,"fs":0.0022},
+  "submarino": {"k":0.086071,"buy":240,"hit":0.5971,"fs":0.0022},
   "superas": {"k":0.24754,"buy":64,"hit":0.3953,"fs":0.00284},
   "supermercado": {"k":0.33023,"buy":56,"hit":0.6567,"fs":0.00219},
   "superrico": {"k":0.40595,"buy":0,"hit":0.2776,"fs":0},
