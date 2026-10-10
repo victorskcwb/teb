@@ -260,19 +260,19 @@
       }
     }
     async function play(rt, g, st, wk) {
-      await hitWilds(rt, st, TRK.map(c => g[c][0]));
       for (let step = 0; step < 30 && !rt.capped; step++) {
         const res = ev(g);
         if (!res.total) break;
+        // a pimenta só entra no multiplicador quando faz parte de uma combinação vencedora
+        await hitWilds(rt, st, [...res.cells].map(k => { const [c, r] = K.unkey(k); return g[c][r]; }));
         await pay(rt, res, st.m);
         if (rt.capped) break;
         rt.mark(res.cells, 'burst');
         await rt.wait(200);
-        const fresh = fall(g, res.cells, wk);
+        fall(g, res.cells, wk);
         st.m = Math.min(CAP, st.m + 1);
         rt.chip('mult', 'MULT.', 'x' + st.m);
         await rt.drop(g);
-        await hitWilds(rt, st, fresh);
       }
       return count(g, x => x.sc);
     }
@@ -283,10 +283,10 @@
       intro: 'Inspirado no "Muertos Multiplier Megaways" (Pragmatic Play).', hello: 'As pimentas esquentam o multiplicador!',
       symbols: all,
       tables: [table('Pagamento por caminho', heads(3, 4, ' rolos'), SY, 'Megaways: 6 rolos de 2 a 7 símbolos mais a linha do topo nos rolos 2 a 5. Iguais em rolos seguidos a partir da esquerda pagam por caminho.')],
-      highlights: ['💀 Megaways com <b>linha no topo</b> dos rolos 2 a 5 e <b>cascata</b>', '🌶️ <b>Pimenta</b> (coringa) só cai na linha do topo com <b>x2 ou x3</b>: ela <b>multiplica</b> o multiplicador global (x2 com pimenta x3 = <b>x6</b>)', '➕ Cada cascata soma <b>+1</b> no multiplicador global', '💀 3+ caveiras = <b>8 a 12 rodadas grátis</b>, com <b>roleta</b> para arriscar mais giros', '🔥 Nas grátis o multiplicador <b>não zera</b> até o fim', 'Prêmio máximo: <b>10.000x</b>'],
+      highlights: ['💀 Megaways com <b>linha no topo</b> dos rolos 2 a 5 e <b>cascata</b>', '🌶️ <b>Pimenta</b> (coringa) só cai na linha do topo com <b>x2 ou x3</b>: se entrar numa combinação vencedora, ela <b>multiplica</b> o multiplicador global (x2 com pimenta x3 = <b>x6</b>)', '➕ Cada cascata soma <b>+1</b> no multiplicador global', '💀 3+ caveiras = <b>8 a 12 rodadas grátis</b>, com <b>roleta</b> para arriscar mais giros', '🔥 Nas grátis o multiplicador <b>não zera</b> até o fim', 'Prêmio máximo: <b>10.000x</b>'],
       how: `<p><b>6 rolos</b> com 2 a 7 símbolos e uma <b>linha horizontal no topo</b> dos rolos 2 a 5. Iguais em rolos seguidos a partir da esquerda pagam por caminho.</p>
         <p><b>Cascata:</b> os vencedores somem; nos rolos os símbolos caem de cima e na linha do topo eles deslizam da direita para a esquerda.</p>
-        <p>${ico('hotpepper')} <b>Pimenta</b> é o coringa e só aparece na linha do topo, com <b>x2 ou x3</b>. Toda vez que uma pimenta chega à tela, ela <b>multiplica o multiplicador global</b> da rodada pelo valor dela (ex.: global x2 e pimenta x3 → <b>x6</b>). Cada cascata soma <b>+1</b> ao global. Todos os ganhos pagam × o multiplicador global.</p>`,
+        <p>${ico('hotpepper')} <b>Pimenta</b> é o coringa e só aparece na linha do topo, com <b>x2 ou x3</b>. Quando uma pimenta <b>faz parte de uma combinação vencedora</b>, ela <b>multiplica o multiplicador global</b> da rodada pelo valor dela, já valendo para esse ganho (ex.: global x2 e pimenta x3 → <b>x6</b>). Cada cascata soma <b>+1</b> ao global. Todos os ganhos pagam × o multiplicador global.</p>`,
       features: `<p>${ico('skull')} <b>3 ou mais caveiras</b> dão <b>8, 10 ou 12 rodadas grátis</b>. Antes de começar você pode girar a <b>roleta</b>: arrisca os giros por um nível maior (até 30) — se perder, o bônus acaba. A chance é justa: o valor médio não muda.</p>
         <p>🔥 Nas rodadas grátis o multiplicador global <b>não zera</b> entre os giros: as pimentas e as cascatas continuam aumentando até o fim do bônus (até x${CAP}). As pimentas aparecem mais. 3+ caveiras dão <b>+5 giros</b>.</p>`,
       make,
