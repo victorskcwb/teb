@@ -347,6 +347,7 @@ const UI = {
     const el = h(`
       <div class="bigwin">
         <div class="bigwin-rays"></div>
+        <div class="bigwin-coins">${Array.from({ length: window.LITE ? 10 : 28 }, () => `<img src="${IMG('coin')}" alt="" style="left:${Math.random() * 100}%;--d:${1.6 + Math.random() * 1.6}s;--dl:${Math.random() * 1.8}s;--s:${0.6 + Math.random() * 0.7}">`).join('')}</div>
         <div class="bigwin-inner">
           <img class="bigwin-img" src="${IMG(mult >= 50 ? 'trophy' : mult >= 20 ? 'moneybag' : 'coin')}" alt="">
           <div class="bigwin-title">${label}</div>
@@ -358,7 +359,7 @@ const UI = {
       </div>`);
     document.body.append(el);
     Sfx.big();
-    UI.confetti(mult >= 20 ? 70 : 45);
+    UI.confetti(mult >= 20 ? 30 : 18);
     const amtEl = $('.bigwin-amount', el);
     const start = performance.now(), dur = 1400;
     const step = now => {
