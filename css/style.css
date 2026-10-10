@@ -1394,3 +1394,22 @@ select { padding: 9px 10px; border-radius: 12px; background: var(--bg2); border:
 .stag.t { background: linear-gradient(180deg, #0ea5e9, #0369a1); }
 .lite .kc.wild, .lite .kc.mulx b, .lite .kc.wild b { animation: none; }
 .lite .kc.sc.drop, .lite .kc.bonus.drop { animation: scDrop .36s cubic-bezier(.3, 1.4, .5, 1) backwards; }
+
+/* =========================================================
+   Efeitos extras: partículas do tema, moedas e chuva de moedas
+   ========================================================= */
+.kit-grid { position: relative; }
+.kit-amb { position: absolute; inset: 8px; border-radius: 16px; overflow: hidden; pointer-events: none; z-index: 0; }
+.kit-amb img { position: absolute; bottom: -40px; width: calc(34px * var(--s)); opacity: .16; filter: blur(.4px); animation: ambRise var(--d) linear var(--dl) infinite; }
+@keyframes ambRise { 0% { transform: translateY(0) rotate(0); opacity: 0; } 15% { opacity: .18; } 85% { opacity: .14; } 100% { transform: translateY(-115%) translateY(-420px) rotate(160deg); opacity: 0; } }
+.kit-grid .kcol { position: relative; z-index: 1; }
+.coin-box { position: absolute; left: 50%; top: 50%; pointer-events: none; }
+.coin-fly { position: absolute; width: 28px; margin: -14px 0 0 -14px; animation: coinFly 1.1s cubic-bezier(.2, .7, .4, 1) both; filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .5)); }
+@keyframes coinFly { 0% { transform: translate(0, 0) scale(.4) rotate(0); opacity: 0; } 15% { opacity: 1; } 70% { opacity: 1; } 100% { transform: translate(var(--dx), calc(var(--dy) + 160px)) scale(1) rotate(var(--r)); opacity: 0; } }
+.bigwin-coins { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.bigwin-coins img { position: absolute; top: -60px; width: calc(46px * var(--s)); animation: coinRain var(--d) linear var(--dl) infinite; filter: drop-shadow(0 4px 6px rgba(0, 0, 0, .5)); }
+@keyframes coinRain { to { transform: translateY(115vh) rotate(540deg); } }
+.lite .bigwin-coins img { animation-iteration-count: 2; }
+.bigwin-inner { z-index: 2; }
+.bigwin-coins { z-index: 1; opacity: .85; }
+.bigwin ~ .confetti { z-index: 299; }

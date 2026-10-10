@@ -397,6 +397,13 @@ const SlotKit = (() => {
 
         const gridEl = $('.kit-grid', el), headEl = $('.kit-head', el), msgEl = $('.scat-msg', el), winEl = $('.slot-winbar b', el);
         const chipsEl = $('.kit-chips', el), banner = $('.scat-banner', el), fxEl = $('.kit-fx', el), frameFx = $('.kit-frame', el);
+        // partículas do tema flutuando no fundo da grade (desligado no modo leve)
+        if (!window.LITE) {
+          const amb = document.createElement('div');
+          amb.className = 'kit-amb';
+          amb.innerHTML = Array.from({ length: 7 }, (_, i) => `<img src="${IMG(i % 3 === 2 ? 'sparkles' : cfg.art)}" alt="" style="left:${6 + i * 13 + Math.random() * 6}%;--d:${9 + Math.random() * 7}s;--dl:-${Math.random() * 12}s;--s:${0.5 + Math.random() * 0.6}">`).join('');
+          frameFx.append(amb);
+        }
         const LITE = !!window.LITE;
         /* ---------- efeitos de ganho (só transform/opacity: leves até no celular) ---------- */
         // contador do ganho que sobe até o valor novo
@@ -434,6 +441,20 @@ const SlotKit = (() => {
           fxEl.append(box);
           setTimeout(() => box.remove(), 900);
         };
+        // moedas espirrando do centro da grade (ganhos a partir de 5x a aposta)
+        const coinBurst = (lvl = 1) => {
+          if (!ctx.alive) return;
+          const n = (LITE ? 6 : 14) * lvl, html = [];
+          for (let i = 0; i < n; i++) {
+            const a = -Math.PI / 2 + (Math.random() - 0.5) * 2.4, d = 90 + Math.random() * 140;
+            html.push(`<img class="coin-fly" src="${IMG('coin')}" alt="" style="--dx:${Math.cos(a) * d}px;--dy:${Math.sin(a) * d}px;--r:${(Math.random() - 0.5) * 720}deg;animation-delay:${Math.random() * 0.15}s">`);
+          }
+          const box = document.createElement('div');
+          box.className = 'coin-box';
+          box.innerHTML = html.join('');
+          fxEl.append(box);
+          setTimeout(() => box.remove(), 1400);
+        };
         // valor do ganho subindo do centro da grade
         const floatWin = x => {
           const v = round2(x * K * bet);
@@ -444,7 +465,7 @@ const SlotKit = (() => {
           f.textContent = '+🪙 ' + fmt(v);
           fxEl.append(f);
           setTimeout(() => f.remove(), 1300);
-          if (x * K >= 5) { frameFx.classList.remove('shake'); void frameFx.offsetWidth; frameFx.classList.add('shake'); }
+          if (x * K >= 5) { frameFx.classList.remove('shake'); void frameFx.offsetWidth; frameFx.classList.add('shake'); coinBurst(x * K >= 20 ? 2 : 1); }
         };
         const spinBtn = $('.spin-btn', el), buyBtn = $('.buy', el), mascot = $('.scat-mascot', el);
         const stepper = UI.betStepper([0.2, 0.4, 1, 2, 3, 5, 10, 20, 50, 100, 200], 3);
