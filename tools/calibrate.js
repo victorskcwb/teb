@@ -136,6 +136,8 @@ if (isMainThread) {
     w.on('message', r => {
       if (r.verify) { console.log(`${r.id.padEnd(16)} verificação: rtp=${(r.rtp * 100).toFixed(2)}% ±${(r.se * 100).toFixed(2)} hit=${(r.hit * 100).toFixed(1)}%`); return; }
       calib[r.id] = mine[r.id] = { k: r.k, buy: r.buy, hit: r.hit, fs: r.fs };
+      // grava a cada jogo: se o processo cair, o que já foi calibrado não se perde
+      if (!args.includes('--verify')) done();
       console.log(`${r.id.padEnd(14)} rtp=${(r.rtp * 100).toFixed(2)}% ±${(r.se * 100).toFixed(2)} k=${r.k} buy=${r.buy} (bônus médio ${r.bonusAvg.toFixed(1)}x) hit=${(r.hit * 100).toFixed(1)}% bônus=1/${r.fs ? Math.round(1 / r.fs) : '-'}${r.hold ? ` hold=1/${Math.round(1 / r.hold)}` : ''}`);
     });
     w.on('error', e => console.error(id, e));
