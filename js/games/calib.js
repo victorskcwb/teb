@@ -160,7 +160,7 @@ const SLOT_CALIB = {
   "montanharussa": {"k":0.044603,"buy":114,"hit":0.5357,"fs":0.00167},
   "mortosvivos": {"k":0.1431,"buy":70,"hit":0.358,"fs":0.00283},
   "motoqueiros": {"k":1.9617,"buy":31,"hit":0.3783,"fs":0.00419},
-  "muertos": {"k":0.030863,"buy":105,"hit":0.468,"fs":0.00334},
+  "muertos": {"k":0.038683,"buy":75,"hit":0.4654,"fs":0.00325},
   "ninhodragao": {"k":2.9768,"buy":0,"hit":0.4451,"fs":0},
   "ninjasamurai": {"k":0.68699,"buy":30,"hit":0.4011,"fs":0.00479},
   "noitedisco": {"k":4.4204,"buy":44,"hit":0.241,"fs":0.00222},

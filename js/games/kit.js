@@ -484,23 +484,8 @@ const SlotKit = (() => {
         stepper.el.addEventListener('click', renderBuy);
         renderBuy();
         el.style.setProperty('--cols', cfg.cols);
-        let arNow = cfg.cols / (cfg.rows * (cfg.cellH || 1));
         gridEl.style.aspectRatio = `${cfg.cols} / ${cfg.rows * (cfg.cellH || 1)}`;
-        /** Ajusta a largura da grade para o jogo inteiro (até o botão de girar) caber acima da barra de navegação. */
-        const frameEl = $('.kit-frame', el);
-        const fit = () => {
-          if (!el.isConnected) return;
-          const nav = $('.bottom-nav');
-          const navH = nav ? Math.max(0, innerHeight - nav.getBoundingClientRect().top) : 0;
-          const top = frameEl.getBoundingClientRect().top + scrollY;
-          const below = ['.slot-winbar', '.fs-slot', '.slot-controls'].reduce((sum, q) => sum + ($(q, el).offsetHeight || 0), 0) + 3 * 10 + 10;
-          const head = headEl.classList.contains('hidden') ? 0 : headEl.offsetHeight;
-          const avail = innerHeight - navH - top - below - 16 - head;
-          frameEl.style.width = Math.round(Math.max(230, Math.min(el.clientWidth, avail * arNow + 16))) + 'px';
-        };
-        requestAnimationFrame(fit);
-        addEventListener('resize', fit);
-        ctx.onUnmount(() => removeEventListener('resize', fit));
+        // a grade sempre ocupa toda a largura disponível (a página rola se precisar)
 
         let busy = false, auto = false, bet = stepper.value;
         const blur = cfg.symbols.filter(s => !s.noBlur && (s.img || s.letter));
@@ -613,14 +598,10 @@ const SlotKit = (() => {
           /** Muda a altura da grade (nº de linhas) e reajusta a tela. */
           layout(rows) {
             gridEl.style.aspectRatio = `${cfg.cols} / ${rows * (cfg.cellH || 1)}`;
-            arNow = cfg.cols / (rows * (cfg.cellH || 1));
-            requestAnimationFrame(fit);
           },
           /** Faixa acima das colunas (valores por coluna) ou null. */
           head(vals) {
-            const was = headEl.classList.contains('hidden');
             headEl.classList.toggle('hidden', !vals);
-            if (was === !!vals) requestAnimationFrame(fit);
             if (vals) headEl.innerHTML = vals.map(v => `<span>${v == null ? '' : v}</span>`).join('');
           },
           /** Contador no topo (GRÁTIS, MULT...). val null remove. */
