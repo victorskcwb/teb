@@ -320,53 +320,87 @@
     }));
   })();
 
-  /* 27. 3 Coringas Zunindo (3 Buzzing Wilds) */
+  /* 27. 3 Coringas Zunindo (3 Buzzing Wilds) — 5×4, 20 linhas, 3 tipos de coringa abelha */
   (() => {
     const L20 = K.linesFor(4, 20);
-    const SY = [S('colmeia', 'beehive', 'Colmeia', [5, 20, 100], 3), S('mel', 'honeypot', 'Mel', [3, 10, 50], 4), S('flor', 'cherryblossom', 'Flor', [2, 6, 30], 4), S('girassol', 'sunflower', 'Girassol', [1.5, 4, 20], 5), ...R([[0.5, 1.5, 5], [0.5, 1.5, 5], [0.3, 1, 3], [0.3, 1, 3]])];
-    const WILD = { id: 'w', img: 'bee', name: 'Coringa', wild: true, reels: [1, 2, 3, 4], w: 0.8 };
-    const SC = { id: 'sc', img: 'beekeeper', name: 'Apicultor', sc: true, reels: [0, 2, 4], w: 1.25, fw: 0.9 };
-    const draw = pool([...SY, WILD, SC]);
-    const make = () => grid([4, 4, 4, 4, 4], c => draw(c));
-    const TYPES = { rand: { n: 'Coringas aleatórios', d: '10 giros · 2 a 6 coringas', s: 10 }, exp: { n: 'Coringa que expande', d: '8 giros · enche o rolo inteiro', s: 8 }, sur: { n: 'Coringa que cerca', d: '6 giros · vira coringa em 3×3', s: 6 } };
-    function apply(g, type, rt) {
-      if (type === 'rand') { const n = RNG.int(2, 6); for (let i = 0; i < n; i++) g[RNG.int(1, 4)][RNG.int(0, 3)] = { ...WILD, fresh: true }; return n; }
-      const c = RNG.int(1, 3), r = RNG.int(0, 3);
-      if (type === 'exp') { g[c] = g[c].map(() => ({ ...WILD, fresh: true })); return 1; }
-      for (let a = c - 1; a <= c + 1; a++) for (let b = r - 1; b <= r + 1; b++) if (g[a] && g[a][b]) g[a][b] = { ...WILD, fresh: true };
-      return 1;
+    const SY = [S('joaninha', 'ladybug', 'Joaninha', [2, 8, 25], 3), S('besouro', 'beetle', 'Besouro', [1.5, 5, 15], 4), S('borboleta', 'butterfly', 'Borboleta', [1, 4, 12], 4),
+      S('flor', 'sunflower', 'Girassol', [0.8, 3, 10], 5), ...R([[0.4, 1.2, 4], [0.4, 1.2, 4], [0.3, 1, 3], [0.3, 1, 3]])];
+    // coringa comum paga como o melhor símbolo (5/15/50) e substitui todos menos a colmeia
+    const WILD = { id: 'w', img: 'bee', name: 'Abelha coringa', wild: true, pays: [5, 15, 50], reels: [1, 2, 3, 4], w: 0.55, fw: 0.55 };
+    const EXP = { id: 'wexp', img: 'honeypot', name: 'Coringa que expande', wild: true, exp: true, tagTxt: 'EXPANDE', reels: [1, 2, 3], w: 0.12, fw: 0 };
+    const SUR = { id: 'wsur', img: 'flower2', name: 'Coringa que cerca', wild: true, sur: true, tagTxt: 'CERCA', reels: [1, 2, 3], w: 0.1, fw: 0 };
+    const SC = { id: 'sc', img: 'beehive', name: 'Colmeia', sc: true, w: 0.7, fw: 0 };
+    const SC_PAY = { 3: 2, 4: 10, 5: 50 };
+    const draw = pool([...SY, WILD, EXP, SUR, SC]);
+    const make = (wk = 'w') => grid([4, 4, 4, 4, 4], c => draw(c, wk));
+    const PAYS = [...SY, { ...WILD }];
+    const MODES = {
+      rand: { n: 'Coringas aleatórios', d: '10 giros · coringas caem em qualquer lugar', s: 10 },
+      exp: { n: 'Coringas que expandem', d: '8 giros · o coringa enche o rolo', s: 8 },
+      sur: { n: 'Coringas que cercam', d: '6 giros · tudo em volta vira coringa', s: 6 },
+    };
+    const W = () => ({ ...WILD, fresh: true });
+    // transforma os coringas especiais: o que expande enche o rolo, o que cerca vira coringa em volta (3×3)
+    async function expandAll(rt, g, sticky) {
+      let n = 0;
+      g.forEach((col, c) => col.forEach((x, r) => {
+        if (x.exp) { g[c] = col.map(() => W()); n++; }
+        else if (x.sur) { for (let a = c - 1; a <= c + 1; a++) for (let b = r - 1; b <= r + 1; b++) if (g[a] && g[a][b] && !g[a][b].sc) g[a][b] = W(); n++; }
+      }));
+      if (n) { rt.msg('🐝 Os coringas se espalharam!'); rt.fx('big'); await rt.drop(g); await rt.wait(400); }
+      if (sticky) g.forEach((col, c) => col.forEach((x, r) => { if (x.wild) sticky.add(key(c, r)); }));
+    }
+    async function payAll(rt, g) {
+      await pay(rt, lines(g, L20, PAYS));
+      const sc = count(g, x => x.sc);
+      if (SC_PAY[Math.min(5, sc)]) { const v = SC_PAY[Math.min(5, sc)]; rt.mark(scatters(g)); rt.win(v); rt.msg(`🍯 ${sc} colmeias: ${v}x a aposta`); await rt.wait(700); }
+      return sc;
     }
     App.register(K.create({
-      id: 'tresabelhas', name: '3 Coringas Zunindo', studio: STUDIO, art: 'beekeeper', mascot: 'bee',
+      id: 'tresabelhas', name: '3 Coringas Zunindo', studio: STUDIO, art: 'bee', mascot: 'bee',
       tag: '3 tipos de coringa · grátis colantes', colors: ['#f59e0b', '#1f2937'], bg: 'linear-gradient(180deg,#fef3c7,#f59e0b 60%,#78350f)',
-      cols: 5, rows: 4, maxWin: 5000, vol: 4, rtp: '~96,5%', target: 0.965,
-      intro: 'Inspirado no "3 Buzzing Wilds" (Pragmatic Play).', hello: 'Três tipos de coringa voando!',
-      symbols: [...SY, WILD, SC],
-      lineList: { cols: 5, rows: 4, list: L20, text: '20 linhas fixas.' },
-      tables: [table('Pagamento por linha', heads(3, 3), SY, 'Iguais seguidos a partir da esquerda.')],
-      highlights: ['🐝 Recursos aleatórios: <b>coringas aleatórios</b>, <b>coringa que expande</b> e <b>coringa que cerca (3×3)</b>', '🧑‍🌾 3 apicultores = rodadas grátis: escolha <b>10 giros</b> com coringas aleatórios, <b>8</b> com coringa que expande ou <b>6</b> com coringa que cerca; todo coringa fica <b>colante</b>', 'Prêmio máximo: <b>5.000x</b>'],
-      how: '<p>Grade 5×4 com 20 linhas. Em qualquer giro uma abelha pode ativar um dos três recursos de coringa.</p>',
-      features: '<p>🧑‍🌾 <b>3 apicultores</b> (rolos 1, 3 e 5) abrem as rodadas grátis. Antes, você escolhe o tipo de coringa: <b>coringas aleatórios com 10 giros</b>, <b>coringa que expande com 8 giros</b> ou <b>coringa que cerca com 6 giros</b>. O escolhido aparece com mais frequência e todo coringa criado <b>gruda</b> até o fim. 3 apicultores durante o bônus dão +5 giros.</p>',
+      cols: 5, rows: 4, maxWin: 5000, vol: 4, rtp: '~96%', target: 0.96,
+      intro: 'Inspirado no "3 Buzzing Wilds" (Pragmatic Play).', hello: 'Três tipos de abelha coringa voando!',
+      symbols: [...SY, WILD, EXP, SUR, SC],
+      lineList: { cols: 5, rows: 4, list: L20, text: '20 linhas fixas, da esquerda para a direita.' },
+      tables: [table('Pagamento por linha', heads(3, 3), PAYS, 'Iguais seguidos a partir do rolo da esquerda. A abelha coringa substitui tudo menos a colmeia e paga 5x/15x/50x.')],
+      highlights: ['🐝 <b>Coringas aleatórios:</b> em giros sorteados caem de 2 a 5 coringas em qualquer lugar', '🍯 <b>Coringa que expande:</b> enche o rolo inteiro', '🌼 <b>Coringa que cerca:</b> transforma todas as casas em volta em coringa', '🏠 3, 4 ou 5 colmeias pagam <b>2x, 10x ou 50x</b> e abrem as rodadas grátis: escolha <b>10, 8 ou 6 giros</b> com o coringa de sua preferência, e todos os coringas ficam <b>presos</b>', 'Prêmio máximo: <b>5.000x</b>'],
+      how: `<p>Grade <b>5×4</b> com <b>20 linhas</b>. Iguais seguidos a partir do rolo da esquerda pagam.</p>
+        <p>${ico('bee')} <b>Abelha coringa</b> (rolos 2 a 5) substitui todos os símbolos menos a colmeia.</p>
+        <p>Há três recursos de coringa no jogo normal:</p><ul class="si-list">
+        <li>🐝 <b>Coringas aleatórios:</b> em giros sorteados, de 2 a 5 coringas caem em casas aleatórias.</li>
+        <li>${ico('honeypot')} <b>Coringa que expande</b> (rolos 2 a 4): ao cair, enche o rolo inteiro de coringas.</li>
+        <li>${ico('flower2')} <b>Coringa que cerca</b> (rolos 2 a 4): ao cair, todas as casas em volta dele viram coringa.</li></ul>`,
+      features: `<p>${ico('beehive')} <b>Colmeia</b> (scatter) paga em qualquer lugar: 3 = <b>2x</b>, 4 = <b>10x</b>, 5 = <b>50x</b> a aposta, e 3 ou mais abrem as rodadas grátis.</p>
+        <p>Antes de começar você escolhe o modo:</p><ul class="si-list">
+        <li><b>Coringas aleatórios:</b> 10 giros; na maioria dos giros caem de 1 a 3 coringas em qualquer lugar.</li>
+        <li><b>Coringas que expandem:</b> 8 giros; os coringas que expandem aparecem muito mais.</li>
+        <li><b>Coringas que cercam:</b> 6 giros; os coringas que cercam aparecem muito mais.</li></ul>
+        <p>📌 Em todos os modos, <b>todo coringa fica preso</b> no lugar até o fim do bônus. As rodadas grátis <b>não</b> são reativadas.</p>`,
       make,
       async spin(rt) {
         const g = make();
-        if (RNG.float() < 0.07) { const t = RNG.pick(Object.keys(TYPES)); apply(g, t, rt); rt.msg(`🐝 ${TYPES[t].n}!`); }
+        if (RNG.float() < 0.04) { const n = RNG.int(2, 5); for (let i = 0; i < n; i++) { const c = RNG.int(1, 4), r = RNG.int(0, 3); if (!g[c][r].sc) g[c][r] = W(); } rt.msg('🐝 Coringas aleatórios!'); }
         await rt.spin(g);
-        await pay(rt, lines(g, L20, SY));
-        if (count(g, x => x.sc) >= 3) { rt.mark(scatters(g)); await rt.wait(1000); await this.bonus(rt, {}); }
+        await expandAll(rt, g, null);
+        const sc = await payAll(rt, g);
+        if (sc >= 3 && !rt.capped) { await rt.wait(700); await this.bonus(rt, {}); }
       },
       async bonus(rt) {
-        const t = await rt.choose('ESCOLHA SUA ABELHA', Object.entries(TYPES).map(([id, x]) => ({ id, img: 'bee', label: x.n, desc: x.d })));
+        const t = await rt.choose('ESCOLHA SUA ABELHA', Object.entries(MODES).map(([id, x]) => ({ id, img: id === 'rand' ? 'bee' : id === 'exp' ? 'honeypot' : 'flower2', label: x.n, desc: x.d })));
         const sticky = new Set();
-        await rt.fsLoop(TYPES[t].s, async api => {
-          const g = make();
-          if (RNG.float() < 0.35) apply(g, t, rt);
+        await rt.fsLoop(MODES[t].s, async () => {
+          const g = make('fw');
+          // o modo escolhido aparece muito mais
+          if (t === 'rand') { if (RNG.float() < 0.6) { const n = RNG.int(1, 3); for (let i = 0; i < n; i++) g[RNG.int(0, 4)][RNG.int(0, 3)] = W(); } }
+          else if (RNG.float() < 0.3) { const c = RNG.int(1, 3), r = RNG.int(0, 3); g[c][r] = t === 'exp' ? { ...EXP } : { ...SUR }; }
           sticky.forEach(kk => { const [c, r] = unkey(kk); g[c][r] = { ...WILD, c: 'sticky' }; });
           await rt.spin(g, { tease: false });
-          cells(g, x => x.wild).forEach(([c, r]) => sticky.add(key(c, r)));
-          await pay(rt, lines(g, L20, SY));
-          if (count(g, x => x.sc) >= 3) api.add(5);
-        }, { sub: `${TYPES[t].n} · colantes` });
+          await expandAll(rt, g, sticky);
+          await payAll(rt, g);
+          rt.chip('mult', 'PRESOS', sticky.size);
+        }, { sub: `${MODES[t].n} · coringas presos` });
+        rt.chip('mult', null);
       },
     }));
   })();
