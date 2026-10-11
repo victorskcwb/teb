@@ -255,10 +255,10 @@
       ...['A', 'K', 'Q', 'J', '10'].map((l, i) => K.L(l, [[0.2, 0.4, 1, 2.5], [0.2, 0.4, 1, 2.5], [0.15, 0.3, 0.8, 2], [0.15, 0.3, 0.8, 2], [0.1, 0.25, 0.6, 1.5]][i], 7 + i)),
     ];
     const WILD = { id: 'w', img: 'hotpepper', name: 'Pimenta', wild: true, tagTxt: 'WILD' };
-    const SC = { id: 'sc', img: 'skull', name: 'Caveira', sc: true, w: 0.48, fw: 0.3 };
+    const SC = { id: 'sc', img: 'skull', name: 'Caveira', sc: true, w: 0.52, fw: 0.3 };
     const all = [...SY, WILD, SC];
     const dReel = pool([...SY, SC]), dTopP = pool(SY);
-    const drawTop = (c, wk) => (RNG.float() < (wk === 'fw' ? 0.11 : 0.07) ? { ...WILD, m: RNG.weighted([{ m: 2, w: 65 }, { m: 3, w: 35 }]).m } : dTopP(c));
+    const drawTop = (c, wk) => (RNG.float() < (wk === 'fw' ? 0.065 : 0.028) ? { ...WILD, m: RNG.weighted([{ m: 2, w: 70 }, { m: 3, w: 30 }]).m } : dTopP(c));
     const { make, fall } = megaTrack(dReel, drawTop);
     const CAP = 1000;
     const ev = g => ways(g, SY, { wildMult: 'once', onceM: 1 });
@@ -343,10 +343,10 @@
     ];
     const WILD = { id: 'w', img: 'magicwand', name: 'Coringa', wild: true };
     const BOLT = { id: 'raio', img: 'lightning', name: 'Raio', noPay: true, bolt: true, tagTxt: 'RAIO' };
-    const SC = { id: 'sc', img: 'goldbook', name: 'Livro de feitiços', sc: true, w: 0.82, fw: 0.4 };
+    const SC = { id: 'sc', img: 'goldbook', name: 'Livro de feitiços', sc: true, w: 0.95, fw: 0.4 };
     const all = [...SY, WILD, BOLT, SC];
     const dReel = pool([...SY, SC]), dTopP = pool(SY);
-    const drawTop = (c, wk) => (RNG.float() < (wk === 'fw' ? 0.09 : 0.06) ? { ...BOLT } : dTopP(c));
+    const drawTop = (c, wk) => (RNG.float() < (wk === 'fw' ? 0.04 : 0.025) ? { ...BOLT } : dTopP(c));
     const { make, fall } = megaTrack(dReel, drawTop);
     const ev = g => ways(g, SY);
     const FS_N = [{ v: 10, w: 40 }, { v: 12, w: 35 }, { v: 15, w: 25 }];
@@ -387,11 +387,11 @@
     App.register(K.create({
       id: 'merlin', name: 'Poder de Merlin Megaways', studio: STUDIO, art: 'mage', mascot: 'mage',
       tag: 'Megaways · Raio transforma em coringa', colors: ['#4338ca', '#0891b2'], bg: 'radial-gradient(circle at 50% 0%,#3730a3,#0c0a3e 70%)',
-      cols: 6, rows: 8, maxWin: 10000, vol: 5, rtp: '~96,5%', target: 0.965,
+      cols: 6, rows: 8, maxWin: 40000, vol: 5, rtp: '~96,5%', target: 0.965,
       intro: 'Inspirado no "Power of Merlin Megaways" (Pragmatic Play).', hello: 'O Raio de Merlin transforma símbolos em coringas!',
       symbols: all,
       tables: [table('Pagamento por caminho', heads(3, 4, ' rolos'), SY, 'Megaways: 6 rolos de 2 a 7 símbolos mais a linha do topo nos rolos 2 a 5. Iguais em rolos seguidos a partir da esquerda pagam por caminho.')],
-      highlights: ['🔮 Megaways com <b>linha no topo</b> dos rolos 2 a 5 e <b>cascata</b>', '⚡ <b>Raio</b> (só na linha do topo): escolhe um símbolo da tela e transforma <b>todos</b> eles em <b>coringa</b> nos rolos 2 a 5', '🔁 Se o Raio muda de lugar numa cascata, ele <b>dispara de novo</b>', '📖 4+ livros = <b>10 a 15 rodadas grátis</b>, com <b>roleta</b> para arriscar mais giros', '✨ Nas grátis cada cascata soma <b>+1</b> no multiplicador, que <b>não zera</b>', 'Prêmio máximo: <b>10.000x</b>'],
+      highlights: ['🔮 Megaways com <b>linha no topo</b> dos rolos 2 a 5 e <b>cascata</b>', '⚡ <b>Raio</b> (só na linha do topo): escolhe um símbolo da tela e transforma <b>todos</b> eles em <b>coringa</b> nos rolos 2 a 5', '🔁 Se o Raio muda de lugar numa cascata, ele <b>dispara de novo</b>', '📖 4+ livros = <b>10 a 15 rodadas grátis</b>, com <b>roleta</b> para arriscar mais giros', '✨ Nas grátis cada cascata soma <b>+1</b> no multiplicador, que <b>não zera</b>', 'Prêmio máximo: <b>40.000x</b>'],
       how: `<p><b>6 rolos</b> com 2 a 7 símbolos e uma <b>linha horizontal no topo</b> dos rolos 2 a 5. Iguais em rolos seguidos a partir da esquerda pagam por caminho, com <b>cascata</b> (o topo desliza da direita para a esquerda).</p>
         <p>${ico('lightning')} <b>Raio:</b> aparece só na linha do topo. Quando chega, escolhe um símbolo pagante da tela e transforma <b>todas</b> as cópias dele nos rolos 2, 3, 4 e 5 em ${ico('magicwand')} <b>coringa</b>. Se o Raio for empurrado para outra casa durante uma cascata, o efeito <b>dispara de novo</b>.</p>`,
       features: `<p>${ico('goldbook')} <b>4 ou mais livros de feitiços</b> dão <b>10, 12 ou 15 rodadas grátis</b>. Antes de começar você pode girar a <b>roleta</b> para arriscar os giros por um nível maior (até 30) — se perder, o bônus acaba. A chance é justa.</p>
