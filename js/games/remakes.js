@@ -19,8 +19,8 @@
       S('dragao', 'dragon', 'Dragão', [1, 2, 4, 10, 25, 100], 4), S('coracao', 'heartfire', 'Coração em chamas', [0.8, 1.5, 3, 7, 20, 75], 5),
       S('cometa', 'comet', 'Cometa', [0.5, 1, 2, 4, 10, 40], 7), S('varinha', 'wand', 'Varinha', [0.4, 0.8, 1.5, 3, 8, 30], 8),
       S('rubi', 'gem', 'Rubi', [0.3, 0.6, 1.2, 2.5, 6, 25], 9), S('topazio', 'orangediamond', 'Topázio', [0.25, 0.5, 1, 2, 5, 20], 13),
-      S('safira', 'bluediamond', 'Safira', [0.2, 0.4, 0.8, 1.6, 4, 15], 16, { fw: 21 }),
-      S('chama', 'fire', 'Chama', [0.15, 0.3, 0.6, 1.2, 3, 12], 20, { fw: 28 }), S('bola', 'crystal', 'Bola de cristal', [0.15, 0.3, 0.6, 1.2, 3, 12], 20, { fw: 28 }),
+      S('safira', 'bluediamond', 'Safira', [0.2, 0.4, 0.8, 1.6, 4, 15], 16, { fw: 17 }),
+      S('chama', 'fire', 'Chama', [0.15, 0.3, 0.6, 1.2, 3, 12], 20, { fw: 22 }), S('bola', 'crystal', 'Bola de cristal', [0.15, 0.3, 0.6, 1.2, 3, 12], 20, { fw: 22 }),
     ];
     const WILD = { id: 'w', img: 'cyclone', name: 'Portal de fogo', wild: true, fixed: true, w: 0, tagTxt: 'PORTAL' };
     const SC = { id: 'sc', img: 'volcano', name: 'Vulcão', sc: true, w: 0.75, fw: 0.3 };
@@ -35,7 +35,7 @@
 
     /**
      * Um giro em cascata, como no original:
-     * - todo grupo vencedor SEM portal cria um Portal de fogo x1 numa das casas dele;
+     * - todo grupo vencedor SEM portal cria um Portal de fogo x2 numa das casas dele;
      * - o multiplicador de um grupo é o PRODUTO dos portais que estão nele;
      * - dois ou mais portais no mesmo ganho se fundem num só, com os multiplicadores multiplicados;
      * - todo portal que participou de um ganho sobe +1 e anda uma casa (cima, baixo, esquerda ou direita);
@@ -90,13 +90,13 @@
             gg[c][r] = { ...draw(c, wk), fresh: true };
             gg[a][b] = x; x.fresh = true; pos.set(x, [a, b]);
           }
-          // 3) todo grupo vencedor sem portal cria um portal x1 numa das suas casas
+          // 3) todo grupo vencedor sem portal cria um portal x2 numa das suas casas
           for (const gr of groups) {
             if (gr.ws.length) continue;
             const free = gr.plain.filter(kk => { const [c, r] = K.unkey(kk); return !gg[c][r].wild && !gg[c][r].sc; });
             if (!free.length) continue;
             const [c, r] = K.unkey(RNG.pick(free));
-            gg[c][r] = portal(1);
+            gg[c][r] = portal(2);
           }
         },
       });
@@ -111,9 +111,9 @@
       hello: 'Cada ganho abre um portal de fogo!',
       symbols: all,
       tables: [table('Pagamento por tamanho do grupo', ['5–6', '7–8', '9–10', '11–12', '13–14', '15+'], SY, 'Grupos de 5+ iguais encostados (na horizontal ou vertical). Grupos diferentes se somam.')],
-      highlights: ['🔥 Grade <b>7×7</b> com grupos de 5+ e cascata', '🌀 Todo grupo vencedor <b>sem portal</b> cria um <b>Portal de fogo</b> (coringa x1)', '⬆️ O portal que combina com os símbolos <b>sobe +1</b> e vai para uma <b>casa que esvaziou</b> nessa sequência', '✖️ 2 ou mais portais na mesma sequência <b>se encontram</b> e os valores <b>se multiplicam</b> (x3 e x2 = <b>x6</b>, até x2.500)', '🌋 3 a 7 vulcões = <b>10 a 18 rodadas grátis</b> com os portais <b>presos até o fim</b>', 'Prêmio máximo: <b>10.000x</b>'],
+      highlights: ['🔥 Grade <b>7×7</b> com grupos de 5+ e cascata', '🌀 Todo grupo vencedor <b>sem portal</b> cria um <b>Portal de fogo</b> (coringa que já começa em <b>x2</b>)', '⬆️ O portal que combina com os símbolos <b>sobe +1</b> e vai para uma <b>casa que esvaziou</b> nessa sequência', '✖️ 2 ou mais portais na mesma sequência <b>se encontram</b> e os valores <b>se multiplicam</b> (x3 e x2 = <b>x6</b>, até x2.500)', '🌋 3 a 7 vulcões = <b>10 a 18 rodadas grátis</b> com os portais <b>presos até o fim</b>', 'Prêmio máximo: <b>10.000x</b>'],
       how: `<p>Grade <b>7×7</b>: grupos de <b>5 ou mais</b> símbolos iguais encostados pagam. Os vencedores somem e novos símbolos caem (<b>cascata</b>).</p>
-        <p>${ico('cyclone')} <b>Portal de fogo:</b> todo grupo vencedor que <b>não tem portal</b> cria um portal (coringa) <b>x1</b> numa das casas dele. O grupo que tem portais paga multiplicado pelo <b>produto</b> dos portais dentro dele.</p>
+        <p>${ico('cyclone')} <b>Portal de fogo:</b> todo grupo vencedor que <b>não tem portal</b> cria um portal (coringa) que já começa em <b>x2</b> numa das casas dele. O grupo que tem portais paga multiplicado pelo <b>produto</b> dos portais dentro dele.</p>
         <p>Quando um portal combina com os símbolos, ele <b>sobe +1</b>. Se <b>dois ou mais portais</b> combinam na <b>mesma sequência</b>, eles se encontram e viram <b>um só</b>, com os valores <b>multiplicados</b> (portal x3 e portal x2 = <b>x6</b>). Cada portal vai até <b>x2.500</b>.</p>
         <p>A cada sequência vencedora, o portal se <b>move</b> para uma das casas que <b>ficaram vazias</b> nessa sequência.</p>
         <p>No jogo normal os portais somem quando as cascatas acabam (no máximo 12 cascatas por giro).</p>`,
