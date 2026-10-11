@@ -63,36 +63,32 @@
           const pos = new Map();
           gg.forEach((col, c) => col.forEach((x, r) => { if (x.wild) pos.set(x, [c, r]); }));
           const alias = new Map(), live = x => { while (alias.has(x)) x = alias.get(x); return x; };
-          const used = new Set();
-          // 1) portais no mesmo ganho se fundem: os multiplicadores se multiplicam
+          const used = new Set(), merged = new Set(), area = new Map();
+          // 1) dois ou mais portais no mesmo ganho se encontram e viram um só: os valores se multiplicam (x3 e x2 = x6)
           for (const gr of groups) {
             const ws = [...new Set(gr.ws.map(live))];
             if (ws.length > 1) {
               const [a, ...rest] = ws;
               setM(a, rest.reduce((m, x) => m * (x.m || 1), a.m || 1));
               rest.forEach(x => { const [c, r] = pos.get(x); gg[c][r] = { ...draw(c, wk), fresh: true }; pos.delete(x); alias.set(x, a); });
-              a.fresh = true;
-              rt.msg(`🌀 ${ws.length} portais se fundiram: x${a.m}!`); rt.fx('big');
+              a.fresh = true; merged.add(a);
+              rt.msg(`🌀 ${ws.length} portais se encontraram: x${a.m}!`); rt.fx('big');
             }
-            ws.forEach(x => used.add(live(x)));
+            ws.forEach(x => { const y = live(x); used.add(y); area.set(y, [...(area.get(y) || []), ...gr.plain]); });
           }
-          // 2) cada portal que ganhou sobe +1 e anda uma casa
+          const emptied = groups.flatMap(gr => gr.plain);
+          // 2) o portal que combinou sozinho sobe +1; todo portal que ganhou vai para uma casa que esvaziou nessa sequência
           for (const x of used) {
             if (alias.has(x)) continue;
             const p = pos.get(x);
             if (!p) continue;
-            setM(x, (x.m || 1) + 1);
-            const [c, r] = p;
-            const opts = [[c - 1, r], [c + 1, r], [c, r - 1], [c, r + 1]].filter(([a, b]) => gg[a] && gg[a][b] && !gg[a][b].sc && gg[a][b] !== x);
+            if (!merged.has(x)) setM(x, (x.m || 1) + 1);
+            const ok = kk => { const [c, r] = K.unkey(kk); return !gg[c][r].wild && !gg[c][r].sc; };
+            const own = (area.get(x) || []).filter(ok), opts = own.length ? own : emptied.filter(ok);
             if (!opts.length) continue;
-            const [a, b] = RNG.pick(opts), y = gg[a][b];
+            const [c, r] = p, [a, b] = K.unkey(RNG.pick(opts));
             gg[c][r] = { ...draw(c, wk), fresh: true };
-            pos.delete(x);
-            if (y.wild) {
-              // encontrou outro portal: viram um só e os multiplicadores se multiplicam
-              setM(y, (y.m || 1) * (x.m || 1)); y.fresh = true; alias.set(x, y);
-              rt.msg(`🌀 Portais se encontraram: x${y.m}!`); rt.fx('big');
-            } else { gg[a][b] = x; x.fresh = true; pos.set(x, [a, b]); }
+            gg[a][b] = x; x.fresh = true; pos.set(x, [a, b]);
           }
           // 3) todo grupo vencedor sem portal cria um portal x1 numa das suas casas
           for (const gr of groups) {
@@ -115,12 +111,13 @@
       hello: 'Cada ganho abre um portal de fogo!',
       symbols: all,
       tables: [table('Pagamento por tamanho do grupo', ['5–6', '7–8', '9–10', '11–12', '13–14', '15+'], SY, 'Grupos de 5+ iguais encostados (na horizontal ou vertical). Grupos diferentes se somam.')],
-      highlights: ['🔥 Grade <b>7×7</b> com grupos de 5+ e cascata', '🌀 Todo grupo vencedor <b>sem portal</b> cria um <b>Portal de fogo</b> (coringa x1)', '⬆️ O portal que entra num ganho <b>sobe +1</b> e <b>anda uma casa</b>', '✖️ Portais no mesmo ganho <b>se fundem</b> e os multiplicadores <b>se multiplicam</b> (até x2.500 por portal)', '🌋 3 a 7 vulcões = <b>10 a 18 rodadas grátis</b> com os portais <b>presos até o fim</b>', 'Prêmio máximo: <b>10.000x</b>'],
+      highlights: ['🔥 Grade <b>7×7</b> com grupos de 5+ e cascata', '🌀 Todo grupo vencedor <b>sem portal</b> cria um <b>Portal de fogo</b> (coringa x1)', '⬆️ O portal que combina com os símbolos <b>sobe +1</b> e vai para uma <b>casa que esvaziou</b> nessa sequência', '✖️ 2 ou mais portais na mesma sequência <b>se encontram</b> e os valores <b>se multiplicam</b> (x3 e x2 = <b>x6</b>, até x2.500)', '🌋 3 a 7 vulcões = <b>10 a 18 rodadas grátis</b> com os portais <b>presos até o fim</b>', 'Prêmio máximo: <b>10.000x</b>'],
       how: `<p>Grade <b>7×7</b>: grupos de <b>5 ou mais</b> símbolos iguais encostados pagam. Os vencedores somem e novos símbolos caem (<b>cascata</b>).</p>
         <p>${ico('cyclone')} <b>Portal de fogo:</b> todo grupo vencedor que <b>não tem portal</b> cria um portal (coringa) <b>x1</b> numa das casas dele. O grupo que tem portais paga multiplicado pelo <b>produto</b> dos portais dentro dele.</p>
-        <p>Depois de cada ganho, todo portal que participou <b>sobe +1</b> e <b>anda uma casa</b> (para cima, para baixo ou para os lados). Se dois ou mais portais estão no <b>mesmo ganho</b>, eles <b>se fundem num só</b> e os multiplicadores <b>se multiplicam</b> (x3 e x4 = <b>x12</b>). Cada portal vai até <b>x2.500</b>.</p>
+        <p>Quando um portal combina com os símbolos, ele <b>sobe +1</b>. Se <b>dois ou mais portais</b> combinam na <b>mesma sequência</b>, eles se encontram e viram <b>um só</b>, com os valores <b>multiplicados</b> (portal x3 e portal x2 = <b>x6</b>). Cada portal vai até <b>x2.500</b>.</p>
+        <p>A cada sequência vencedora, o portal se <b>move</b> para uma das casas que <b>ficaram vazias</b> nessa sequência.</p>
         <p>No jogo normal os portais somem quando as cascatas acabam (no máximo 12 cascatas por giro).</p>`,
-      features: `<p>${ico('volcano')} <b>3, 4, 5, 6 ou 7 vulcões</b> dão <b>10, 12, 14, 16 ou 18 rodadas grátis</b>. Nelas os portais <b>ficam presos até o fim</b> do bônus, guardando o multiplicador, e continuam crescendo, andando e se fundindo. 3+ vulcões nas grátis dão mais giros pela mesma tabela.</p>`,
+      features: `<p>${ico('volcano')} <b>3, 4, 5, 6 ou 7 vulcões</b> dão <b>10, 12, 14, 16 ou 18 rodadas grátis</b>. Nelas os portais <b>ficam presos até o fim</b> do bônus, guardando o multiplicador, e continuam crescendo, se movendo e se multiplicando. 3+ vulcões nas grátis dão mais giros pela mesma tabela.</p>`,
       make,
       async spin(rt) {
         const g = make();

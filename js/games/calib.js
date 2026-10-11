@@ -190,7 +190,7 @@ const SLOT_CALIB = {
   "pompeia": {"k":0.095127,"buy":165,"hit":0.2236,"fs":0.00338},
   "porquinhomagico": {"k":0.63946,"buy":67,"hit":0.3515,"fs":0.00435},
   "porquinhosorte": {"k":0.1778,"buy":0,"hit":0.4838,"fs":0},
-  "portais": {"k":3.5486,"buy":108,"hit":0.3317,"fs":0.00548},
+  "portais": {"k":3.8346,"buy":104,"hit":0.3326,"fs":0.00555},
   "portaisvalhalla": {"k":1.9568,"buy":66,"hit":0.2137,"fs":0.00331},
   "princesa1000": {"k":1.1833,"buy":88,"hit":0.3187,"fs":0.00331},
   "princesacrepusculo": {"k":1.8584,"buy":139,"hit":0.348,"fs":0.00281},
