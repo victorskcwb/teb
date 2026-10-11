@@ -26,7 +26,7 @@
     intro: 'Inspirado no "Gates of Olympus 1000" (Pragmatic Play).', maxWin: 15000,
     syms: anySyms([['coroa', 'laurel', 'Louros'], ['ampulheta', 'harp', 'Lira'], ['anel', 'scroll2', 'Pergaminho'], ['calice', 'goblet', 'Cálice'], ['rubi', 'heartfire', 'Rubi'], ['safira', 'bluediamond', 'Safira'], ['topazio', 'orangediamond', 'Topázio'], ['ametista', 'purpleheart', 'Ametista'], ['esmeralda', 'greenheart', 'Esmeralda']]),
     scImg: 'cloudbolt', scName: 'Raio', scW: 1.25, orbImg: 'crystal', orbName: 'Orbes', orbs: ORB1000, orbBase: 0.005, orbFS: 0.03, accumulate: true, fsCount: 15,
-    highlights: ['⚡ Orbes de <b>x2 até x1.000</b> em qualquer giro', 'Nas rodadas grátis os orbes <b>acumulam</b> num multiplicador total', '4+ raios = <b>15 rodadas grátis</b>', 'Prêmio máximo: <b>15.000x</b>'],
+    superBuy: { hi: 9, mid: 2.3, desc: 'multiplicadores altos (x25 a x1.000) caem muito mais nas rodadas grátis.' }, highlights: ['⚡ Orbes de <b>x2 até x1.000</b> em qualquer giro', 'Nas rodadas grátis os orbes <b>acumulam</b> num multiplicador total', '4+ raios = <b>15 rodadas grátis</b>', 'Prêmio máximo: <b>15.000x</b>'],
   }));
 
   /* 2. Doce Rush 1000 */
@@ -38,7 +38,7 @@
     intro: 'Inspirado no "Sugar Rush 1000" (Pragmatic Play).', maxWin: 25000, cap: 1024,
     syms: rushSyms([['gelatina', 'jelly', 'Gelatina'], ['pirulito2', 'candycane', 'Bengala'], ['marshmallow', 'marshmallow', 'Marshmallow'], ['bolo', 'cake', 'Bolo'], ['torta', 'pie', 'Torta'], ['biscoito', 'cookie', 'Biscoito'], ['pudim', 'custard', 'Pudim']]),
     scImg: 'gumball', scName: 'Máquina de chiclete', scW: 0.46, fsTable: { 3: 10, 4: 12, 5: 15, 6: 20, 7: 30 },
-    highlights: ['🍬 Grade 7×7 com grupos e cascata', '✨ Posições multiplicadoras dobram até <b>x1.024</b>', '3+ scatters = <b>10 a 30 rodadas grátis</b> com as posições <b>guardadas</b>', 'Prêmio máximo: <b>25.000x</b>'],
+    superBuy: { x: 6.5, desc: 'todas as posições da grade já começam com multiplicador x2.' }, highlights: ['🍬 Grade 7×7 com grupos e cascata', '✨ Posições multiplicadoras dobram até <b>x1.024</b>', '3+ scatters = <b>10 a 30 rodadas grátis</b> com as posições <b>guardadas</b>', 'Prêmio máximo: <b>25.000x</b>'],
   }));
 
   /* 3. Princesa Estelar 1000 */
@@ -48,7 +48,7 @@
     intro: 'Inspirado no "Starlight Princess 1000" (Pragmatic Play).', maxWin: 15000,
     syms: anySyms([['tiara', 'tiara', 'Tiara'], ['cetro', 'wand', 'Cetro'], ['lua', 'crescentmoon', 'Lua'], ['espelho', 'mirror', 'Espelho'], ['rosa', 'heartsparkle', 'Coração brilhante'], ['azul', 'blueheart', 'Coração azul'], ['roxo', 'purpleheart', 'Coração roxo'], ['verde', 'greenheart', 'Coração verde'], ['amarelo', 'yellowheart', 'Coração dourado']]),
     scImg: 'shootingstar', scName: 'Estrela cadente', scW: 1.25, orbImg: 'heartgrow', orbName: 'Corações', orbs: ORB1000, orbBase: 0.005, orbFS: 0.03, accumulate: true, fsCount: 15,
-    highlights: ['💖 Corações multiplicadores de <b>x2 até x1.000</b>', 'Nas rodadas grátis eles <b>acumulam</b>', '4+ estrelas = <b>15 rodadas grátis</b>', 'Prêmio máximo: <b>15.000x</b>'],
+    superBuy: { hi: 9, mid: 2.3, desc: 'multiplicadores altos (x25 a x1.000) caem muito mais nas rodadas grátis.' }, highlights: ['💖 Corações multiplicadores de <b>x2 até x1.000</b>', 'Nas rodadas grátis eles <b>acumulam</b>', '4+ estrelas = <b>15 rodadas grátis</b>', 'Prêmio máximo: <b>15.000x</b>'],
   }));
 
   /* 4. Doce Bonança 1000 */
@@ -58,7 +58,7 @@
     intro: 'Inspirado no "Sweet Bonanza 1000" (Pragmatic Play).', maxWin: 25000,
     syms: anySyms([['coracao', 'candyheart', 'Bala de coração'], ['sorvete', 'icecream', 'Sorvete'], ['donut', 'doughnut', 'Rosquinha'], ['chocolate', 'candybar', 'Chocolate'], ['maca', 'redapple2', 'Maçã do amor'], ['cereja', 'cherries', 'Cereja'], ['melancia', 'watermelon', 'Melancia'], ['uva', 'grapes', 'Uva'], ['banana', 'banana', 'Banana']]).map(s => ({ ...s, pays: s.pays.map(p => p * 2.2) })),
     scImg: 'lollipop', scName: 'Pirulito', scW: 1.25, orbImg: 'bombcandy', orbName: 'Bombas', orbs: ORB1000, orbBase: 0, orbFS: 0.05, accumulate: false, fsCount: 10,
-    highlights: ['🍭 Paga em qualquer lugar com cascata', '💣 Nas rodadas grátis caem <b>bombas de x2 até x1.000</b> que se somam', '4+ pirulitos = <b>10 rodadas grátis</b>', 'Prêmio máximo: <b>25.000x</b>'],
+    superBuy: { hi: 9, mid: 2.3, desc: 'multiplicadores altos (x25 a x1.000) caem muito mais nas rodadas grátis.' }, highlights: ['🍭 Paga em qualquer lugar com cascata', '💣 Nas rodadas grátis caem <b>bombas de x2 até x1.000</b> que se somam', '4+ pirulitos = <b>10 rodadas grátis</b>', 'Prêmio máximo: <b>25.000x</b>'],
   }));
 
   /* 5. 5 Leões Megaways */

@@ -34,9 +34,11 @@ const SlotT = (() => {
     const ROWS = o.rows || (o.lockTop ? 6 : 5);
     const SCMIN = o.scMin || 4, RETRIG = o.retrig || { min: 3, add: 5 };
     const UNLOCK = [1, 3, 6, 9, 12, 15];
+    // bônus super: multiplicadores altos muito mais frequentes (x25+ e, principalmente, x100 a x1000)
+    const SUPER = o.superBuy ? o.orbs.map(x => ({ ...x, w: x.w * (x.m >= 100 ? o.superBuy.hi : x.m >= 25 ? o.superBuy.mid : 1) })) : null;
     const orbVal = st => {
       const lv = o.levels && st && st.level != null ? o.levels[st.level].min : 0;
-      const list = (st && st.fs && o.orbsFS) || o.orbs;
+      const list = (st && st.fs && st.super && SUPER) || (st && st.fs && o.orbsFS) || o.orbs;
       return RNG.weighted(list.filter(x => x.m >= lv).length ? list.filter(x => x.m >= lv) : list).m;
     };
     const cell = (c, fs, st) => (RNG.float() < (fs ? o.orbFS : o.orbBase) ? { ...ORB, m: orbVal(fs ? { ...st, fs: true } : st) } : draw(c, fs ? 'fw' : 'w'));
@@ -87,7 +89,7 @@ const SlotT = (() => {
     }
 
     return K.create({
-      id: o.id, name: o.name, studio: o.studio, art: o.art, mascot: o.mascot, tag: o.tag, colors: o.colors, bg: o.bg,
+      id: o.id, name: o.name, studio: o.studio, art: o.art, mascot: o.mascot, tag: o.tag, colors: o.colors, bg: o.bg, superBuy: o.superBuy,
       cols: 6, rows: ROWS, maxWin: o.maxWin, vol: o.vol || 4, rtp: o.rtp || '~96,5%', target: o.target || 0.965,
       intro: o.intro, hello: o.hello || '8+ iguais em qualquer lugar pagam!',
       symbols: [...SY, SC, ORB, ...(o.lockTop ? [{ img: 'locked', noBlur: true }] : [])],
@@ -106,8 +108,9 @@ const SlotT = (() => {
         const sc = await play(rt, g, false, st);
         if (sc >= SCMIN) { rt.mark(scatters(g)); await rt.wait(1000); await this.bonus(rt, { sc }); }
       },
-      async bonus(rt, { sc = SCMIN } = {}) {
-        const st = { acc: 0, open: [], level: 0, got: 0 };
+      async bonus(rt, { sc = SCMIN, super: sup = false } = {}) {
+        const st = { acc: 0, open: [], level: 0, got: 0, super: sup };
+        if (sup) rt.msg('🔥 Bônus super: multiplicadores altos muito mais frequentes!');
         if (o.levels) rt.chip('lvl', 'FORJA', 'Nv 1');
         const n0 = o.fsCount + Math.max(0, sc - SCMIN) * (o.fsPer || 0);
         await rt.fsLoop(n0, async api => {
@@ -157,7 +160,7 @@ const SlotT = (() => {
     }
     const fresh = () => Array.from({ length: N }, () => new Array(N).fill(0));
     return K.create({
-      id: o.id, name: o.name, studio: o.studio, art: o.art, mascot: o.mascot, tag: o.tag, colors: o.colors, bg: o.bg,
+      id: o.id, name: o.name, studio: o.studio, art: o.art, mascot: o.mascot, tag: o.tag, colors: o.colors, bg: o.bg, superBuy: o.superBuy,
       cols: N, rows: N, maxWin: o.maxWin, vol: 4, rtp: o.rtp || '~96,5%', target: o.target || 0.965,
       intro: o.intro, hello: o.hello || 'Grupos de 5+ iguais encostados pagam!',
       symbols: [...SY, SC],
@@ -172,8 +175,10 @@ const SlotT = (() => {
         const sc = await play(rt, g, false, fresh());
         if (sc >= 3) { rt.mark(scatters(g)); await rt.wait(1000); await this.bonus(rt, { sc }); }
       },
-      async bonus(rt, { sc = 3 } = {}) {
-        const sp = fresh();
+      async bonus(rt, { sc = 3, super: sup = false } = {}) {
+        // bônus super: todas as posições já começam em x2
+        const sp = sup ? Array.from({ length: N }, () => new Array(N).fill(2)) : fresh();
+        if (sup) rt.msg('🔥 Bônus super: todas as posições começam em x2!');
         const n = k => o.fsTable[Math.min(7, Math.max(3, k))];
         await rt.fsLoop(n(sc), async api => {
           const g = make('fw');

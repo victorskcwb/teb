@@ -27,8 +27,7 @@
     const all = [...SY, WILD, SC];
     const draw = pool(SY), drawSC = pool([...SY, SC]);
     const FS_T = n => ({ 3: 10, 4: 12, 5: 14, 6: 16 }[n] || 18);
-    const CAP = { base: 5, fs: 6 }; // limite de cada portal
-    const MAXSTEP = 12, MAXW = { base: 3, fs: 3 };
+    const MAXSTEP = 12, MAXW = { base: 3, fs: 2 };
     const make = (wk = 'w') => Array.from({ length: 7 }, (_, c) => Array.from({ length: 7 }, () => drawSC(c, wk)));
     const nSC = g => count(g, x => x.sc);
 
@@ -41,7 +40,7 @@
       if (keepW) keepW.forEach((w, k) => { const [c, r] = K.unkey(k); g[c][r] = { ...WILD, m: w.m }; });
       await rt.drop(g);
       let used = [], hit = [], steps = 0;
-      const cap = keepW ? CAP.fs : CAP.base, maxw = keepW ? MAXW.fs : MAXW.base;
+      const maxw = keepW ? MAXW.fs : MAXW.base;
       await tumble(rt, g, {
         draw: c => draw(c),
         keep: x => x.wild,
@@ -57,7 +56,22 @@
           return res;
         },
         onStep: async (step, gg) => {
-          new Set(used).forEach(x => { x.m = Math.min(cap, (x.m || 1) + 1); });
+          // cada portal que ganhou sobe +1 e anda uma casa para uma casa vizinha que fez parte do ganho;
+          // se cair em cima de outro portal, os dois se juntam e os multiplicadores SE MULTIPLICAM (sem limite)
+          const pos = new Map();
+          gg.forEach((col, c) => col.forEach((x, r) => { if (x.wild) pos.set(x, [c, r]); }));
+          for (const x of new Set(used)) {
+            if (!keepW) x.m = (x.m || 1) + 1;
+            const p = pos.get(x);
+            if (!p) continue;
+            const [c, r] = p;
+            const opts = hit.filter(kk => { const [a, b] = K.unkey(kk); return Math.max(Math.abs(a - c), Math.abs(b - r)) === 1 && gg[a][b] !== x && !gg[a][b].sc; });
+            if (!opts.length) continue;
+            const [a, b] = K.unkey(RNG.pick(opts)), y = gg[a][b];
+            if (y.wild) { y.m = (y.m || 1) * x.m; y.fresh = true; pos.delete(x); rt.msg(`🌀 Portais se encontraram: x${y.m}!`); rt.fx('big'); }
+            else { gg[a][b] = x; x.fresh = true; pos.set(x, [a, b]); }
+            gg[c][r] = { ...draw(c), fresh: true };
+          }
           const free = hit.filter(kk => { const [c, r] = K.unkey(kk); return !gg[c][r].wild && !gg[c][r].sc; });
           if (free.length && count(gg, x => x.wild) < maxw) { const [c, r] = K.unkey(RNG.pick(free)); gg[c][r] = { ...WILD, m: 1, fresh: true }; }
         },
@@ -73,9 +87,9 @@
       hello: 'Cada ganho abre um portal de fogo!',
       symbols: all,
       tables: [table('Pagamento por tamanho do grupo', ['5–6', '7–8', '9–10', '11–12', '13–14', '15+'], SY, 'Grupos de 5+ iguais encostados (na horizontal ou vertical). Grupos diferentes se somam.')],
-      highlights: ['🔥 Grade <b>7×7</b> com grupos de 5+ e cascata', '🌀 Cada ganho cria um <b>Portal de fogo</b> (coringa x1) que <b>sobe +1</b> sempre que participa de um ganho', '🔝 Grupo com vários portais usa o <b>maior multiplicador</b>', '🌋 3 a 7 vulcões = <b>10 a 18 rodadas grátis</b> com os portais <b>presos até o fim</b>', 'Prêmio máximo: <b>5.000x</b>'],
+      highlights: ['🔥 Grade <b>7×7</b> com grupos de 5+ e cascata', '🌀 Cada ganho cria um <b>Portal de fogo</b> (coringa x1) que <b>sobe +1</b> e <b>anda uma casa</b> a cada ganho', '✖️ Dois portais que se encontram <b>multiplicam</b> seus valores, <b>sem limite</b>', '🔝 Grupo com vários portais usa o <b>maior multiplicador</b>', '🌋 3 a 7 vulcões = <b>10 a 18 rodadas grátis</b> com os portais <b>presos até o fim</b>', 'Prêmio máximo: <b>5.000x</b>'],
       how: `<p>Grade <b>7×7</b>: grupos de <b>5 ou mais</b> símbolos iguais encostados pagam. Os vencedores somem e novos símbolos caem (<b>cascata</b>).</p>
-        <p>${ico('cyclone')} <b>Portal de fogo:</b> a cada ganho, um portal (coringa) aparece numa das casas vencedoras com <b>x1</b>. Ele fica parado na casa e, sempre que faz parte de um ganho, o multiplicador dele <b>sobe +1</b> (até x${CAP.base} no jogo normal e x${CAP.fs} nas grátis). Se um grupo tem vários portais, vale o <b>maior</b> multiplicador entre eles.</p>
+        <p>${ico('cyclone')} <b>Portal de fogo:</b> a cada ganho, um portal (coringa) aparece numa das casas vencedoras com <b>x1</b>. Sempre que ele faz parte de um ganho, ele <b>anda uma casa</b> (no jogo normal o multiplicador também <b>sobe +1</b>) para uma casa vizinha que fez parte do ganho. Se dois portais se encontram, eles viram um só e os multiplicadores <b>se multiplicam</b> (x3 e x4 = <b>x12</b>), <b>sem limite</b>. Se um grupo tem vários portais, vale o <b>maior</b> multiplicador.</p>
         <p>Cabem até <b>${MAXW.base} portais</b> na grade no jogo normal e <b>${MAXW.fs}</b> nas grátis. No jogo normal eles somem no fim do giro (no máximo 12 cascatas por giro).</p>`,
       features: `<p>${ico('volcano')} <b>3, 4, 5, 6 ou 7 vulcões</b> dão <b>10, 12, 14, 16 ou 18 rodadas grátis</b>. Nelas os portais <b>ficam presos até o fim</b> do bônus, com o multiplicador que já tinham. 3+ vulcões nas grátis dão mais giros pela mesma tabela.</p>`,
       make,

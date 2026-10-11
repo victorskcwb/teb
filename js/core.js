@@ -431,11 +431,25 @@ const UI = {
         <button type="button" data-a="+" aria-label="Aumentar aposta">+</button>
       </div>`);
     const b = $('b', el);
-    const render = () => { b.textContent = fmt(levels[idx]); };
+    const base = levels.slice(), top = base[base.length - 1];
+    // acima do último valor fixo a aposta dobra (400, 800, 1.600…) enquanto couber no saldo
+    const bal = () => (typeof Wallet !== 'undefined' && Wallet.s ? Wallet.s.balance : 0);
+    const grow = () => {
+      const out = base.slice();
+      for (let v = top * 2; v <= bal(); v *= 2) out.push(v);
+      if (idx > out.length - 1) out.length = idx + 1; // mantém a aposta atual mesmo que o saldo caia
+      levels = out.map((v, i) => v || levels[i]);
+    };
+    const render = () => { b.textContent = levels[idx] >= 10000 && typeof fmt0 === 'function' ? fmt0(levels[idx]) : fmt(levels[idx]); };
     el.addEventListener('click', e => {
       const a = e.target.dataset.a;
       if (!a) return;
       Sfx.click();
+      grow();
+      if (a === '+' && idx >= levels.length - 1 && levels[idx] >= top) {
+        const next = levels[idx] * 2;
+        if (next > bal()) UI.toast(`Para apostar 🪙 ${fmt(next)} você precisa ter esse valor no saldo`, 'info', 1800, 'bet');
+      }
       idx = Math.max(0, Math.min(levels.length - 1, idx + (a === '+' ? 1 : -1)));
       render();
     });
