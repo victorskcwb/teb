@@ -702,7 +702,7 @@
     App.register(K.create({
       id: 'tribodragao', name: 'Tribo do Dragão', studio: STUDIO, art: 'dragon', mascot: 'woman',
       tag: 'xWays + xNudge · 27.000x', colors: ['#ea580c', '#1c1917'], bg: 'linear-gradient(180deg,#7c2d12,#292524 60%,#0c0a09)',
-      cols: 6, rows: 4, maxWin: 27000, vol: 5, rtp: '~96,1%', target: 0.961,
+      cols: 6, rows: 4, maxWin: 27000, vol: 4, rtp: '~96,1%', target: 0.961,
       intro: 'Inspirado no "Dragon Tribe" (Nolimit City).', hello: 'A caçadora persegue os dragões!',
       symbols: [...SY, WILD, XW, SC],
       tables: [table('Pagamento por caminho', heads(3, 4, ' rolos'), SY, '6×4 (4.096 caminhos) que crescem com xWays até 20.736.')],

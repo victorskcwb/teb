@@ -482,7 +482,7 @@
     const SYS = mk([['kitsune', 'fox', 'Kitsune'], ['tengu', 'goblin', 'Tengu'], ['lanterna', 'izakaya', 'Lanterna'], ['amuleto', 'omamori', 'Amuleto'], ['sino', 'windchime', 'Sino']], P6);
     App.register(withBuy(pg({
       id: 'maravilhasespirituais', name: 'Maravilhas Espirituais', art: 'fox', mascot: 'ghost', tag: 'Mistérios · mult. sem zerar nas grátis',
-      colors: ['#7c3aed', '#dc2626'], bg: 'radial-gradient(circle at 50% 20%,#4c1d95,#0f0518 70%)', maxWin: 50000, vol: 4, rtp: '~96,7%',
+      colors: ['#7c3aed', '#dc2626'], bg: 'radial-gradient(circle at 50% 20%,#4c1d95,#0f0518 70%)', maxWin: 50000, vol: 3, rtp: '~96,7%',
       intro: 'Inspirado no "Spirited Wonders" (PG Soft).', hello: 'Sem ganho? Os mistérios ajudam!',
       syms: SYS, extra: [MYS], wildImg: 'torii2', scImg: 'torii', scName: 'Torii', scW: 0.8, scMin: 3,
       heights: () => Array.from({ length: 6 }, () => RNG.int(2, 5)), silver: [0.06, 0.14],
@@ -540,7 +540,7 @@
     App.register(withBuy(K.create({
       id: 'bufalovencedor', name: 'Búfalo Vencedor', studio: STUDIO, art: 'bison', mascot: 'bison',
       tag: 'Rolos infinitos · 25.000x', colors: ['#92400e', '#f59e0b'], bg: 'linear-gradient(180deg,#fdba74,#9a3412 50%,#1c1917)',
-      cols: 12, rows: 4, cellH: 1, maxWin: 25000, vol: 4, rtp: '~96,7%', target: 0.967,
+      cols: 12, rows: 4, cellH: 1, maxWin: 25000, vol: 3, rtp: '~96,7%', target: 0.967,
       intro: 'Inspirado no "Buffalo Win" (PG Soft).', hello: 'Cada ganho até o último rolo cria um rolo novo!',
       symbols: [...SY, WILD, SC],
       tables: [table('Pagamento por caminho (3 rolos)', ['3 rolos'], SY, 'Cada rolo a mais aumenta o prêmio em 60%.')],
@@ -613,7 +613,7 @@
     const PEARL = { id: 'w', img: 'pearl', name: 'Pérola', wild: true, w: 0 };
     App.register(pg({
       id: 'riquezassereia', name: 'Riquezas da Sereia', art: 'mermaid', mascot: 'mermaid', tag: 'Pérola coringa que passeia',
-      colors: ['#0891b2', '#ec4899'], bg: 'linear-gradient(180deg,#a5f3fc,#0891b2 50%,#164e63)', maxWin: 20000, cols: 5, rows: 5, vol: 4, rtp: '~96,7%',
+      colors: ['#0891b2', '#ec4899'], bg: 'linear-gradient(180deg,#a5f3fc,#0891b2 50%,#164e63)', maxWin: 20000, cols: 5, rows: 5, vol: 3, rtp: '~96,7%',
       intro: 'Inspirado no "Mermaid Riches" (PG Soft).', hello: 'A pérola coringa muda de lugar a cada giro!',
       syms: SYS, wildImg: 'oyster', wildW: 0.35, wildReels: [1, 2, 3, 4], scImg: 'mermaid', scName: 'Sereia', scW: 1.1, scMin: 3, fsConc: 2,
       heights: () => [1, 2, 3, 4, 5], stack: 0,

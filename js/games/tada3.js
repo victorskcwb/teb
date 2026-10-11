@@ -268,8 +268,9 @@
       await rt.spin(g, { tease: !st });
       let res = ways(g, SY), paid = 0;
       // os vencedores ficam e o resto gira de novo enquanto aparecer ganho novo
-      for (let i = 0; i < 12 && res.total > paid; i++) {
+      for (let i = 0; i < 12 && res.total > paid && !rt.capped; i++) {
         await pay(rt, { ...res, total: res.total - paid });
+        if (rt.capped) break;
         paid = res.total;
         const keepN = res.cells.size + count(g, x => x.sc);
         if (keepN >= 12 && rows < 5) { rows++; rt.layout(rows); g.forEach((col, c) => col.unshift({ ...cell(c), fresh: true })); rt.msg(`🔥 A grade cresceu: ${rows} linhas`); res = { ...res, cells: new Set([...res.cells].map(k => { const [c, r] = unkey(k); return key(c, r + 1); })) }; }
@@ -594,7 +595,7 @@
     const JOKER = () => W('joker', 'Coringa', { fresh: true });
     App.register(T.pg({
       studio: STUDIO, id: 'megaas', name: 'Mega Ás', art: 'spadesuit', mascot: 'jester', tag: '4.096 caminhos · cartas douradas viram coringa',
-      colors: ['#ca8a04', '#1d4ed8'], bg: 'linear-gradient(180deg,#0c4a6e,#1e1b4b 55%,#422006)', maxWin: 10000, vol: 4, rtp: '~96,5%', target: 0.965, cols: 6, rows: 4, cellH: 1.2,
+      colors: ['#ca8a04', '#1d4ed8'], bg: 'linear-gradient(180deg,#0c4a6e,#1e1b4b 55%,#422006)', maxWin: 1500, vol: 2, rtp: '~96,5%', target: 0.965, cols: 6, rows: 4, cellH: 1.2,
       intro: 'Inspirado no "Mega Ace" (TaDa Gaming).', hello: 'Cartas douradas viram coringas!',
       syms: [S('as_e', 'spadesuit', 'Ás de espadas', [0.5, 1, 2, 4], 4), S('as_c', 'heartsuit', 'Ás de copas', [0.4, 0.8, 1.6, 3], 4), S('as_o', 'diamondsuit', 'Ás de ouros', [0.3, 0.6, 1.2, 2.5], 5), S('as_p', 'clubsuit', 'Ás de paus', [0.25, 0.5, 1, 2], 5),
         ...['A', 'K', 'Q', 'J'].map((l, i) => K.L(l, [[0.15, 0.3, 0.6, 1.2], [0.12, 0.25, 0.5, 1], [0.1, 0.2, 0.4, 0.8], [0.1, 0.2, 0.4, 0.8]][i], 7 + i))],
@@ -609,7 +610,7 @@
         return w;
       },
       onStep: async (rt, gg) => { if (spreadBig(gg, JOKER)) rt.msg('🃏 O Coringa grande se copiou nas casas vizinhas!'); },
-      highlights: ['🂡 6×4 com <b>4.096 caminhos</b> e cascata', '🔥 Escada por cascata <b>x1 → x2 → x3 → x4 → x5</b> (nas grátis <b>x2 → x10</b>)', '✨ Cartas douradas (rolos 2 a 5) que ganham viram <b>Coringa</b> no lugar; o <b>Coringa grande</b> se copia em 2 ou 3 casas vizinhas', '🃏 3+ scatters = <b>10 rodadas grátis</b> (+2 por extra), +5 com 3 nelas', 'Prêmio máximo: <b>10.000x</b>'],
+      highlights: ['🂡 6×4 com <b>4.096 caminhos</b> e cascata', '🔥 Escada por cascata <b>x1 → x2 → x3 → x4 → x5</b> (nas grátis <b>x2 → x10</b>)', '✨ Cartas douradas (rolos 2 a 5) que ganham viram <b>Coringa</b> no lugar; o <b>Coringa grande</b> se copia em 2 ou 3 casas vizinhas', '🃏 3+ scatters = <b>10 rodadas grátis</b> (+2 por extra), +5 com 3 nelas', 'Prêmio máximo: <b>1.500x</b>'],
       how: '<p>Grade 6×4 com 4.096 caminhos e cascata. O multiplicador sobe a cada cascata do mesmo giro: x1, x2, x3, x4 e x5.</p><p>Cartas com <b>moldura dourada</b> (rolos 2 a 5) que fazem parte de um ganho não somem: viram <b>Coringa</b> no mesmo lugar para a próxima cascata. Às vezes vira o <b>Coringa grande</b>, que se copia em 2 ou 3 casas vizinhas.</p>',
       features: '<p>🃏 <b>3 ou mais scatters</b> dão <b>10 rodadas grátis</b> (+2 por scatter extra) com a escada <b>x2, x4, x6, x8 e x10</b>. 3 scatters nas grátis dão <b>+5 giros</b>.</p>',
     }));
@@ -631,7 +632,7 @@
     App.register(K.create({
       id: 'dinheirochegando', name: 'Dinheiro Chegando', studio: STUDIO, art: 'moneybag', mascot: 'moneybag',
       tag: 'Monte o número · Roda da Sorte até x100', colors: ['#16a34a', '#ca8a04'], bg: 'radial-gradient(circle at 50% 30%,#14532d,#052e16 70%)',
-      cols: 4, rows: 3, maxWin: 10000, vol: 4, rtp: '~96%', target: 0.96, buy: false,
+      cols: 4, rows: 3, maxWin: 10000, vol: 3, rtp: '~96%', target: 0.96, buy: false,
       intro: 'Inspirado no "Money Coming" (TaDa Gaming).', hello: 'Monte o número e gire a Roda da Sorte!',
       symbols: [...R1, ...R23.filter(x => x.id === 'n00' || x.id === 'n0'), { img: 'counterclockwise', noBlur: true }, { img: 'dizzystar', noBlur: true }],
       lineList: { cols: 3, rows: 3, list: [[1, 1, 1]], text: 'Uma única linha, no meio; o 4º rolo é o rolo especial.' },

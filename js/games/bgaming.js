@@ -92,7 +92,7 @@
     App.register(K.create({
       id: 'clustersastecas', name: 'Clusters Astecas', studio: STUDIO, art: 'hindutemple', mascot: 'moai',
       tag: '6×8 · casas multiplicadoras x2 a x100', colors: ['#15803d', '#ca8a04'], bg: 'radial-gradient(circle at 50% 20%,#166534,#052e16 60%,#1c1004)',
-      cols: COLS, rows: ROWS, maxWin: 10000, vol: 5, rtp: '~97%', target: 0.965,
+      cols: COLS, rows: ROWS, maxWin: 10000, vol: 4, rtp: '~97%', target: 0.965,
       intro: 'Inspirado no "Aztec Clusters" (BGaming).', hello: 'Ganhos marcam as casas do templo!',
       symbols: [...SY, WILD, SC],
       tables: [table('Pagamento por tamanho do grupo', ['5–6', '7–8', '9–10', '11–12', '13–14', '15+'], SY, 'Grupos de 5+ iguais encostados na horizontal ou vertical, com cascata.')],

@@ -33,7 +33,7 @@
   const SCAT_PAY = { 3: 2, 4: 20, 5: 200 };
   const STEPS = [{ at: 4, m: 2 }, { at: 8, m: 3 }, { at: 12, m: 10 }];
   const BUY_X = 77;
-  const MAX_WIN = 5000;
+  const MAX_WIN = 2100;
   const sym = id => SYMBOLS.find(s => s.id === id);
 
   const draw = fs => {

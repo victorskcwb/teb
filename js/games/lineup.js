@@ -6,7 +6,7 @@
    os outros continuam no código (é só incluir o id aqui para voltar).
    ========================================================= */
 const SLOT_LINEUP = {
-  pragmatic: ['olimpo1000', 'doce1000', 'princesa1000', 'docerush1000', 'casacaes', 'casacaesmulti', 'lobodeouro', 'festafrutas', 'festafrutas2',
+  pragmatic: ['olimpo1000', 'doce1000', 'princesa1000', 'docerush1000', 'pescaria1000', 'casacaes', 'casacaesmulti', 'lobodeouro', 'festafrutas', 'festafrutas2',
     'joiasbonanca', 'madamedestino', 'reibufalo', 'cincoleoes', 'poderthor', 'extrasuculentomw', 'kraken2', 'sabedoriaatena', 'princesacrepusculo',
     'acucarsupremo', 'pompeia', 'gravidade', 'portais', 'zeushades', 'muertos', 'merlin', 'tresabelhas'],
   pgsoft: ['mahjong1', 'mahjong2', 'ninhodragao', 'bandidoselvagem', 'tesourosastecas', 'riquezasduende', 'ouroganesha', 'recompensacapitao', 'caishen',

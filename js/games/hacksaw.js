@@ -493,7 +493,7 @@
     App.register(K.create({
       id: 'gladiadores', name: 'Lendas Gladiadoras', studio: STUDIO, art: 'helmet', mascot: 'lion',
       tag: 'DuelReels · arena até x1.000', colors: ['#b91c1c', '#ca8a04'], bg: 'linear-gradient(180deg,#78350f,#92400e 60%,#451a03)',
-      cols: 5, rows: 4, maxWin: 10000, vol: 4, rtp: '~96,3%', target: 0.963,
+      cols: 5, rows: 4, maxWin: 10000, vol: 5, rtp: '~96,3%', target: 0.963,
       intro: 'Inspirado no "Gladiator Legends" (Hacksaw Gaming).', hello: 'Dois gladiadores, um multiplicador!',
       symbols: all,
       lineList: { cols: 5, rows: 4, list: L, text: '10 linhas fixas, da esquerda para a direita.' },
@@ -593,7 +593,7 @@
     App.register(K.create({
       id: 'unidadedork', name: 'Unidade Dork', studio: STUDIO, art: 'gift', mascot: 'robot',
       tag: 'Rolos do Lenny até x200 · chuva de presentes', colors: ['#16a34a', '#db2777'], bg: 'linear-gradient(180deg,#86efac,#22c55e 50%,#166534)',
-      cols: 5, rows: 4, maxWin: 10000, vol: 4, rtp: '~96,3%', target: 0.963,
+      cols: 5, rows: 4, maxWin: 10000, vol: 3, rtp: '~96,3%', target: 0.963,
       intro: 'Inspirado no "Dork Unit" (Hacksaw Gaming).', hello: 'Presentes são coringas multiplicadores!',
       symbols: all,
       lineList: { cols: 5, rows: 4, list: L, text: '16 linhas fixas, da esquerda para a direita.' },
