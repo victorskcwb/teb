@@ -8,7 +8,7 @@
 const SLOT_LINEUP = {
   pragmatic: ['olimpo1000', 'doce1000', 'princesa1000', 'docerush1000', 'casacaes', 'casacaesmulti', 'lobodeouro', 'festafrutas', 'festafrutas2',
     'joiasbonanca', 'madamedestino', 'reibufalo', 'cincoleoes', 'poderthor', 'extrasuculentomw', 'kraken2', 'sabedoriaatena', 'princesacrepusculo',
-    'acucarsupremo', 'pompeia', 'gravidade', 'portais', 'zeushades', 'muertos', 'merlin'],
+    'acucarsupremo', 'pompeia', 'gravidade', 'portais', 'zeushades', 'muertos', 'merlin', 'tresabelhas'],
   pgsoft: ['mahjong1', 'mahjong2', 'ninhodragao', 'bandidoselvagem', 'tesourosastecas', 'riquezasduende', 'ouroganesha', 'recompensacapitao', 'caishen',
     'qilin', 'dueloselvagem', 'capsuladoces', 'riquezassereia', 'songkran', 'asgard', 'sonhosmacau', 'livromisterio', 'gloriagladiador', 'bufalovencedor',
     'carnavalmascaras', 'maravilhasespirituais', 'prosperidade', 'diaochan', 'montanharussa', 'ninjasamurai'],

@@ -13,6 +13,7 @@
     { id: 'hacksaw', title: 'Estilo Hacksaw', short: 'Hacksaw', art: 'cowboy', desc: 'DuelReels, coringas que andam e bônus malucos' },
     { id: 'tada', title: 'Estilo TaDa / JILI', short: 'TaDa', art: 'gem', desc: 'Joias, clássicos asiáticos e cascatas' },
     { id: 'nolimit', title: 'Estilo Nolimit City', short: 'Nolimit', art: 'headstone', desc: 'xWays, xNudge, xBomb — volatilidade extrema' },
+    { id: 'bgaming', title: 'Estilo BGaming', short: 'BGaming', art: 'hindutemple', desc: 'Grupos com casas multiplicadoras' },
   ];
   // ranking aproximado dos jogos mais jogados em cassinos online no Brasil
   const POPULAR = ['tigrinho', 'mahjong1', 'touro', 'docerush', 'procurado', 'joiasfortuna', 'raspadinha', 'crash', 'doce', 'zeushades', 'coelho', 'mines', 'olimpo', 'anubis', 'pescaria', 'portais', 'ratinho', 'princesa', 'double', 'futebol', 'roleta', 'plinko', 'dragaozinho', 'blackjack'];
