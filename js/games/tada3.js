@@ -268,8 +268,9 @@
       await rt.spin(g, { tease: !st });
       let res = ways(g, SY), paid = 0;
       // os vencedores ficam e o resto gira de novo enquanto aparecer ganho novo
-      for (let i = 0; i < 12 && res.total > paid; i++) {
+      for (let i = 0; i < 12 && res.total > paid && !rt.capped; i++) {
         await pay(rt, { ...res, total: res.total - paid });
+        if (rt.capped) break;
         paid = res.total;
         const keepN = res.cells.size + count(g, x => x.sc);
         if (keepN >= 12 && rows < 5) { rows++; rt.layout(rows); g.forEach((col, c) => col.unshift({ ...cell(c), fresh: true })); rt.msg(`🔥 A grade cresceu: ${rows} linhas`); res = { ...res, cells: new Set([...res.cells].map(k => { const [c, r] = unkey(k); return key(c, r + 1); })) }; }

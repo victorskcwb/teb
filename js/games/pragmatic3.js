@@ -824,6 +824,7 @@
         const res = payClusters(cl, TT, k => k.cells.reduce((sum, kk) => { const [c, r] = unkey(kk); return sum + sp[c][r]; }, 0) || 1);
         if (!res.total) break;
         await pay(rt, res);
+        if (rt.capped) break;
         res.cells.forEach(kk => { const [c, r] = unkey(kk); sp[c][r] = Math.min(CAP, sp[c][r] + 1); });
         deco(g, sp);
         if (!nudging) { if (!always && RNG.float() >= 0.4) break; nudging = true; rt.msg('🍭 Powernudge!'); rt.fx('rise'); }
