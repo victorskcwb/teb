@@ -343,6 +343,8 @@ const SlotKit = (() => {
     const cal = (typeof SLOT_CALIB !== 'undefined' && SLOT_CALIB[cfg.id]) || {};
     const K = cal.k || 1;
     const buyX = cfg.buy === false ? 0 : cal.buy || 100;
+    // bônus super (jogos "1000"): o dobro do preço, com mais chance dos multiplicadores altos
+    const superX = buyX && cfg.superBuy ? Math.round(buyX * (cfg.superBuy.x || 2)) : 0;
     const rtp = cfg.rtp || '~96%';
     const hit = cal.hit ? `~1 em ${String(Math.round((1 / cal.hit) * 10) / 10).replace('.', ',')} giros (${Math.round(cal.hit * 100)}%)` : '—';
     const fsEvery = cal.fs ? Math.round(1 / cal.fs) : 0;
@@ -362,6 +364,7 @@ const SlotKit = (() => {
         features: `${cfg.features}
           ${fsEvery && cfg.buy !== false ? `<p class="muted small">O bônus aparece em média 1 vez a cada ~${fsEvery} giros.</p>` : ''}
           ${buyX ? `<p>💰 <b>Comprar bônus:</b> entra direto no bônus por <b>${buyX}x</b> a aposta (retorno médio da compra ~94%).</p>` : ''}
+          ${superX ? `<p>🔥 <b>Bônus super:</b> custa <b>${superX}x</b> a aposta${(cfg.superBuy.x || 2) === 2 ? ' (o dobro)' : ''}: ${cfg.superBuy.desc}</p>` : ''}
           <p class="muted small">Prêmio máximo: ${maxTxt}x a aposta — ao atingir, a rodada termina.</p>`,
         lines: L ? { cols: L.cols, rows: L.rows, list: L.list.map(line => line.map((r, c) => `${c}:${r}`)), text: L.text } : null,
       },
@@ -391,7 +394,7 @@ const SlotKit = (() => {
                 <button class="toggle" data-t="auto">🔁 Auto</button>
               </div>
             </div>
-            ${buyX ? '<button class="btn btn-buy buy"></button>' : ''}
+            ${buyX ? `<div class="buy-row"><button class="btn btn-buy buy"></button>${superX ? '<button class="btn btn-buy buy-super"></button>' : ''}</div>` : ''}
           </div>`);
         root.append(el);
 
@@ -467,14 +470,17 @@ const SlotKit = (() => {
           setTimeout(() => f.remove(), 1300);
           if (x * K >= 5) { frameFx.classList.remove('shake'); void frameFx.offsetWidth; frameFx.classList.add('shake'); coinBurst(x * K >= 20 ? 2 : 1); }
         };
-        const spinBtn = $('.spin-btn', el), buyBtn = $('.buy', el), mascot = $('.scat-mascot', el);
+        const spinBtn = $('.spin-btn', el), buyBtn = $('.buy', el), superBtn = $('.buy-super', el), mascot = $('.scat-mascot', el);
         const stepper = UI.betStepper([0.2, 0.4, 1, 2, 3, 5, 10, 20, 50, 100, 200], 3);
         $('.slot-bet', el).append(stepper.el);
         ctx.bet = () => stepper.value;
         SlotInfo.attach(el, ctx);
         const fsBar = freeSpinBar(ctx, on => { spinBtn.classList.toggle('free', on); if (on && !busy) spin(); });
         $('.fs-slot', el).append(fsBar.el);
-        const renderBuy = () => { if (buyBtn) buyBtn.innerHTML = `💰 Comprar bônus <b>🪙 ${fmt(stepper.value * buyX)}</b>`; };
+        const renderBuy = () => {
+          if (buyBtn) buyBtn.innerHTML = `💰 Comprar bônus <b>🪙 ${fmt(stepper.value * buyX)}</b>`;
+          if (superBtn) superBtn.innerHTML = `🔥 Bônus super <b>🪙 ${fmt(stepper.value * superX)}</b>`;
+        };
         stepper.el.addEventListener('click', renderBuy);
         renderBuy();
         el.style.setProperty('--cols', cfg.cols);
@@ -708,6 +714,7 @@ const SlotKit = (() => {
           busy = b;
           spinBtn.disabled = b;
           if (buyBtn) buyBtn.disabled = b;
+          if (superBtn) superBtn.disabled = b;
           stepper.setDisabled(b);
           fsBar.setDisabled(b);
           spinBtn.classList.toggle('go', b);
@@ -734,20 +741,20 @@ const SlotKit = (() => {
           finish(free ? 0 : bet, pay, bet, { bonus: trig });
         }
 
-        async function buy() {
+        async function buy(sup = false) {
           if (busy || !buyX) return;
           bet = stepper.value;
-          const price = round2(bet * buyX);
+          const price = round2(bet * (sup ? superX : buyX));
           // confirmação dentro do jogo; o giro automático para antes de perguntar
           setAuto(false);
-          if (!(await UI.ask('Comprar bônus', `Comprar o bônus por 🪙 ${fmt(price)}?`, '💰 Comprar')) || busy) return;
+          if (!(await UI.ask(sup ? 'Bônus super' : 'Comprar bônus', sup ? `Comprar o bônus super por 🪙 ${fmt(price)}?<br><small>${cfg.superBuy.desc}</small>` : `Comprar o bônus por 🪙 ${fmt(price)}?`, sup ? '🔥 Comprar' : '💰 Comprar')) || busy) return;
           if (!Wallet.bet(price)) return;
           setAuto(false);
           setBusy(true);
           rt.reset();
           rt.clear();
           setWin(0);
-          try { await Speed.bonus(() => game.bonus(rt, { buy: true })); } catch (e) { console.error(e); }
+          try { await Speed.bonus(() => game.bonus(rt, sup ? { buy: true, super: true } : { buy: true })); } catch (e) { console.error(e); }
           const pay = round2(Math.min(rt.total * K, cfg.maxWin) * bet);
           finish(price, pay, price, { buy: true });
         }
@@ -771,7 +778,8 @@ const SlotKit = (() => {
         }
 
         spinBtn.addEventListener('click', spin);
-        if (buyBtn) buyBtn.addEventListener('click', buy);
+        if (buyBtn) buyBtn.addEventListener('click', () => buy(false));
+        if (superBtn) superBtn.addEventListener('click', () => buy(true));
         Speed.bind($('[data-t="speed"]', el), ctx);
         $('.slot-toggles', el).addEventListener('click', e => {
           const t = e.target.dataset.t;
