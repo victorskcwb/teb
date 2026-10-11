@@ -1108,7 +1108,7 @@
     const FS_N = { 3: 10, 4: 15, 5: 20 }, SC_PAY = { 3: 2, 4: 20, 5: 200 };
     const all = [...SY, WILD, SC];
     const draw = pool(all);
-    const SUPER = FISH.map(f => ({ ...f, w: f.w * (f.v >= 500 ? 8 : f.v >= 100 ? 3 : f.v >= 25 ? 1.6 : 1) }));
+    const SUPER = FISH.map(f => ({ ...f, w: f.w * (f.v >= 500 ? 10 : f.v >= 100 ? 3.6 : f.v >= 25 ? 1.7 : 1) }));
     const fishOf = (fs, sup) => {
       if (fs && RNG.float() < (sup ? 0.0003 : 0.00008)) return { ...GOLD };
       return { v: RNG.weighted(sup ? SUPER : FISH).v };
