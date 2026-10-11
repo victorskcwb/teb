@@ -157,7 +157,7 @@
     App.register(K.create({
       id: 'maresmalditos', name: 'Mares Malditos', studio: STUDIO, art: 'chest', mascot: 'skull',
       tag: 'Baús até x200 · caveiras e Kraken', colors: ['#0f766e', '#1e293b'], bg: 'linear-gradient(180deg,#134e4a,#0f172a 60%,#020617)',
-      cols: 5, rows: 4, maxWin: 12500, vol: 5, rtp: '~96,2%', target: 0.962,
+      cols: 5, rows: 4, maxWin: 12500, vol: 4, rtp: '~96,2%', target: 0.962,
       intro: 'Inspirado no "Cursed Seas" (Hacksaw Gaming).', hello: 'Abra os baús amaldiçoados!',
       symbols: [...SY, WILD, CHEST, SC, SKULL, KRAKEN],
       lineList: { cols: 5, rows: 4, list: L26, text: '26 linhas fixas.' },
@@ -208,7 +208,7 @@
     App.register(K.create({
       id: 'templotormento', name: 'Templo do Tormento', studio: STUDIO, art: 'scarab', mascot: 'jackal',
       tag: 'Escaravelhos até x200 · bônus de Anúbis e de Rá', colors: ['#ca8a04', '#7f1d1d'], bg: 'linear-gradient(180deg,#451a03,#1c1917 60%,#0c0a09)',
-      cols: 5, rows: 4, maxWin: 10000, vol: 4, rtp: '~96,2%', target: 0.962,
+      cols: 5, rows: 4, maxWin: 10000, vol: 3, rtp: '~96,2%', target: 0.962,
       intro: 'Inspirado no "Temple of Torment" (Hacksaw Gaming).', hello: 'Escaravelhos expandem pelos rolos!',
       symbols: [...SY, WILD, SCAR, SCA, SCR],
       lineList: { cols: 5, rows: 4, list: L14, text: '14 linhas fixas.' },
@@ -933,7 +933,7 @@
     App.register(K.create({
       id: 'forjadotempestade', name: 'Forjado na Tempestade', studio: STUDIO, art: 'lightning', mascot: 'beardman',
       tag: 'Coringas até x200 · dois bônus', colors: ['#1d4ed8', '#ea580c'], bg: 'linear-gradient(180deg,#1e3a8a,#0f172a 50%,#7c2d12)',
-      cols: 5, rows: 4, maxWin: 12500, vol: 5, rtp: '~96,4%', target: 0.964,
+      cols: 5, rows: 4, maxWin: 12500, vol: 4, rtp: '~96,4%', target: 0.964,
       intro: 'Inspirado no "Stormforged" (Hacksaw Gaming).', hello: 'Portais de Muspelheim abertos!',
       symbols: [...SY, WILD, CHEST, SCV, SCS],
       lineList: { cols: 5, rows: 4, list: L14, text: '14 linhas fixas.' },
@@ -1245,7 +1245,7 @@
     App.register(K.create({
       id: 'densho', name: 'Densho', studio: STUDIO, art: 'crane', mascot: 'geisha',
       tag: 'Rolos multiplicadores até x100', colors: ['#be123c', '#7c3aed'], bg: 'linear-gradient(180deg,#fce7f3,#c4b5fd 50%,#4c1d95)',
-      cols: 5, rows: 4, maxWin: 10000, vol: 3, rtp: '~96,3%', target: 0.963,
+      cols: 5, rows: 4, maxWin: 10000, vol: 4, rtp: '~96,3%', target: 0.963,
       intro: 'Inspirado no "Densho" (Hacksaw Gaming).', hello: 'Pássaros Densho viram rolos coringa!',
       symbols: [...SY, WILD, ...D, SC],
       lineList: { cols: 5, rows: 4, list: L10, text: '10 linhas fixas.' },

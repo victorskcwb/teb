@@ -743,7 +743,7 @@
     let pick = 1;
     const G = pg({
       id: 'livromisterio', name: 'Livro dos Mistérios do Egito', art: 'goldbook', mascot: 'pharaoh', tag: 'Escolha: 15 giros x1 a 5 giros x10',
-      colors: ['#ca8a04', '#0f172a'], bg: 'linear-gradient(180deg,#fef3c7,#a16207 50%,#1c1917)', maxWin: 100000, vol: 5, rtp: '~96,8%', target: 0.968,
+      colors: ['#ca8a04', '#0f172a'], bg: 'linear-gradient(180deg,#fef3c7,#a16207 50%,#1c1917)', maxWin: 100000, vol: 4, rtp: '~96,8%', target: 0.968,
       intro: 'Inspirado no "Egypt\'s Book of Mystery" (PG Soft).', hello: 'Molduras viram coringas!',
       syms: mk([['farao', 'pharaoh', 'Faraó'], ['anubis', 'jackal', 'Anúbis'], ['ankh', 'ankh', 'Ankh'], ['escaravelho', 'scarab', 'Escaravelho'], ['olho', 'eye', 'Olho']], P6),
       wildImg: 'pyramid', scImg: 'goldbook', scName: 'Livro', scW: 0.72, scFW: 0.4, scMin: 4,

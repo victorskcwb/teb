@@ -58,7 +58,7 @@
     App.register(K.create({
       id: 'manicomio', name: 'Manicômio', studio: STUDIO, art: 'brain', mascot: 'zombie',
       tag: 'xWays · Fire Frames · 3 níveis de bônus', colors: ['#7f1d1d', '#334155'], bg: 'linear-gradient(180deg,#1c1917,#292524 60%,#450a0a)',
-      cols: 5, rows: 3, cellH: 1.2, maxWin: 66666, vol: 4, rtp: '~96%', target: 0.96,
+      cols: 5, rows: 3, cellH: 1.2, maxWin: 66666, vol: 5, rtp: '~96%', target: 0.96,
       intro: 'Inspirado no "Mental" (Nolimit City).', hello: 'Os símbolos se dividem...',
       symbols: all,
       tables: [table('Pagamento por caminho', heads(3, 3, ' rolos'), SY, 'Rolos 2-3-3-3-2 = 108 caminhos, que multiplicam com xWays e Fire Frames.')],
@@ -106,7 +106,7 @@
     App.register(K.create({
       id: 'celaxways', name: 'Cela xWays', studio: STUDIO, art: 'chains', mascot: 'police',
       tag: 'Coringas que pulam até x512 · 150.000x', colors: ['#475569', '#b91c1c'], bg: 'linear-gradient(180deg,#0f172a,#1e293b 60%,#334155)',
-      cols: 5, rows: 3, maxWin: 150000, vol: 4, rtp: '~96%', target: 0.96,
+      cols: 5, rows: 3, maxWin: 150000, vol: 5, rtp: '~96%', target: 0.96,
       intro: 'Inspirado no "San Quentin xWays" (Nolimit City).', hello: 'Segurança máxima, prêmio máximo!',
       symbols: all,
       tables: [table('Pagamento por caminho', heads(3, 3, ' rolos'), SY, '243 caminhos que crescem com xWays e Razor Split.')],
@@ -187,7 +187,7 @@
     App.register(K.create({
       id: 'lapiderip', name: 'Lápide RIP', studio: STUDIO, art: 'headstone', mascot: 'cowboy',
       tag: 'Volatilidade insana · 2 bônus · até 300.000x', colors: ['#78350f', '#1c1917'], bg: 'linear-gradient(180deg,#451a03,#292524 60%,#0c0a09)',
-      cols: 5, rows: 3, cellH: 1.2, maxWin: 300000, vol: 4, rtp: '~96%', target: 0.96,
+      cols: 5, rows: 3, cellH: 1.2, maxWin: 300000, vol: 5, rtp: '~96%', target: 0.96,
       intro: 'Inspirado no "Tombstone R.I.P." (Nolimit City).', hello: 'O faroeste mais perigoso que existe.',
       symbols: all,
       tables: [table('Pagamento por caminho', heads(3, 3, ' rolos'), SY, 'Rolos 2-3-3-3-1: 54 caminhos (mais com xSplit). Multiplicadores de rolos diferentes se multiplicam.')],
@@ -252,7 +252,7 @@
     App.register(K.create({
       id: 'cidadefantasma', name: 'Cidade Fantasma', studio: STUDIO, art: 'pistol', mascot: 'cowboy',
       tag: 'xNudge somam · caçador ou pistoleiro', colors: ['#a16207', '#44403c'], bg: 'linear-gradient(180deg,#78350f,#57534e 60%,#1c1917)',
-      cols: 5, rows: 4, maxWin: 13950, vol: 4, rtp: '~96%', target: 0.96,
+      cols: 5, rows: 4, maxWin: 13950, vol: 5, rtp: '~96%', target: 0.96,
       intro: 'Inspirado no "Deadwood" (Nolimit City).', hello: 'Caçadores empurram os rolos!',
       symbols: all,
       tables: [table('Pagamento por caminho', heads(3, 3, ' rolos'), SY, 'Rolos 3-4-4-4-3 = 576 caminhos.')],
@@ -356,7 +356,7 @@
     App.register(K.create({
       id: 'buracofogo', name: 'Buraco de Fogo xBomb', studio: STUDIO, art: 'pick', mascot: 'bomb',
       tag: 'Mina que cresce até 46.656 caminhos', colors: ['#ea580c', '#1c1917'], bg: 'linear-gradient(180deg,#292524,#1c1917 60%,#431407)',
-      cols: 6, rows: 6, maxWin: 60000, vol: 4, rtp: '~96%', target: 0.96,
+      cols: 6, rows: 6, maxWin: 60000, vol: 5, rtp: '~96%', target: 0.96,
       intro: 'Inspirado no "Fire in the Hole xBomb" (Nolimit City).', hello: 'Cada ganho abre mais uma linha da mina!',
       symbols: all, extraSprites: ['locked', 'coin'],
       tables: [table('Pagamento por caminho', heads(3, 4, ' rolos'), SY, 'Começa com 3 linhas abertas (729 caminhos) e pode abrir até 6 (46.656).')],
@@ -399,7 +399,7 @@
     App.register(K.create({
       id: 'submarino', name: 'Das Submarino', studio: STUDIO, art: 'ship', mascot: 'militaryhelmet',
       tag: 'Torpedos sobem · 2 bônus', colors: ['#1e3a8a', '#0f766e'], bg: 'linear-gradient(180deg,#0c4a6e,#083344 60%,#020617)',
-      cols: 5, rows: 4, maxWin: 55200, vol: 4, rtp: '~96%', target: 0.96,
+      cols: 5, rows: 4, maxWin: 55200, vol: 5, rtp: '~96%', target: 0.96,
       intro: 'Inspirado no "Das xBoot" (Nolimit City).', hello: 'O radar procura torpedos...',
       symbols: all,
       tables: [table('Pagamento por caminho', heads(3, 3, ' rolos'), SY, '5×4 = 1.024 caminhos (2.048 com o rolo 3 de 8 casas).')],
@@ -487,7 +487,7 @@
     App.register(K.create({
       id: 'blococelas', name: 'Bloco de Celas', studio: STUDIO, art: 'cockroach', mascot: 'police',
       tag: 'Baratas abrem celas · até 75.000x', colors: ['#57534e', '#ca8a04'], bg: 'linear-gradient(180deg,#1c1917,#292524 60%,#0c0a09)',
-      cols: 5, rows: 6, maxWin: 75000, vol: 4, rtp: '~96%', target: 0.96,
+      cols: 5, rows: 6, maxWin: 75000, vol: 5, rtp: '~96%', target: 0.96,
       intro: 'Inspirado no "Folsom Prison" (Nolimit City).', hello: 'As baratas sabem onde estão as chaves...',
       symbols: all,
       tables: [table('Pagamento por caminho', heads(3, 3, ' rolos'), SY, 'Começa em 2-4-4-4-2 (128 caminhos) e as celas abertas aumentam os caminhos (até 4-6-6-6-4).')],
@@ -525,7 +525,7 @@
     App.register(K.create({
       id: 'sanguesombra', name: 'Sangue e Sombra', studio: STUDIO, art: 'blooddrop', mascot: 'bat',
       tag: 'Barra do Ritual · giros amaldiçoados', colors: ['#7f1d1d', '#1e1b4b'], bg: 'linear-gradient(180deg,#1c0505,#2e1065 60%,#020617)',
-      cols: 5, rows: 5, maxWin: 6666, vol: 4, rtp: '~96%', target: 0.96,
+      cols: 5, rows: 5, maxWin: 6666, vol: 5, rtp: '~96%', target: 0.96,
       intro: 'Inspirado no "Blood & Shadow" (Nolimit City).', hello: 'O ritual transforma os baixos em altos...',
       symbols: all,
       tables: [table('Pagamento por caminho', heads(3, 3, ' rolos'), SY, '5×4 = 1.024 caminhos com cascata (5×5 = 3.125 nos giros amaldiçoados).')],
@@ -679,7 +679,7 @@
     App.register(K.create({
       id: 'detetiveserial', name: 'Detetive Serial', studio: STUDIO, art: 'detective', mascot: 'detective',
       tag: 'Enhancer Cells · até 74.800x', colors: ['#1e293b', '#dc2626'], bg: 'linear-gradient(180deg,#0f172a,#1e1b4b 60%,#020617)',
-      cols: 5, rows: 5, maxWin: 74800, vol: 4, rtp: '~96%', target: 0.96,
+      cols: 5, rows: 5, maxWin: 74800, vol: 5, rtp: '~96%', target: 0.96,
       intro: 'Inspirado no "Serial" (Nolimit City), com tema de investigação policial.', hello: 'Cada pista abre uma Enhancer Cell...',
       symbols: all, extraSprites: ['notepad'],
       tables: [table('Pagamento por caminho', heads(3, 3, ' rolos'), SY, '5×3 = 243 caminhos, mais as Enhancer Cells no topo dos rolos 2 a 4.')],

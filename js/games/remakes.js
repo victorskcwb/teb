@@ -82,12 +82,12 @@
     App.register(K.create({
       id: 'portais', name: 'Portais de Fogo', studio: STUDIO, art: 'cyclone', mascot: 'fire',
       tag: '7×7 · portais coringa que crescem', colors: ['#ea580c', '#7e22ce'], bg: 'radial-gradient(circle at 50% 10%,#9a3412,#3b0764 65%,#1e0533)',
-      cols: 7, rows: 7, maxWin: 5000, vol: 4, rtp: '~96%', target: 0.96,
+      cols: 7, rows: 7, maxWin: 10000, vol: 4, rtp: '~96%', target: 0.96,
       intro: 'Inspirado no "Fire Portals" (Pragmatic Play).',
       hello: 'Cada ganho abre um portal de fogo!',
       symbols: all,
       tables: [table('Pagamento por tamanho do grupo', ['5–6', '7–8', '9–10', '11–12', '13–14', '15+'], SY, 'Grupos de 5+ iguais encostados (na horizontal ou vertical). Grupos diferentes se somam.')],
-      highlights: ['🔥 Grade <b>7×7</b> com grupos de 5+ e cascata', '🌀 Cada ganho cria um <b>Portal de fogo</b> (coringa x1) que <b>sobe +1</b> e <b>anda uma casa</b> a cada ganho', '✖️ Dois portais que se encontram <b>multiplicam</b> seus valores, <b>sem limite</b>', '🔝 Grupo com vários portais usa o <b>maior multiplicador</b>', '🌋 3 a 7 vulcões = <b>10 a 18 rodadas grátis</b> com os portais <b>presos até o fim</b>', 'Prêmio máximo: <b>5.000x</b>'],
+      highlights: ['🔥 Grade <b>7×7</b> com grupos de 5+ e cascata', '🌀 Cada ganho cria um <b>Portal de fogo</b> (coringa x1) que <b>sobe +1</b> e <b>anda uma casa</b> a cada ganho', '✖️ Dois portais que se encontram <b>multiplicam</b> seus valores, <b>sem limite</b>', '🔝 Grupo com vários portais usa o <b>maior multiplicador</b>', '🌋 3 a 7 vulcões = <b>10 a 18 rodadas grátis</b> com os portais <b>presos até o fim</b>', 'Prêmio máximo: <b>10.000x</b>'],
       how: `<p>Grade <b>7×7</b>: grupos de <b>5 ou mais</b> símbolos iguais encostados pagam. Os vencedores somem e novos símbolos caem (<b>cascata</b>).</p>
         <p>${ico('cyclone')} <b>Portal de fogo:</b> a cada ganho, um portal (coringa) aparece numa das casas vencedoras com <b>x1</b>. Sempre que ele faz parte de um ganho, ele <b>anda uma casa</b> (no jogo normal o multiplicador também <b>sobe +1</b>) para uma casa vizinha que fez parte do ganho. Se dois portais se encontram, eles viram um só e os multiplicadores <b>se multiplicam</b> (x3 e x4 = <b>x12</b>), <b>sem limite</b>. Se um grupo tem vários portais, vale o <b>maior</b> multiplicador.</p>
         <p>Cabem até <b>${MAXW.base} portais</b> na grade no jogo normal e <b>${MAXW.fs}</b> nas grátis. No jogo normal eles somem no fim do giro (no máximo 12 cascatas por giro).</p>`,
@@ -293,7 +293,7 @@
     App.register(K.create({
       id: 'muertos', name: 'Muertos Multiplicador Megaways', studio: STUDIO, art: 'skull', mascot: 'hotpepper',
       tag: 'Megaways · pimentas multiplicam o multiplicador', colors: ['#db2777', '#f59e0b'], bg: 'linear-gradient(180deg,#4a044e,#831843 55%,#431407)',
-      cols: 6, rows: 8, maxWin: 10000, vol: 5, rtp: '~96,5%', target: 0.965,
+      cols: 6, rows: 8, maxWin: 10000, vol: 4, rtp: '~96,5%', target: 0.965,
       intro: 'Inspirado no "Muertos Multiplier Megaways" (Pragmatic Play).', hello: 'As pimentas esquentam o multiplicador!',
       symbols: all,
       tables: [table('Pagamento por caminho', heads(3, 4, ' rolos'), SY, 'Megaways: 6 rolos de 2 a 7 símbolos mais a linha do topo nos rolos 2 a 5. Iguais em rolos seguidos a partir da esquerda pagam por caminho.')],
@@ -387,7 +387,7 @@
     App.register(K.create({
       id: 'merlin', name: 'Poder de Merlin Megaways', studio: STUDIO, art: 'mage', mascot: 'mage',
       tag: 'Megaways · Raio transforma em coringa', colors: ['#4338ca', '#0891b2'], bg: 'radial-gradient(circle at 50% 0%,#3730a3,#0c0a3e 70%)',
-      cols: 6, rows: 8, maxWin: 40000, vol: 5, rtp: '~96,5%', target: 0.965,
+      cols: 6, rows: 8, maxWin: 40000, vol: 4, rtp: '~96,5%', target: 0.965,
       intro: 'Inspirado no "Power of Merlin Megaways" (Pragmatic Play).', hello: 'O Raio de Merlin transforma símbolos em coringas!',
       symbols: all,
       tables: [table('Pagamento por caminho', heads(3, 4, ' rolos'), SY, 'Megaways: 6 rolos de 2 a 7 símbolos mais a linha do topo nos rolos 2 a 5. Iguais em rolos seguidos a partir da esquerda pagam por caminho.')],

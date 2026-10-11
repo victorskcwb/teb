@@ -378,7 +378,7 @@
     scatter: { id: 'sc', img: 'lollipop', name: 'Pirulito', w: 1.25 },
     orbImg: 'rainbow', orbs: ORBS, orbBase: 0, orbFS: 0.048,
     fsCount: 10, buyX: 93, accumulate: false,
-    maxWin: 21100, vol: 3, hit: '~1 em 3 giros (33%)', fsEvery: 300,
+    maxWin: 21100, vol: 4, hit: '~1 em 3 giros (33%)', fsEvery: 300,
     highlights: ['🍭 4+ pirulitos = <b>10 rodadas grátis</b>', '🌈 Nas rodadas grátis caem <b>bombas de 2x a 100x</b> que se somam', 'Cascatas: um giro pode pagar várias vezes', 'Prêmio máximo: <b>21.100x</b>'],
   }));
 
@@ -394,7 +394,7 @@
     scatter: { id: 'sc', img: 'voltage', name: 'Raio de Zeus', w: 1.25 },
     orbImg: 'crystal', orbs: ORBS, orbBase: 0.0048, orbFS: 0.0155,
     fsCount: 15, buyX: 60, accumulate: true,
-    maxWin: 5000, vol: 4, hit: '~1 em 3 giros (32%)', fsEvery: 295,
+    maxWin: 5000, vol: 5, hit: '~1 em 3 giros (32%)', fsEvery: 295,
     highlights: ['⚡ Orbes de <b>2x a 100x</b> podem cair em qualquer giro', 'Nas rodadas grátis os orbes <b>acumulam</b> e valem para todos os ganhos seguintes', '4+ raios = <b>15 rodadas grátis</b>', 'Prêmio máximo: <b>5.000x</b>'],
   }));
 
@@ -410,7 +410,7 @@
     scatter: { id: 'sc', img: 'shootingstar', name: 'Estrela cadente', w: 1.25 },
     orbImg: 'glowstar', orbs: ORBS, orbBase: 0.0048, orbFS: 0.0155,
     fsCount: 15, buyX: 60, accumulate: true,
-    maxWin: 5000, vol: 4, hit: '~1 em 3 giros (32%)', fsEvery: 295,
+    maxWin: 5000, vol: 5, hit: '~1 em 3 giros (32%)', fsEvery: 295,
     highlights: ['🌟 Estrelas de <b>2x a 100x</b> podem cair em qualquer giro', 'Nas rodadas grátis as estrelas <b>acumulam</b> e valem para todos os ganhos seguintes', '4+ estrelas cadentes = <b>15 rodadas grátis</b>', 'Prêmio máximo: <b>5.000x</b>'],
   }));
 

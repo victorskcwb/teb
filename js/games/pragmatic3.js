@@ -7,7 +7,7 @@
    ========================================================= */
 (function () {
   const K = SlotKit, T = SlotT;
-  const { S, pool, ways, lines, cells, count, key, unkey, clusters, payClusters, table, heads, pay, tumble, scatters } = K;
+  const { S, pool, ways, lines, cells, count, key, unkey, clusters, payClusters, table, heads, pay, tumble, scatters, LINES_5x3 } = K;
   const STUDIO = 'pragmatic';
   const R = (pays, w) => K.ROYALS(pays, w);
   const grid = (hs, f) => hs.map((hh, c) => Array.from({ length: hh }, (_, r) => f(c, r)));
@@ -278,7 +278,7 @@
   /* 26. Panda Gordo — rolo modificador */
   (() => {
     const L20 = K.LINES_5x3.slice(0, 20);
-    const SY = [S('panda', 'panda', 'Panda', [5, 25, 100], 3), S('bambu', 'bamboo', 'Bambu', [3, 10, 50], 4), S('lanterna', 'izakaya', 'Lanterna', [2, 6, 30], 4), S('bolinho', 'dumpling', 'Bolinho', [1.5, 4, 20], 5), ...R([[0.5, 1.5, 5], [0.5, 1.5, 5], [0.3, 1, 3], [0.3, 1, 3]])];
+    const SY = [S('panda', 'panda', 'Panda', [4, 18, 75], 3), S('bambu', 'bamboo', 'Bambu', [3, 10, 50], 4), S('lanterna', 'izakaya', 'Lanterna', [2, 6, 30], 4), S('bolinho', 'dumpling', 'Bolinho', [1.5, 4, 20], 5), ...R([[0.5, 1.5, 5], [0.5, 1.5, 5], [0.3, 1, 3], [0.3, 1, 3]])];
     const WILD = { id: 'w', img: 'pandaface', name: 'Coringa', wild: true, reels: [1, 2, 3, 4], w: 0.9 };
     const SC = { id: 'sc', img: 'yinyang2', name: 'Bônus', sc: true, w: 1.05 };
     const draw = pool([...SY, WILD, SC]);
@@ -553,7 +553,7 @@
   /* 30. Trilha do Mustang — coringas que se duplicam */
   (() => {
     const L10 = K.LINES_5x3.slice(0, 10);
-    const SY = [S('mustang', 'horse', 'Mustang', [5, 25, 100], 3), S('cowgirl', 'cowboy', 'Vaqueira', [3, 12, 60], 4), S('sela', 'saddle', 'Sela', [2, 8, 40], 4), S('ferradura', 'horseshoe', 'Ferradura', [1.5, 5, 25], 5), ...R([[0.5, 1.5, 5], [0.5, 1.5, 5], [0.3, 1, 3], [0.3, 1, 3]])];
+    const SY = [S('mustang', 'horse', 'Mustang', [4, 18, 75], 3), S('cowgirl', 'cowboy', 'Vaqueira', [3, 12, 60], 4), S('sela', 'saddle', 'Sela', [2, 8, 40], 4), S('ferradura', 'horseshoe', 'Ferradura', [1.5, 5, 25], 5), ...R([[0.5, 1.5, 5], [0.5, 1.5, 5], [0.3, 1, 3], [0.3, 1, 3]])];
     const WILD = { id: 'w', img: 'horseface', name: 'Coringa', wild: true, reels: [1, 2, 3, 4], w: 0.85, fw: 1.6 };
     const SC = { id: 'sc', img: 'sunset', name: 'Pôr do sol', sc: true, w: 0.95, fw: 1.1 };
     const draw = pool([...SY, WILD, SC]);
@@ -636,7 +636,7 @@
     App.register(K.create({
       id: 'gravidade', name: 'Bonança da Gravidade', studio: STUDIO, art: 'blackhole', mascot: 'rocket',
       tag: 'Buraco negro suga e multiplica', colors: ['#6d28d9', '#0ea5e9'], bg: 'radial-gradient(circle at 50% 30%,#4c1d95,#020617 70%)',
-      cols: 7, rows: 7, maxWin: 10000, vol: 5, rtp: '~96,5%', target: 0.965,
+      cols: 7, rows: 7, maxWin: 10000, vol: 4, rtp: '~96,5%', target: 0.965,
       intro: 'Inspirado no "Gravity Bonanza" (Pragmatic Play).', hello: 'O buraco negro coleta um símbolo inteiro!',
       symbols: [...SY, SC, HOLE],
       tables: [table('Pagamento por tamanho do grupo', CLH, SY, 'Grupos de 5+ iguais encostados, com cascata.')],
@@ -1023,7 +1023,7 @@
     App.register(K.create({
       id: 'pompeia', name: 'Pompeia Megareels Megaways', studio: STUDIO, art: 'volcano', mascot: 'amphora',
       tag: 'Rolos que crescem até 8 · 10.000x', colors: ['#b91c1c', '#ca8a04'], bg: 'linear-gradient(180deg,#7f1d1d,#451a03 60%,#1c1917)',
-      cols: 6, rows: 8, maxWin: 10000, vol: 5, rtp: '~96,5%', target: 0.965,
+      cols: 6, rows: 8, maxWin: 10000, vol: 4, rtp: '~96,5%', target: 0.965,
       intro: 'Inspirado no "Pompeii Megareels Megaways" (Pragmatic Play).', hello: 'Rolos com ganho crescem!',
       symbols: [...SY, WILD, SC],
       tables: [table('Pagamento por caminho', heads(3, 4, ' rolos'), SY, 'Megaways com cascata.')],
@@ -1082,6 +1082,106 @@
         const sp = RNG.pick(SY);
         await rt.reveal('SÍMBOLO ESPECIAL', SY.map(s => ({ img: s.img, label: s.name })), SY.indexOf(sp));
         await rt.fsLoop(10, async api => { if (await play(rt, make('fw'), sp) >= 4) api.add(10); }, { sub: `Especial: ${sp.name}` });
+      },
+    }));
+  })();
+
+  /* =========================================================
+     Pescaria Bonança 1000 (Big Bass Bonanza 1000) — 5×3, 10 linhas,
+     peixes de até 1.000x (e o raríssimo Peixe Dourado do prêmio máximo),
+     Pescador coleta nas grátis; a cada 4: +10 giros e x2 → x3 → x10
+     ========================================================= */
+  (() => {
+    const SY = [
+      S('caixa', 'tackle', 'Caixa de pesca', [5, 25, 100], 3), S('vara', 'fishingpole', 'Vara', [3, 12, 50], 4),
+      S('boia', 'buoy', 'Boia', [2.5, 8, 30], 5), S('dinamite', 'dynamite', 'Dinamite', [2, 6, 25], 5),
+      S('peixe', 'fish', 'Peixe de prêmio', [2, 8, 40], 5.5, { fw: 6.5 }),
+      ...K.ROYALS([[1, 4, 16], [1, 4, 16], [0.6, 2.5, 10], [0.6, 2.5, 10]], [9, 9, 10, 10]),
+    ];
+    const WILD = { id: 'w', img: 'captain', name: 'Pescador', wild: true, w: 0, fw: 1.05 };
+    const SC = { id: 'sc', img: 'sailboat', name: 'Barco (scatter)', sc: true, w: 1.6, fw: 0 };
+    const FISH = [{ v: 2, w: 40 }, { v: 5, w: 28 }, { v: 10, w: 14 }, { v: 15, w: 7 }, { v: 20, w: 4 }, { v: 25, w: 2.5 }, { v: 50, w: 1.5 },
+      { v: 100, w: 0.55 }, { v: 250, w: 0.18 }, { v: 500, w: 0.06 }, { v: 1000, w: 0.02 }];
+    const MAXW = 20000, STACK = 0.35;
+    const GOLD = { v: 1e7, t: 'MÁX', c: 'jp', gold: true };
+    const LV = [1, 2, 3, 10];
+    const FS_N = { 3: 10, 4: 15, 5: 20 }, SC_PAY = { 3: 2, 4: 20, 5: 200 };
+    const all = [...SY, WILD, SC];
+    const draw = pool(all);
+    const SUPER = FISH.map(f => ({ ...f, w: f.w * (f.v >= 500 ? 8 : f.v >= 100 ? 3 : f.v >= 25 ? 1.6 : 1) }));
+    const fishOf = (fs, sup) => {
+      if (fs && RNG.float() < (sup ? 0.0003 : 0.00008)) return { ...GOLD };
+      return { v: RNG.weighted(sup ? SUPER : FISH).v };
+    };
+    // rolos empilhados (como nas fitas reais); cada peixe ganha o próprio valor
+    const make = (wk = 'w', sup = false) => K.stack(Array.from({ length: 5 }, (_, c) => Array.from({ length: 3 }, () => draw(c, wk))), STACK)
+      .map(col => col.map(x => (x.id === 'peixe' ? { ...x, ...fishOf(wk === 'fw', sup) } : x)));
+
+    App.register(K.create({
+      id: 'pescaria1000', name: 'Pescaria Bonança 1000', studio: STUDIO, art: 'goldfish', mascot: 'captain',
+      tag: 'Peixes de até 1.000x · prêmio máximo 20.000x', colors: ['#0369a1', '#facc15'], bg: 'linear-gradient(180deg,#0c4a6e,#075985 55%,#082f49)',
+      cols: 5, rows: 3, maxWin: MAXW, vol: 5, rtp: '~96,5%', target: 0.965,
+      intro: 'Inspirado no "Big Bass Bonanza 1000" (Pragmatic Play).', hello: '3 barcos abrem a pescaria!',
+      symbols: all,
+      superBuy: { desc: 'peixes de 100x, 500x e 1.000x bem mais frequentes e o Peixe Dourado do prêmio máximo cerca de 3x mais comum.' },
+      lineList: { cols: 5, rows: 3, list: LINES_5x3.slice(0, 10), text: '10 linhas fixas, da esquerda para a direita.' },
+      tables: [table('Pagamento por linha', heads(3, 3), SY, 'Iguais seguidos a partir do rolo da esquerda.'),
+        { title: 'Valores dos peixes', note: 'Cada peixe mostra um destes valores (x aposta). Nas grátis pode surgir o Peixe Dourado, que vale o prêmio máximo.', head: ['cada peixe'], rows: FISH.map(f => ({ img: 'fish', name: `Peixe ${f.v}x`, pays: [f.v] })).concat([{ img: 'goldfish', name: 'Peixe Dourado', pays: [MAXW] }]) }],
+      highlights: ['🎣 5×3 com <b>10 linhas</b>', '🐟 Peixes de prêmio valem de <b>2x a 1.000x</b> a aposta', '⛵ 3/4/5 barcos = <b>10/15/20 rodadas grátis</b>', '👨‍✈️ Nas grátis o <b>Pescador</b> (coringa) coleta todos os peixes; a cada 4: <b>+10 giros</b> e coleta <b>x2 → x3 → x10</b>', '🌟 <b>Peixe Dourado</b>: raríssimo, vale o <b>prêmio máximo</b> se for fisgado', 'Prêmio máximo: <b>20.000x</b>'],
+      how: `<p>Grade <b>5×3</b> com <b>10 linhas</b>. 3 a 5 iguais seguidos a partir da esquerda pagam.</p>
+        <p>${ico('fish')} <b>Peixes de prêmio</b> mostram valores de 2x a 1.000x a aposta. Eles só são coletados pelo Pescador nas rodadas grátis.</p>
+        <p>${ico('sailboat')} <b>Barco:</b> 3, 4 ou 5 pagam 2x, 20x ou 200x e dão <b>10, 15 ou 20 rodadas grátis</b>.</p>`,
+      features: `<p>${ico('captain')} <b>Pescador:</b> só aparece nas grátis. É coringa e <b>coleta o valor de todos os peixes</b> da tela (dois pescadores = coleta dupla).</p>
+        <p>A cada <b>4 pescadores</b>: <b>+10 rodadas</b> e a coleta passa a valer <b>x2</b>, depois <b>x3</b> e por fim <b>x10</b>.</p>
+        <p>${ico('goldfish')} <b>Peixe Dourado:</b> muito raro nas grátis. Se um Pescador o fisgar, você leva o <b>prêmio máximo de 20.000x</b> e o bônus termina.</p>`,
+      make,
+      async spin(rt) {
+        const g = make();
+        await rt.spin(g);
+        await pay(rt, lines(g, LINES_5x3.slice(0, 10), SY));
+        const n = count(g, x => x.sc);
+        if (n >= 3 && !rt.capped) {
+          const v = SC_PAY[Math.min(5, n)];
+          rt.mark(scatters(g)); rt.win(v); rt.msg(`⛵ ${n} barcos: ${v}x a aposta`);
+          await rt.wait(1000);
+          await this.bonus(rt, { n });
+        }
+      },
+      async bonus(rt, { n = 3, super: sup = false } = {}) {
+        const st = { got: 0, lvl: 0 };
+        if (sup) rt.msg('🔥 Bônus super: peixes grandes muito mais frequentes!');
+        await rt.fsLoop(FS_N[Math.min(5, n)], async api => {
+          const g = make('fw', sup);
+          await rt.spin(g, { tease: false });
+          await pay(rt, lines(g, LINES_5x3.slice(0, 10), SY));
+          if (rt.capped) return;
+          const nw = count(g, x => x.wild);
+          const fish = cells(g, x => x.v > 0);
+          if (nw && fish.length) {
+            const m = LV[st.lvl], sum = fish.reduce((a, [c, r]) => a + g[c][r].v, 0);
+            const w = sum * nw * m;
+            rt.mark([...cells(g, x => x.wild), ...fish].map(([c, r]) => key(c, r)));
+            rt.win(w);
+            const gold = fish.some(([c, r]) => g[c][r].gold);
+            rt.msg(gold ? '🌟 PEIXE DOURADO FISGADO! PRÊMIO MÁXIMO!' : `🎣 ${nw > 1 ? nw + ' pescadores coletam' : 'Pescador coleta'} ${fish.length} peixe${fish.length > 1 ? 's' : ''}${m > 1 ? ` · x${m}` : ''} = ${rt.coins(w)}`);
+            rt.fx(gold ? 'jackpot' : w >= 50 ? 'big' : 'coin');
+            await rt.wait(gold ? 1600 : 1000);
+          }
+          if (nw && st.lvl < 3) {
+            st.got += nw;
+            while (st.got >= 4 && st.lvl < 3) {
+              st.got -= 4; st.lvl++;
+              api.add(10, true);
+              rt.msg(`🎣 4 pescadores! +10 rodadas e coleta x${LV[st.lvl]}`);
+              rt.fx('big');
+              await rt.wait(900);
+            }
+            if (st.lvl >= 3) st.got = 0;
+          }
+          rt.chip('pesc', 'PESCADOR', st.lvl >= 3 ? 'MÁX' : `${st.got}/4`);
+          rt.chip('mult', 'COLETA', 'x' + LV[st.lvl]);
+        }, { sub: `${FS_N[Math.min(5, n)]} giros · o Pescador coleta os peixes` });
+        rt.chip('pesc', null); rt.chip('mult', null);
       },
     }));
   })();

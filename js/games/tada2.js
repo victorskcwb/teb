@@ -182,7 +182,7 @@
   /* 1. Super Ás (Super Ace) — cartas douradas viram curinga; combo até x5 (x10 nas grátis) */
   App.register(T.pg({
     studio: STUDIO, id: 'superas', name: 'Super Ás', art: 'spadesuit', mascot: 'joker', tag: 'Curinga Grande · combo até x10',
-    colors: ['#b91c1c', '#ca8a04'], bg: 'linear-gradient(180deg,#14532d,#166534 50%,#052e16)', maxWin: 1500, vol: 3, rtp: '~97,9%', target: 0.979, cols: 5, rows: 4, cellH: 1.25,
+    colors: ['#b91c1c', '#ca8a04'], bg: 'linear-gradient(180deg,#14532d,#166534 50%,#052e16)', maxWin: 1500, vol: 2, rtp: '~97,9%', target: 0.979, cols: 5, rows: 4, cellH: 1.25,
     intro: 'Inspirado no "Super Ace" (TaDa Gaming).', hello: 'Cartas douradas viram Curinga!',
     syms: [S('as_e', 'spadesuit', 'Ás de espadas', [0.5, 1, 2], 4), S('as_c', 'heartsuit', 'Ás de copas', [0.4, 0.8, 1.6], 4), S('as_p', 'clubsuit', 'Ás de paus', [0.3, 0.6, 1.2], 5), S('as_o', 'diamondsuit', 'Ás de ouros', [0.3, 0.6, 1.2], 5), ...['A', 'K', 'Q', 'J'].map((l, i) => K.L(l, [[0.2, 0.4, 0.8], [0.15, 0.3, 0.6], [0.1, 0.25, 0.5], [0.1, 0.2, 0.4]][i], 7 + i))],
     wildImg: 'joker', wildName: 'Curinga', wildW: 0, wildFW: 0, scImg: 'cards', scName: 'Scatter', scW: 0.6, scFW: 0.45,

@@ -814,7 +814,7 @@
     App.register(K.create({
       id: 'cubos2', name: 'Cubos 2', studio: STUDIO, art: 'bluesquare', mascot: 'redsquare',
       tag: 'Grade cresce até 11×11', colors: ['#3b82f6', '#ec4899'], bg: 'linear-gradient(135deg,#1e1b4b,#312e81 40%,#831843)',
-      cols: 11, rows: 11, maxWin: 10500, vol: 4, rtp: '~96,3%', target: 0.963,
+      cols: 11, rows: 11, maxWin: 10500, vol: 5, rtp: '~96,3%', target: 0.963,
       intro: 'Inspirado no "Cubes 2" (Hacksaw Gaming).', hello: 'Cada ganho aumenta a grade!',
       symbols: SY,
       tables: [table('Pagamento por tamanho do grupo', ['5–7', '8–10', '11–15', '16–25', '26–45', '46+'], SY, 'Todas as cores pagam igual. Grupos de 70+ valem x10.')],
@@ -859,7 +859,7 @@
     App.register(K.create({
       id: 'xpander', name: 'Xpander', studio: STUDIO, art: 'up', mascot: 'seven',
       tag: 'Saltador até 4×4 e x128', colors: ['#a21caf', '#06b6d4'], bg: 'linear-gradient(180deg,#0f0a1f,#4c1d95 50%,#155e75)',
-      cols: 7, rows: 7, maxWin: 10000, vol: 5, rtp: '~96,3%', target: 0.963,
+      cols: 7, rows: 7, maxWin: 10000, vol: 4, rtp: '~96,3%', target: 0.963,
       intro: 'Inspirado no "Xpander" (Hacksaw Gaming).', hello: 'Grupos que tocam o Saltador são multiplicados!',
       symbols: [...SY, DBL, GROW, SC],
       tables: [table('Pagamento por tamanho do grupo', CLH, SY, 'Grupos de 5+ iguais encostados, com cascata.')],

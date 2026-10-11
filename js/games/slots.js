@@ -409,7 +409,7 @@
     tag: 'Rolo coringa · ganho garantido', colors: ['#f43f5e', '#7c2d12'], rtp: '~95,7%',
     intro: 'Inspirado no "Fortune Mouse".',
     feature: 'mouse',
-    maxWin: 250, vol: 1, hit: '~1 em 3 giros (32%)',
+    maxWin: 1000, vol: 3, hit: '~1 em 3 giros (32%)',
     highlights: ['🐭 <b>Ratinho Sortudo</b> (≈1 em 18 giros): rolo do meio vira coringa e o ganho é garantido', 'Muitos ganhos pequenos: bom para saldo baixo', 'Tela cheia de Ratinhos = <b>250x</b>'],
     featureRules: `<p><b>🐭 Ratinho Sortudo:</b> em qualquer giro (≈ 1 a cada 18) o rolo do meio vira <b>coringa</b> inteiro e os outros rolos giram de novo até formar pelo menos uma linha — <b>vitória garantida</b>!</p>`,
     featureChance: 1 / 18,
