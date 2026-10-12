@@ -221,18 +221,18 @@
      4. Joias Bonança (Gems Bonanza) — 8×8 com marcadores
      ========================================================= */
   (() => {
-    const T = n => (n < 5 ? -1 : n <= 6 ? 0 : n <= 8 ? 1 : n <= 10 ? 2 : n <= 12 ? 3 : n <= 14 ? 4 : 5);
+    // tabela por tamanho do grupo, de 5 até 25+ (como no original)
+    const T = n => (n < 5 ? -1 : n <= 6 ? 0 : n <= 8 ? 1 : n <= 10 ? 2 : n <= 14 ? 3 : n <= 19 ? 4 : n <= 24 ? 5 : 6);
+    const LAD = [0.002, 0.005, 0.01, 0.03, 0.08, 0.25, 1];
+    const G = (id, img, name, top, w) => S(id, img, name, LAD.map(f => Math.round(top * f * 100) / 100), w);
     const SY = [
-      S('coroa', 'crown', 'Coroa', [1, 2, 4, 10, 25, 100], 4), S('anel', 'ring', 'Anel', [0.8, 1.5, 3, 7, 20, 75], 5),
-      S('rubi', 'gem', 'Rubi', [0.5, 1, 2, 4, 10, 40], 7), S('safira', 'bluediamond', 'Safira', [0.4, 0.8, 1.5, 3, 8, 30], 8),
-      S('topazio', 'orangediamond', 'Topázio', [0.3, 0.6, 1.2, 2.5, 6, 25], 9), S('ametista', 'purpleheart', 'Ametista', [0.25, 0.5, 1, 2, 5, 20], 10),
-      S('esmeralda', 'greenheart', 'Esmeralda', [0.2, 0.4, 0.8, 1.6, 4, 15], 11),
-      S('perola', 'pearl', 'Pérola', [0.15, 0.3, 0.6, 1.2, 3, 12], 12), S('citrino', 'yellowheart', 'Citrino', [0.15, 0.3, 0.6, 1.2, 3, 12], 12),
+      G('vermelha', 'gb-red', 'Joia vermelha', 1000, 6), G('roxa', 'gb-purple', 'Joia roxa', 500, 7), G('verde', 'gb-green', 'Joia verde', 300, 8),
+      G('turquesa', 'gb-turq', 'Joia turquesa', 150, 9), G('laranja', 'gb-orange', 'Joia laranja', 100, 10), G('rosa', 'gb-pink', 'Joia rosa', 75, 11),
+      G('azul', 'gb-blue', 'Joia azul', 50, 12),
     ];
-    const WILD = { id: 'w', img: 'sparkles', name: 'Coringa', wild: true, w: 0 };
-    const SC = { id: 'sc', img: 'gemsparkle', name: 'Bônus', sc: true, w: 0.36, fw: 0.25 };
-    const all = [...SY, WILD, SC];
-    const draw = pool(SY), drawSC = pool([...SY, SC]);
+    const WILD = { id: 'w', img: 'gb-wild', name: 'Coringa', wild: true, w: 0 };
+    const all = [...SY, WILD];
+    const draw = pool(SY);
     // ordem fixa de execução
     const MODS = [
       { id: 'nuclear', c: 'mk-blue', name: 'Nuclear' }, { id: 'wildgem', c: 'mk-pink', name: 'Joia Coringa' },
@@ -240,15 +240,16 @@
       { id: 'lucky', c: 'mk-green', name: 'Coringas da Sorte' },
     ];
     const FEVER = [[114, 2], [116, 4], [120, 6], [125, 8], [132, 10]];
-    const FS_T = n => (n >= 5 ? 20 : n === 4 ? 15 : 12);
-    const make = (wk = 'w') => Array.from({ length: 8 }, (_, c) => Array.from({ length: 8 }, () => drawSC(c, wk)));
-    const nSC = g => count(g, x => x.sc);
+    // quantas marcas coloridas aparecem no giro (cores diferentes)
+    const NMARK = [{ v: 0, w: 62 }, { v: 1, w: 27 }, { v: 2, w: 9 }, { v: 3, w: 2 }];
+    const make = () => Array.from({ length: 8 }, (_, c) => Array.from({ length: 8 }, () => draw(c)));
 
     // um giro completo. As 5 marcas (uma de cada cor) ficam fixas na POSIÇÃO, no fundo da grade.
     // st.n conta os símbolos estourados (no giro normal zera a cada giro; nas grátis acumula).
     async function play(rt, g, st) {
       const marks = {};
-      RNG.shuffle(Array.from({ length: 64 }, (_, i) => i)).slice(0, 5).forEach((i, k) => { marks[key(i % 8, Math.floor(i / 8))] = MODS[k]; });
+      const nm = RNG.weighted(NMARK).v;
+      RNG.shuffle(Array.from({ length: 64 }, (_, i) => i)).slice(0, nm).forEach((i, k) => { marks[key(i % 8, Math.floor(i / 8))] = RNG.pick(MODS.filter(m => !Object.values(marks).includes(m))); });
       const flags = {};
       const paint = gg => gg.forEach((col, c) => col.forEach((x, r) => { const m = marks[key(c, r)]; x.c = m ? m.c : undefined; }));
       const show = () => { if (st.fever > 1) rt.chip('fever', 'FEBRE', 'x' + st.fever); rt.chip('cnt', 'SÍMBOLOS', st.n); };
@@ -290,7 +291,7 @@
         if (m.id === 'wildgem') { const pool = g.flat().filter(x => !x.wild && !x.sc); if (pool.length) { const s = RNG.pick(pool).id; g.forEach((col, c) => col.forEach((x, r) => { if (x.id === s) g[c][r] = { ...WILD, fresh: true }; })); } }
         if (m.id === 'squares') { for (let i = RNG.int(2, 4); i > 0; i--) { const s = RNG.pick(SY), c0 = RNG.int(0, 6), r0 = RNG.int(0, 6); for (let a = 0; a < 2; a++) for (let b = 0; b < 2; b++) put(c0 + a, r0 + b, { ...s, fresh: true }); } }
         if (m.id === 'colossal') { const z = RNG.weighted([{ z: 3, w: 75 }, { z: 4, w: 21 }, { z: 5, w: 4 }]).z; const c0 = RNG.int(0, 8 - z), r0 = RNG.int(0, 8 - z); for (let a = 0; a < z; a++) for (let b = 0; b < z; b++) put(c0 + a, r0 + b, { ...WILD, fresh: true }); }
-        if (m.id === 'lucky') { for (let i = RNG.int(5, 10); i > 0; i--) put(RNG.int(0, 7), RNG.int(0, 7), { ...WILD, fresh: true }); }
+        if (m.id === 'lucky') { for (let i = RNG.int(5, 15); i > 0; i--) put(RNG.int(0, 7), RNG.int(0, 7), { ...WILD, fresh: true }); }
         paint(g);
         await rt.drop(g);
         await rt.wait(450);
@@ -299,41 +300,29 @@
     }
 
     App.register(K.create({
-      id: 'joiasbonanca', name: 'Joias Bonança', studio: STUDIO, art: 'ring', mascot: 'crown',
-      tag: '8×8 · modificadores · Febre do Ouro · grátis', colors: ['#7c3aed', '#059669'], bg: 'linear-gradient(180deg,#78350f,#451a03 60%,#1c0a02)',
-      cols: 8, rows: 8, maxWin: 10000, vol: 4, rtp: '~96,5%', target: 0.965,
+      id: 'joiasbonanca', name: 'Joias Bonança', studio: STUDIO, art: 'gb-red', mascot: 'gb-wild',
+      tag: '8×8 · modificadores · Febre do Ouro x10', colors: ['#7c3aed', '#059669'], bg: 'linear-gradient(180deg,#78350f,#451a03 60%,#1c0a02)',
+      cols: 8, rows: 8, maxWin: 10000, vol: 4, rtp: '~96,5%', target: 0.965, buy: false,
       intro: 'Inspirado no "Gems Bonanza" (Pragmatic Play).',
       hello: 'Ganhe em cima das marcas coloridas!',
       symbols: all,
-      tables: [table('Pagamento por tamanho do grupo', ['5–6', '7–8', '9–10', '11–12', '13–14', '15+'], SY, 'Grupos de 5+ iguais encostados. Grupos diferentes se somam.')],
-      highlights: ['💎 Grade <b>8×8</b> com 9 joias, grupos de 5+ e cascata', '🎨 5 marcas coloridas fixas por giro: ganhe em cima delas para ativar os modificadores', '🔥 <b>Febre do Ouro:</b> 114+ símbolos estourados no giro liberam <b>x2 até x10</b> e reativam todos os modificadores', '🎁 3+ joias bônus: <b>12 a 20 rodadas grátis</b> com a Febre do Ouro acumulando o bônus inteiro', 'Prêmio máximo: <b>10.000x</b>'],
+      tables: [table('Pagamento por tamanho do grupo', ['5–6', '7–8', '9–10', '11–14', '15–19', '20–24', '25+'], SY, 'Grupos de 5+ joias iguais encostadas na horizontal ou vertical. Grupos diferentes se somam. A joia vermelha paga até 1.000x.')],
+      highlights: ['💎 Grade <b>8×8</b> com 7 joias, grupos de 5+ e cascata; <b>joia vermelha</b> com 25+ paga <b>1.000x</b>', '🎨 Marcas coloridas aparecem na grade: ganhe em cima delas para ativar os modificadores', '🔥 <b>Febre do Ouro:</b> 114+ símbolos estourados no giro liberam <b>x2 até x10</b> e reativam todos os modificadores', 'Prêmio máximo: <b>10.000x</b>'],
       how: `<p>Grade <b>8×8</b>: grupos de <b>5 ou mais</b> joias iguais encostadas pagam, com <b>cascata</b>.</p>
-        <p>Todo giro sorteia <b>5 casas com marcas coloridas</b> (uma de cada cor). A marca fica presa na casa, no fundo da grade, mesmo com as joias caindo. Se um grupo vencedor passar por cima dela, o modificador da cor é ativado e a marca some.</p>
+        <p>Em cada giro podem aparecer <b>até 3 casas com marcas coloridas</b> (cada uma de uma cor). A marca fica presa na casa, no fundo da grade, mesmo com as joias caindo. Se um grupo vencedor passar por cima dela, o modificador da cor é ativado e a marca some.</p>
         <p>Os modificadores só rodam quando a cascata para: <b>um de cada vez</b>, na ordem abaixo, e depois de cada um a cascata recomeça.</p>`,
       features: `<h4>Modificadores (um por vez, nesta ordem)</h4><ul class="si-list">
         <li><b class="mkt mk-blue">Nuclear (azul)</b>: troca a grade inteira por novas joias.</li>
         <li><b class="mkt mk-pink">Joia Coringa (rosa)</b>: um tipo de joia da tela vira coringa em todas as posições.</li>
         <li><b class="mkt mk-yellow">Quadrados (amarelo)</b>: blocos 2×2 de uma mesma joia aparecem na grade.</li>
         <li><b class="mkt mk-red">Colossal (vermelho)</b>: um bloco gigante de <b>coringas</b> 3×3, 4×4 ou 5×5.</li>
-        <li><b class="mkt mk-green">Coringas da Sorte (verde)</b>: de 5 a 10 coringas caem em posições aleatórias.</li></ul>
+        <li><b class="mkt mk-green">Coringas da Sorte (verde)</b>: de 5 a 15 coringas caem em posições aleatórias.</li></ul>
         <h4>Febre do Ouro</h4><p>O medidor conta todos os símbolos estourados no giro. Nos níveis <b>114, 116, 120, 125 e 132</b> o multiplicador passa a <b>x2, x4, x6, x8 e x10</b> e, a cada nível novo, <b>os 5 modificadores são ativados de novo</b>, recomeçando a fila do Nuclear aos Coringas da Sorte.</p>
-        <h4>Rodadas grátis</h4><p>${ico('gemsparkle')} <b>3, 4 ou 5+ joias bônus</b> na tela dão <b>12, 15 ou 20 rodadas grátis</b>. Nelas a contagem da <b>Febre do Ouro não zera</b> entre os giros: ela acumula durante todo o bônus. 3+ joias bônus nas grátis dão <b>+5 giros</b>.</p>`,
+        <p class="muted small">Como no original, não há rodadas grátis: o grande prêmio vem da Febre do Ouro com os modificadores.</p>`,
       make,
       async spin(rt) {
         const g = make();
         await play(rt, g, { n: 0, fever: 1 });
-        rt.chip('fever', null);
-        rt.chip('cnt', null);
-        const n = nSC(g);
-        if (n >= 3) { rt.mark(scatters(g)); await rt.wait(1000); await this.bonus(rt, { n }); }
-      },
-      async bonus(rt, { n = 3 } = {}) {
-        const st = { n: 0, fever: 1 };
-        await rt.fsLoop(FS_T(n), async api => {
-          const g = make('fw');
-          await play(rt, g, st);
-          if (nSC(g) >= 3) { rt.mark(scatters(g)); rt.msg('🎁 +5 rodadas grátis!'); api.add(5); await rt.wait(700); }
-        }, { sub: `${FS_T(n)} giros · Febre do Ouro acumula` });
         rt.chip('fever', null);
         rt.chip('cnt', null);
       },
