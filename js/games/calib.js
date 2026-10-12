@@ -124,7 +124,7 @@ const SLOT_CALIB = {
   "jackpirata": {"k":2.6001,"buy":37,"hit":0.2395,"fs":0.00267},
   "jardimcoelhos": {"k":2.0641,"buy":133,"hit":0.2976,"fs":0.00369},
   "jixiangruyi": {"k":0.25916,"buy":0,"hit":0.3396,"fs":0},
-  "joiasbonanca": {"k":0.82365,"buy":0,"hit":0.4266,"fs":0},
+  "joiasbonanca": {"k":0.84083,"buy":53,"hit":0.4274,"fs":0},
   "joiasfortuna": {"k":3.5251,"buy":0,"hit":0.1969,"fs":0},
   "joiasfortuna2": {"k":0.8563,"buy":0,"hit":0.2097,"fs":0},
   "jukeboxsorte": {"k":0.11261,"buy":0,"hit":0.538,"fs":0},
