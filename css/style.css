@@ -1422,4 +1422,8 @@ select { padding: 9px 10px; border-radius: 12px; background: var(--bg2); border:
 /* compra de bônus normal + super lado a lado */
 .buy-row { display: flex; gap: 8px; width: 100%; }
 .buy-row .btn-buy { flex: 1; min-width: 0; }
+.buy-row.buy-tiers { display: grid; grid-template-columns: 1fr 1fr; }
+.buy-tier { font-size: .8rem; padding: 9px 6px; display: flex; flex-direction: column; align-items: center; gap: 2px; line-height: 1.15; }
+.buy-tier:nth-child(3) { background: linear-gradient(180deg, #f97316, #c2410c); box-shadow: 0 4px 0 #7c2d12; }
+.buy-tier:nth-child(4) { background: linear-gradient(180deg, #ef4444, #991b1b); box-shadow: 0 4px 0 #7f1d1d, 0 0 14px rgba(239, 68, 68, .5); }
 .btn-buy.buy-super { background: linear-gradient(180deg, #f97316, #b91c1c); box-shadow: 0 4px 0 #7f1d1d, 0 0 14px rgba(249, 115, 22, .5); }

@@ -50,7 +50,7 @@ const SLOT_CALIB = {
   "cidaderip": {"k":1.3337,"buy":147,"hit":0.3269,"fs":0.0023},
   "cincoleoes": {"k":0.10927,"buy":60,"hit":0.3514,"fs":0.00379},
   "cleogata": {"k":0.33924,"buy":55,"hit":0.4081,"fs":0.00352},
-  "clustersastecas": {"k":2.6234,"buy":71,"hit":0.3633,"fs":0.00306},
+  "clustersastecas": {"k":1.066,"buy":95,"hit":0.3777,"fs":0.00575},
   "cobrinha2000": {"k":0.14585,"buy":143,"hit":0.7555,"fs":0.00293},
   "coelhosbonus": {"k":0.44305,"buy":26,"hit":0.5268,"fs":0.00286},
   "colheitaselvagem": {"k":1.302,"buy":111,"hit":0.3874,"fs":0.00315},
