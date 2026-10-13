@@ -424,7 +424,7 @@
         rt.mark([...sq], 'hl');
         await rt.drop(g);
       }
-      if (gold && sq.size && !g.flat().some(x => x.rainbow) && (tier >= 5 || (tier === 4 && RNG.float() < 0.4))) { g[RNG.int(0, 5)][RNG.int(0, 4)] = { ...RAIN, fresh: true }; await rt.drop(g); }
+      if (!rt.capped && gold && sq.size && !g.flat().some(x => x.rainbow) && (tier >= 5 || (tier === 4 && RNG.float() < 0.4))) { g[RNG.int(0, 5)][RNG.int(0, 4)] = { ...RAIN, fresh: true }; await rt.drop(g); }
       let act = false;
       if (g.flat().some(x => x.rainbow) && sq.size) {
         let coins = 0, m = 1;

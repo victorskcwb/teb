@@ -239,110 +239,124 @@
       { id: 'squares', c: 'mk-yellow', name: 'Quadrados' }, { id: 'colossal', c: 'mk-red', name: 'Colossal' },
       { id: 'lucky', c: 'mk-green', name: 'Coringas da Sorte' },
     ];
-    // cada nível pede mais símbolos que o anterior: 114, +116, +120, +125 e +130 (total acumulado)
-    const FEVER = [[114, 2], [230, 4], [350, 6], [475, 8], [605, 10]];
+    // Febre do Ouro: 70 símbolos vencedores num giro (114 no original; reduzido para o modo aparecer sem compra) ativam o modo (nível 1, x2);
+    // dentro do modo, recolher 116 / 121 / 129 / 138 símbolos sobe para os níveis 2 a 5 (x4, x6, x8, x10)
+    const ENTER = 70, NEED = [116, 121, 129, 138], LVM = [2, 4, 6, 8, 10];
     // quantas marcas coloridas aparecem no giro (cores diferentes)
-    const NMARK = [{ v: 0, w: 62 }, { v: 1, w: 27 }, { v: 2, w: 9 }, { v: 3, w: 2 }];
+    const NMARK = [{ v: 0, w: 20 }, { v: 1, w: 40 }, { v: 2, w: 26 }, { v: 3, w: 14 }];
     const make = () => Array.from({ length: 8 }, (_, c) => Array.from({ length: 8 }, () => draw(c)));
 
-    // um giro completo. As 5 marcas (uma de cada cor) ficam fixas na POSIÇÃO, no fundo da grade.
-    // st.n conta os símbolos estourados (no giro normal zera a cada giro; nas grátis acumula).
-    async function play(rt, g, st) {
+    /** Executa um modo na grade (depois a cascata recomeça). */
+    function applyMode(m, g) {
+      const put = (c, r, x) => { if (c >= 0 && c < 8 && r >= 0 && r < 8) g[c][r] = x; };
+      if (m.id === 'nuclear') g.forEach((col, c) => col.forEach((_, r) => put(c, r, { ...draw(c), fresh: true })));
+      if (m.id === 'wildgem') { const pool = g.flat().filter(x => !x.wild); if (pool.length) { const s = RNG.pick(pool).id; g.forEach((col, c) => col.forEach((x, r) => { if (x.id === s) g[c][r] = { ...WILD, fresh: true }; })); } }
+      if (m.id === 'squares') { for (let i = RNG.int(2, 4); i > 0; i--) { const s = RNG.pick(SY), c0 = RNG.int(0, 6), r0 = RNG.int(0, 6); for (let a = 0; a < 2; a++) for (let b = 0; b < 2; b++) put(c0 + a, r0 + b, { ...s, fresh: true }); } }
+      if (m.id === 'colossal') { const z = RNG.weighted([{ z: 3, w: 75 }, { z: 4, w: 21 }, { z: 5, w: 4 }]).z; const c0 = RNG.int(0, 8 - z), r0 = RNG.int(0, 8 - z), s = RNG.pick(SY); for (let a = 0; a < z; a++) for (let b = 0; b < z; b++) put(c0 + a, r0 + b, { ...s, fresh: true }); }
+      if (m.id === 'lucky') { for (let i = RNG.int(5, 15); i > 0; i--) put(RNG.int(0, 7), RNG.int(0, 7), { ...WILD, fresh: true }); }
+    }
+
+    /** Cascatas até parar. `onWin(n)` recebe quantos símbolos venceram em cada passo. */
+    const run = (rt, g, mult, evalHook, onWin) => tumble(rt, g, {
+      draw: c => draw(c),
+      mult: () => mult(),
+      evaluate: gg => { const res = payClusters(clusters(gg, 5), T); if (evalHook) evalHook(res); return res; },
+      onStep: async (step, gg, res) => { await onWin(res.cells.size, gg); },
+    });
+
+    /** Giro do jogo base: marcas coloridas ativam modos; 114+ símbolos vencedores no giro abrem a Febre do Ouro. */
+    async function play(rt, g) {
       const marks = {};
       const nm = RNG.weighted(NMARK).v;
-      RNG.shuffle(Array.from({ length: 64 }, (_, i) => i)).slice(0, nm).forEach((i, k) => { marks[key(i % 8, Math.floor(i / 8))] = RNG.pick(MODS.filter(m => !Object.values(marks).includes(m))); });
+      RNG.shuffle(Array.from({ length: 64 }, (_, i) => i)).slice(0, nm).forEach(i => { marks[key(i % 8, Math.floor(i / 8))] = RNG.pick(MODS.filter(m => !Object.values(marks).includes(m))); });
       const flags = {};
-      // compra: já começa no nível 1 da Febre do Ouro, com 1 modificador garantido
-      if (st.all) { flags[RNG.pick(MODS).id] = true; st.all = false; }
       const paint = gg => gg.forEach((col, c) => col.forEach((x, r) => { const m = marks[key(c, r)]; x.c = m ? m.c : undefined; }));
-      // barra da Febre: símbolos estourados / próximo nível
-      const show = () => {
-        if (st.fever > 1) rt.chip('fever', 'FEBRE', 'x' + st.fever);
-        const nx = FEVER.find(([t]) => st.n < t);
-        rt.chip('cnt', 'FEBRE DO OURO', nx ? `${st.n}/${nx[0]}` : `${st.n} · MÁX`);
-      };
-      const run = () => tumble(rt, g, {
-        draw: c => draw(c),
-        mult: () => st.fever,
-        evaluate: gg => {
-          const res = payClusters(clusters(gg, 5), T);
-          res.cells.forEach(k => { if (marks[k]) { flags[marks[k].id] = true; delete marks[k]; } });
-          return res;
-        },
-        onStep: async (step, gg, res) => {
-          st.n += res.cells.size;
-          paint(gg);
-          const lv = FEVER.filter(([t]) => st.n >= t).pop();
-          if (lv && lv[1] > st.fever) {
-            st.fever = lv[1];
-            // cada nível novo garante 1 modificador sorteado
-            const md = RNG.pick(MODS);
-            flags[md.id] = true;
-            show();
-            rt.msg(`🔥 FEBRE DO OURO x${st.fever}! Modificador garantido: ${md.name} (${st.n} símbolos)`);
-            rt.fx('big');
-            await rt.wait(900);
-          } else show();
-        },
-      });
+      let n = 0;
+      const bar = () => rt.chip('cnt', 'FEBRE DO OURO', `${Math.min(n, ENTER)}/${ENTER}`);
+      const go = () => run(rt, g, () => 1,
+        res => res.cells.forEach(k => { if (marks[k]) { flags[marks[k].id] = true; delete marks[k]; } }),
+        async (k, gg) => { n += k; paint(gg); bar(); });
       paint(g);
       await rt.drop(g);
-      show();
-      await run();
-      // a cada "cascata morta" roda UM modificador (na ordem fixa) e a cascata recomeça
-      for (let guard = 0; guard < 25 && !rt.capped; guard++) {
-        const m = MODS.find(x => flags[x.id]);
-        if (!m) break;
-        flags[m.id] = false;
-        rt.msg(`🎨 ${m.name}!`);
-        rt.fx('big');
-        const put = (c, r, x) => { if (c >= 0 && c < 8 && r >= 0 && r < 8 && !g[c][r].sc) g[c][r] = x; };
-        if (m.id === 'nuclear') g.forEach((col, c) => col.forEach((_, r) => put(c, r, { ...draw(c), fresh: true })));
-        if (m.id === 'wildgem') { const pool = g.flat().filter(x => !x.wild && !x.sc); if (pool.length) { const s = RNG.pick(pool).id; g.forEach((col, c) => col.forEach((x, r) => { if (x.id === s) g[c][r] = { ...WILD, fresh: true }; })); } }
-        if (m.id === 'squares') { for (let i = RNG.int(2, 4); i > 0; i--) { const s = RNG.pick(SY), c0 = RNG.int(0, 6), r0 = RNG.int(0, 6); for (let a = 0; a < 2; a++) for (let b = 0; b < 2; b++) put(c0 + a, r0 + b, { ...s, fresh: true }); } }
-        if (m.id === 'colossal') { const z = RNG.weighted([{ z: 3, w: 75 }, { z: 4, w: 21 }, { z: 5, w: 4 }]).z; const c0 = RNG.int(0, 8 - z), r0 = RNG.int(0, 8 - z); for (let a = 0; a < z; a++) for (let b = 0; b < z; b++) put(c0 + a, r0 + b, { ...WILD, fresh: true }); }
-        if (m.id === 'lucky') { for (let i = RNG.int(5, 15); i > 0; i--) put(RNG.int(0, 7), RNG.int(0, 7), { ...WILD, fresh: true }); }
-        paint(g);
-        await rt.drop(g);
-        await rt.wait(450);
-        await run();
+      bar();
+      await go();
+      // os modos ativados pelas marcas rodam depois das cascatas, um por vez, na ordem fixa
+      for (const m of MODS) {
+        if (!flags[m.id] || rt.capped) continue;
+        rt.msg(`🎨 ${m.name}!`); rt.fx('big');
+        applyMode(m, g); paint(g);
+        await rt.drop(g); await rt.wait(450);
+        await go();
       }
+      rt.chip('cnt', null);
+      return n >= ENTER;
+    }
+
+    /**
+     * Febre do Ouro: começa no nível 1 (x2) com os 5 modos para executar, um de cada vez, na ordem fixa.
+     * Cada símbolo vencedor enche a barra; ao completar o nível, o multiplicador sobe e os 5 modos são
+     * ganhos de novo (mais uma vez cada um). O modo acaba quando não sobra nenhum modo para executar.
+     */
+    async function fever(rt, g) {
+      let lv = 0, cnt = 0;
+      const queue = [...MODS];
+      const show = () => {
+        rt.chip('fever', 'FEBRE', 'x' + LVM[lv]);
+        rt.chip('cnt', 'BARRA', lv < NEED.length ? `${cnt}/${NEED[lv]}` : 'MÁX');
+        rt.chip('modos', 'MODOS', queue.length);
+      };
+      await rt.banner('FEBRE DO OURO!', 'x2 · os 5 modos, um de cada vez', 1500);
+      show();
+      while (queue.length && !rt.capped) {
+        const m = queue.shift();
+        show();
+        rt.msg(`🔥 Febre x${LVM[lv]} · ${m.name}!`); rt.fx('big');
+        applyMode(m, g);
+        await rt.drop(g); await rt.wait(450);
+        await run(rt, g, () => LVM[lv], null, async k => {
+          cnt += k;
+          if (lv < NEED.length && cnt >= NEED[lv]) {
+            cnt -= NEED[lv]; lv++;
+            queue.push(...MODS);
+            rt.msg(`🔥 NÍVEL ${lv + 1}! Multiplicador x${LVM[lv]} e +1 vez cada modo!`); rt.fx('big');
+            await rt.wait(900);
+          }
+          show();
+        });
+      }
+      ['fever', 'cnt', 'modos'].forEach(c => rt.chip(c, null));
     }
 
     App.register(K.create({
       id: 'joiasbonanca', name: 'Joias Bonança', studio: STUDIO, art: 'gb-red', mascot: 'gb-wild',
-      tag: '8×8 · modificadores · Febre do Ouro x10', colors: ['#7c3aed', '#059669'], bg: 'linear-gradient(180deg,#78350f,#451a03 60%,#1c0a02)',
-      cols: 8, rows: 8, maxWin: 10000, vol: 4, rtp: '~96,5%', target: 0.965,
+      tag: '8×8 · 5 modos · Febre do Ouro até x10', colors: ['#7c3aed', '#059669'], bg: 'linear-gradient(180deg,#78350f,#451a03 60%,#1c0a02)',
+      cols: 8, rows: 8, maxWin: 10000, vol: 4, rtp: '~96,5%', target: 0.965, buyLabel: 'Comprar Febre do Ouro',
       intro: 'Inspirado no "Gems Bonanza" (Pragmatic Play).',
       hello: 'Ganhe em cima das marcas coloridas!',
       symbols: all,
       tables: [table('Pagamento por tamanho do grupo', ['5–6', '7–8', '9–10', '11–14', '15–19', '20–24', '25+'], SY, 'Grupos de 5+ joias iguais encostadas na horizontal ou vertical. Grupos diferentes se somam. A joia vermelha paga até 1.000x.')],
-      highlights: ['💎 Grade <b>8×8</b> com 7 joias, grupos de 5+ e cascata; <b>joia vermelha</b> com 25+ paga <b>1.000x</b>', '🎨 Marcas coloridas aparecem na grade: ganhe em cima delas para ativar os modificadores', '🔥 <b>Febre do Ouro:</b> encha a barra com 114+ símbolos estourados no giro para liberar <b>x2 até x10</b>, com <b>1 modificador garantido</b> a cada nível', '💰 <b>Comprar bônus:</b> começa direto na Febre do Ouro x2', 'Prêmio máximo: <b>10.000x</b>'],
+      highlights: ['💎 Grade <b>8×8</b> com 7 joias, grupos de 5+ e cascata; <b>joia vermelha</b> com 25+ paga <b>1.000x</b>', '🎨 Marcas coloridas na grade: ganhe em cima delas para ativar o modo da cor', '🔥 <b>Febre do Ouro:</b> 70 símbolos vencedores num giro abrem o modo <b>x2</b> com os <b>5 modos, um de cada vez</b>', '📈 Encha a barra (116 / 121 / 129 / 138 símbolos) para subir a <b>x4, x6, x8 e x10</b> e ganhar <b>mais 1 vez cada modo</b>', '💰 <b>Comprar Febre do Ouro</b> direto do jogo base', 'Prêmio máximo: <b>10.000x</b>'],
       how: `<p>Grade <b>8×8</b>: grupos de <b>5 ou mais</b> joias iguais encostadas pagam, com <b>cascata</b>.</p>
-        <p>Em cada giro podem aparecer <b>até 3 casas com marcas coloridas</b> (cada uma de uma cor). A marca fica presa na casa, no fundo da grade, mesmo com as joias caindo. Se um grupo vencedor passar por cima dela, o modificador da cor é ativado e a marca some.</p>
-        <p>Os modificadores só rodam quando a cascata para: <b>um de cada vez</b>, na ordem abaixo, e depois de cada um a cascata recomeça.</p>`,
-      features: `<h4>Modificadores (um por vez, nesta ordem)</h4><ul class="si-list">
-        <li><b class="mkt mk-blue">Nuclear (azul)</b>: troca a grade inteira por novas joias.</li>
-        <li><b class="mkt mk-pink">Joia Coringa (rosa)</b>: um tipo de joia da tela vira coringa em todas as posições.</li>
-        <li><b class="mkt mk-yellow">Quadrados (amarelo)</b>: blocos 2×2 de uma mesma joia aparecem na grade.</li>
-        <li><b class="mkt mk-red">Colossal (vermelho)</b>: um bloco gigante de <b>coringas</b> 3×3, 4×4 ou 5×5.</li>
+        <p>Em cada giro podem aparecer <b>até 3 casas com marcas coloridas</b> (cada uma de uma cor). A marca fica presa na casa, no fundo da grade, mesmo com as joias caindo. Se um grupo vencedor passar por cima dela, o modo da cor é ativado.</p>
+        <p>Os modos só rodam quando as cascatas param, <b>um de cada vez</b>, nesta ordem fixa: Nuclear, Joia Coringa, Quadrados, Símbolo Colossal e Coringas da Sorte. Depois de cada um, a cascata recomeça.</p>`,
+      features: `<h4>Modos</h4><ul class="si-list">
+        <li><b class="mkt mk-blue">Nuclear (azul)</b>: todos os símbolos saem da tela e são trocados por novos.</li>
+        <li><b class="mkt mk-pink">Joia Coringa (rosa)</b>: uma joia sorteada da tela vira coringa em todas as posições.</li>
+        <li><b class="mkt mk-yellow">Quadrados (amarelo)</b>: blocos 2×2 de uma mesma joia aparecem em posições aleatórias.</li>
+        <li><b class="mkt mk-red">Símbolo Colossal (vermelho)</b>: um bloco 3×3, 4×4 ou 5×5 da mesma joia aparece na grade.</li>
         <li><b class="mkt mk-green">Coringas da Sorte (verde)</b>: de 5 a 15 coringas caem em posições aleatórias.</li></ul>
-        <h4>Febre do Ouro</h4><p>O medidor conta todos os símbolos estourados no giro. Com <b>114</b> símbolos você entra no nível 1 (<b>x2</b>); depois são mais <b>116, 120, 125 e 130</b> símbolos para os níveis <b>x4, x6, x8 e x10</b> (114, 230, 350, 475 e 605 no total) e cada nível novo <b>garante 1 modificador</b> sorteado. A barra continua enchendo durante as cascatas e zera no fim do giro.</p>
-        <h4>Comprar bônus</h4><p>Como no original, a compra entra direto na <b>Febre do Ouro nível 1</b>: o giro começa com <b>114 símbolos</b> na barra, multiplicador <b>x2</b> e <b>1 modificador garantido</b>. Daí em diante, cada símbolo estourado enche a barra até os níveis x4, x6, x8 e x10.</p><p class="muted small">Como no original, não há rodadas grátis.</p>`,
+        <h4>Febre do Ouro</h4><p>Se um giro somar <b>70 símbolos vencedores</b> nas cascatas, a Febre do Ouro começa quando elas acabam. Ela começa no <b>nível 1 (x2)</b> e executa os <b>5 modos, uma vez cada</b>, um de cada vez e na ordem fixa. Todos os ganhos são multiplicados pelo nível.</p>
+        <p>Cada símbolo vencedor enche a barra. Ao recolher <b>116</b> símbolos você vai ao <b>nível 2 (x4)</b>, depois mais <b>121</b> para o <b>nível 3 (x6)</b>, <b>129</b> para o <b>nível 4 (x8)</b> e <b>138</b> para o <b>nível 5 (x10)</b>. Cada nível novo dá <b>mais 1 vez cada um dos 5 modos</b>. A Febre acaba quando não sobra nenhum modo para executar.</p>
+        <h4>Comprar Febre do Ouro</h4><p>Ativa a Febre do Ouro na hora, no nível 1 (x2), com os 5 modos.</p><p class="muted small">Como no original, não há rodadas grátis.</p>`,
       make,
       async spin(rt) {
         const g = make();
-        await play(rt, g, { n: 0, fever: 1 });
-        rt.chip('fever', null);
-        rt.chip('cnt', null);
+        if (await play(rt, g) && !rt.capped) { rt.msg(`🔥 ${ENTER} símbolos vencedores: FEBRE DO OURO!`); await rt.wait(900); await this.bonus(rt, { g }); }
       },
-      // compra do bônus (como no original): um giro que já começa na Febre do Ouro nível 1 (x2, 114 símbolos)
-      async bonus(rt) {
-        rt.msg('🔥 FEBRE DO OURO x2! Modificador garantido!');
-        rt.fx('big');
-        await play(rt, make(), { n: 114, fever: 2, all: true });
-        rt.chip('fever', null);
-        rt.chip('cnt', null);
+      // compra do bônus (como no original): entra direto na Febre do Ouro (nível 1, x2) com os 5 modos
+      async bonus(rt, { g } = {}) {
+        if (!g) { g = make(); await rt.drop(g); }
+        await fever(rt, g);
       },
     }));
   })();

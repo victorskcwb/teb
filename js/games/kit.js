@@ -481,7 +481,7 @@ const SlotKit = (() => {
         const fsBar = freeSpinBar(ctx, on => { spinBtn.classList.toggle('free', on); if (on && !busy) spin(); });
         $('.fs-slot', el).append(fsBar.el);
         const renderBuy = () => {
-          if (buyBtn) buyBtn.innerHTML = `💰 Comprar bônus <b>🪙 ${fmt(stepper.value * buyX)}</b>`;
+          if (buyBtn) buyBtn.innerHTML = `💰 ${cfg.buyLabel || 'Comprar bônus'} <b>🪙 ${fmt(stepper.value * buyX)}</b>`;
           if (superBtn) superBtn.innerHTML = `🔥 Bônus super <b>🪙 ${fmt(stepper.value * superX)}</b>`;
           if (BT) $$('.buy-tier', el).forEach(b => { const t = BT[+b.dataset.i]; b.innerHTML = `${t.label}<b>🪙 ${fmt(stepper.value * t.price)}</b>`; });
         };
